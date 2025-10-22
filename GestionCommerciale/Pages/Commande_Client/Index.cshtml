@@ -1,0 +1,265 @@
+﻿@page
+@using GestionCommerciale.Enums
+@model GestionCommerciale.Pages.Commande_Client.IndexModel
+@{
+    ViewData["Title"] = "Commandes clients";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            Commandes clients
+                        </h4>
+                        <a asp-page="Create" class="btn btn-light">
+                            <i class="fas fa-plus me-1"></i>
+                            Nouvelle commande
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <!-- Filtres -->
+                    <form method="get" class="mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input asp-for="SearchString" class="form-control" placeholder="Rechercher par numéro de commande ou client..." />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select asp-for="StatutFilter" class="form-select">
+                                    <option value="">Tous les statuts</option>
+                                    <option value="@StatutCommande.EnAttente">En attente</option>
+                                    <option value="@StatutCommande.EnPreparation">En préparation</option>
+                                    <option value="@StatutCommande.Livree">Livrée</option>
+                                    <option value="@StatutCommande.Annulee">Annulée</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-filter me-1"></i>
+                                        Filtrer
+                                    </button>
+                                    <a asp-page="./Index" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-1"></i>
+                                        Effacer
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Statistiques -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6 class="card-title">Total commandes</h6>
+                                            <h4 class="mb-0">@Model.CommandeClients.Count</h4>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-shopping-cart fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6 class="card-title">En attente</h6>
+                                            <h4 class="mb-0">@Model.CommandeClients.Count(c => c.Statut == StatutCommande.EnAttente)</h4>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-clock fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6 class="card-title">En cours</h6>
+                                            <h4 class="mb-0">@Model.CommandeClients.Count(c => c.Statut == StatutCommande.EnPreparation)</h4>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-spinner fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6 class="card-title">Livrées</h6>
+                                            <h4 class="mb-0">@Model.CommandeClients.Count(c => c.Statut == StatutCommande.Livree)</h4>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-check fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tableau des commandes -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Numéro</th>
+                                    <th>Date commande</th>
+                                    <th>Client</th>
+                                    <th>Statut</th>
+                                    <th>Montant TTC</th>
+                                    <th>Date livraison</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.CommandeClients.Any())
+                                {
+                                    @foreach (var commande in Model.CommandeClients)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@commande.NumeroCommande</strong>
+                                            </td>
+                                            <td>
+                                                @commande.DateCommande.ToString("dd/MM/yyyy")
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <strong>@commande.Client.Nom @commande.Client.Prenom</strong>
+                                                </div>
+                                                <small class="text-muted">@commande.Client.Email</small>
+                                            </td>
+                                            <td>
+                                                @switch (commande.Statut)
+                                                {
+                                                    case StatutCommande.EnAttente:
+                                                        <span class="badge bg-warning">En attente</span>
+                                                        break;
+                                                    case StatutCommande.EnPreparation:
+                                                        <span class="badge bg-primary">En cours</span>
+                                                        break;
+                                                    case StatutCommande.Livree:
+                                                        <span class="badge bg-success">Livrée</span>
+                                                        break;
+                                                    case StatutCommande.Annulee:
+                                                        <span class="badge bg-danger">Annulée</span>
+                                                        break;
+                                                }
+                                            </td>
+                                            <td>
+                                                <strong>@commande.MontantTTC.ToString("C")</strong>
+                                                <br>
+                                                <small class="text-muted">HT: @commande.MontantHT.ToString("C")</small>
+                                            </td>
+                                            <td>
+                                                @if (commande.DateLivraison.HasValue)
+                                                {
+                                                    @commande.DateLivraison.Value.ToString("dd/MM/yyyy")
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a asp-page="./Details" asp-route-id="@commande.Id" class="btn btn-outline-info" title="Détails">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a asp-page="./Edit" asp-route-id="@commande.Id" class="btn btn-outline-warning" title="Modifier">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-outline-danger" title="Supprimer" onclick="confirmDelete(@commande.Id, '@commande.NumeroCommande')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                                                <p class="mb-0">Aucune commande trouvée</p>
+                                                @if (!string.IsNullOrEmpty(Model.SearchString) || Model.StatutFilter.HasValue)
+                                                {
+                                                    <small>Essayez de modifier vos critères de recherche</small>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer la commande <strong id="commandeNumero"></strong> ?</p>
+                <p class="text-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="post" class="d-inline" id="deleteForm">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>
+                        Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDelete(id, numeroCommande) {
+        document.getElementById('commandeNumero').textContent = numeroCommande;
+        document.getElementById('deleteForm').action = './Delete?id=' + id;
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
+</script>

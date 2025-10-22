@@ -1,0 +1,104 @@
+﻿@page
+@using GestionCommerciale.Enums
+@model GestionCommerciale.Pages.Commande_Client.DeleteModel
+@{
+    ViewData["Title"] = "Supprimer Commande";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-trash me-2"></i>
+                        Supprimer la Commande
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Attention !</strong> Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Informations de la commande</h6>
+                                </div>
+                                <div class="card-body">
+                                    <dl class="row">
+                                        <dt class="col-sm-5">Numéro</dt>
+                                        <dd class="col-sm-7">@Html.DisplayFor(model => model.CommandeClient.NumeroCommande)</dd>
+                                        
+                                        <dt class="col-sm-5">Date</dt>
+                                        <dd class="col-sm-7">@Html.DisplayFor(model => model.CommandeClient.DateCommande)</dd>
+                                        
+                                        <dt class="col-sm-5">Client</dt>
+                                        <dd class="col-sm-7">@Html.DisplayFor(model => model.CommandeClient.Client.Nom)</dd>
+                                        
+                                        <dt class="col-sm-5">Statut</dt>
+                                        <dd class="col-sm-7">
+                                            <span class="badge bg-@(Model.CommandeClient.Statut == StatutCommande.EnAttente ? "warning" : 
+                                                                   Model.CommandeClient.Statut == StatutCommande.Confirmee ? "success" : 
+                                                                   Model.CommandeClient.Statut == StatutCommande.Livree ? "primary" : "danger")">
+                                                @Html.DisplayFor(model => model.CommandeClient.Statut)
+                                            </span>
+                                        </dd>
+                                        
+                                        <dt class="col-sm-5">Montant TTC</dt>
+                                        <dd class="col-sm-7">@Html.DisplayFor(model => model.CommandeClient.MontantTTC)</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Articles (@Model.CommandeClient.LignesCommande.Count)</h6>
+                                </div>
+                                <div class="card-body">
+                                    @if (Model.CommandeClient.LignesCommande.Any())
+                                    {
+                                        <ul class="list-group list-group-flush">
+                                            @foreach (var ligne in Model.CommandeClient.LignesCommande)
+                                            {
+                                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                    <div>
+                                                        <strong>@ligne.Article.Libelle</strong><br>
+                                                        <small class="text-muted">Qté: @ligne.Quantite × @ligne.PrixUnitaire.ToString("C")</small>
+                                                    </div>
+                                                    <span class="badge bg-primary">@ligne.MontantLigne.ToString("C")</span>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">Aucun article</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" class="mt-4">
+                        <input type="hidden" asp-for="CommandeClient.Id" />
+                        <div class="d-flex justify-content-between">
+                            <a asp-page="./Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Retour à la liste
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i>
+                                Confirmer la suppression
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

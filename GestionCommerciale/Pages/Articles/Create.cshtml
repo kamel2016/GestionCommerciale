@@ -1,0 +1,241 @@
+﻿@page "/Articles/Create"
+@model GestionCommerciale.Pages.Articles.CreateModel
+@{
+    ViewData["Title"] = "Créer un nouvel article";
+
+    Layout = "_Layout";
+}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="~/css/article-create.css" rel="stylesheet" />
+
+<div class="article-container">
+    <!-- En-tête -->
+    <div class="article-header">
+        <div>
+            <h1><i class="fas fa-plus-circle"></i> Créer un nouvel article</h1>
+            <div class="header-info">Ajoutez les informations essentielles du produit</div>
+        </div>
+        <div class="btn-group">
+            <a asp-page="./Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages d'alerte -->
+    @if (TempData["SuccessMessage"] != null)
+
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Formulaire de création -->
+    <div class="create-form-wrapper">
+        <form method="post" id="createArticleForm" novalidate>
+            <!-- Section 1 : Informations de base -->
+            <div class="form-section">
+                <h2><i class="fas fa-box"></i> Informations de base</h2>
+                <div class="section-divider"></div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label asp-for="Article.Reference" class="form-label required">Référence Article</label>
+                        <input asp-for="Article.Reference"
+                               class="form-control"
+                               placeholder="Ex: LAPTOP-DELL-XPS13"
+                               autofocus
+                               required />
+                        <span asp-validation-for="Article.Reference" class="field-error"></span>
+                        <small class="form-text">Code unique de l'article (min 3 caractères)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Barcode" class="form-label required">Code-barre</label>
+                        <input asp-for="Article.Barcode"
+                               class="form-control"
+                               placeholder="Ex: 8717285912345"
+                               required />
+                        <span asp-validation-for="Article.Barcode" class="field-error"></span>
+                        <small class="form-text">Code EAN/UPC unique</small>
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label asp-for="Article.Name" class="form-label required">Désignation</label>
+                        <input asp-for="Article.Name"
+                               class="form-control"
+                               placeholder="Ex: Ordinateur Portable Dell XPS 13"
+                               required />
+                        <span asp-validation-for="Article.Name" class="field-error"></span>
+                        <small class="form-text">Nom commercial du produit</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Brand" class="form-label">Marque</label>
+                        <input asp-for="Article.Brand"
+                               class="form-control"
+                               placeholder="Ex: Dell" />
+                        <span asp-validation-for="Article.Brand" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Model" class="form-label">Modèle</label>
+                        <input asp-for="Article.Model"
+                               class="form-control"
+                               placeholder="Ex: XPS 13" />
+                        <span asp-validation-for="Article.Model" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Category" class="form-label">Catégorie</label>
+                        <select asp-for="Article.Category"
+                                asp-items="Model.Categories"
+                                class="form-control">
+                        </select>
+                        <span asp-validation-for="Article.Category" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Unit" class="form-label required">Unité</label>
+                        <select asp-for="Article.Unit"
+                                asp-items="Model.Units"
+                                class="form-control"
+                                required>
+                        </select>
+                        <span asp-validation-for="Article.Unit" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.VatRate" class="form-label required">Taux TVA %</label>
+                        <input asp-for="Article.VatRate"
+                               type="number"
+                               step="0.1"
+                               class="form-control"
+                               value="20"
+                               required />
+                        <span asp-validation-for="Article.VatRate" class="field-error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2 : Description -->
+            <div class="form-section">
+                <h2><i class="fas fa-align-left"></i> Description</h2>
+                <div class="section-divider"></div>
+
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label asp-for="Article.Description" class="form-label">Description longue</label>
+                        <textarea asp-for="Article.Description"
+                                  class="form-control"
+                                  rows="6"
+                                  placeholder="Description détaillée du produit pour le catalogue..."></textarea>
+                        <span asp-validation-for="Article.Description" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Color" class="form-label">Couleur</label>
+                        <input asp-for="Article.Color"
+                               class="form-control"
+                               placeholder="Ex: Argent" />
+                        <span asp-validation-for="Article.Color" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Size" class="form-label">Dimensions</label>
+                        <input asp-for="Article.Size"
+                               class="form-control"
+                               placeholder="Ex: 13 pouces" />
+                        <span asp-validation-for="Article.Size" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Weight" class="form-label">Poids (kg)</label>
+                        <input asp-for="Article.Weight"
+                               type="number"
+                               step="0.01"
+                               class="form-control"
+                               placeholder="0.00" />
+                        <span asp-validation-for="Article.Weight" class="field-error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3 : Stock -->
+            <div class="form-section">
+                <h2><i class="fas fa-warehouse"></i> Gestion du stock</h2>
+                <div class="section-divider"></div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label asp-for="Article.StockMinimum" class="form-label">Stock Minimum</label>
+                        <input asp-for="Article.StockMinimum"
+                               type="number"
+                               class="form-control"
+                               min="0"
+                               placeholder="0" />
+                        <span asp-validation-for="Article.StockMinimum" class="field-error"></span>
+                        <small class="form-text">Alerte si stock en dessous</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.StockMaximum" class="form-label">Stock Maximum</label>
+                        <input asp-for="Article.StockMaximum"
+                               type="number"
+                               class="form-control"
+                               min="0"
+                               placeholder="0" />
+                        <span asp-validation-for="Article.StockMaximum" class="field-error"></span>
+                        <small class="form-text">Limite de stockage recommandée</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4 : Statut -->
+            <div class="form-section">
+                <h2><i class="fas fa-toggle-on"></i> Statut</h2>
+                <div class="section-divider"></div>
+
+                <div class="form-check">
+                    <input asp-for="Article.IsActive"
+                           type="checkbox"
+                           class="form-check-input"
+                           id="isActiveCheck" />
+                    <label for="isActiveCheck" class="form-check-label">
+                        Article actif
+                    </label>
+                </div>
+                <small class="form-text">Décochez pour créer un article inactif</small>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-save"></i> Créer l'article
+                </button>
+                <a asp-page="./Index" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/article-create.js"></script>
+}

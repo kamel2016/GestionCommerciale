@@ -1,0 +1,62 @@
+﻿@page
+@model GestionCommerciale.Pages.Clients.CreateModel
+@{
+    ViewData["Title"] = "Modifier un nouveau Client";
+}
+
+<div class="container fade-in">
+    <h1>Créer un nouveau client</h1>
+
+    <div class="form-container">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <div class="form-group">
+                <label asp-for="Client.Nom" class="form-label"></label>
+                <input asp-for="Client.Nom" class="form-control" />
+                <span asp-validation-for="Client.Nom" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Client.Prenom" class="form-label"></label>
+                <input asp-for="Client.Prenom" class="form-control" />
+                <span asp-validation-for="Client.Prenom" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Client.Email" class="form-label"></label>
+                <input asp-for="Client.Email" class="form-control" type="email" />
+                <span asp-validation-for="Client.Email" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Client.Telephone" class="form-label"></label>
+                <input asp-for="Client.Telephone" class="form-control" type="tel" />
+                <span asp-validation-for="Client.Telephone" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Client.Adresse" class="form-label"></label>
+                <input asp-for="Client.Adresse" class="form-control" />
+                <span asp-validation-for="Client.Adresse" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i>
+                    Créer
+                </button>
+                <a asp-page="Index" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

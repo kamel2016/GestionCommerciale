@@ -1,0 +1,525 @@
+﻿/* ============================================
+   GOODS RECEIPT DETAILS CSS
+   ============================================ */
+
+:root {
+    --primary-color: #007bff;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --border-color: #dee2e6;
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--dark-color);
+    background-color: white;
+}
+
+/* ============================================
+   CONTAINER
+   ============================================ */
+
+.receipt-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    background: white;
+}
+
+/* ============================================
+   EN-TÊTE DU BON
+   ============================================ */
+
+.receipt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 3px solid var(--dark-color);
+}
+
+.receipt-title h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin: 0 0 10px 0;
+    letter-spacing: 2px;
+}
+
+.receipt-number {
+    font-size: 18px;
+    color: var(--primary-color);
+    font-weight: 600;
+    margin: 0;
+}
+
+.receipt-status {
+    text-align: right;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.status-brouillon {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+.status-validé {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-liquidé {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-annulé {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* ============================================
+   SECTIONS
+   ============================================ */
+
+.receipt-section {
+    margin-bottom: 40px;
+    page-break-inside: avoid;
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--dark-color);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+/* ============================================
+   GRILLE D'INFORMATIONS
+   ============================================ */
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.info-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+    .info-row label {
+        font-weight: 600;
+        color: #666;
+        font-size: 13px;
+        min-width: 140px;
+        flex-shrink: 0;
+    }
+
+    .info-row span {
+        text-align: right;
+        color: var(--dark-color);
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+/* ============================================
+   MONTANTS
+   ============================================ */
+
+.amounts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.amount-box {
+    background: var(--light-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 16px;
+    text-align: center;
+}
+
+.amount-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.amount-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 4px;
+}
+
+.amount-currency {
+    font-size: 14px;
+    color: var(--dark-color);
+}
+
+/* ============================================
+   INFORMATIONS TVA
+   ============================================ */
+
+.vat-info {
+    background: var(--light-color);
+    padding: 12px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #666;
+    text-align: center;
+}
+
+.separator {
+    margin: 0 8px;
+    color: var(--border-color);
+}
+
+/* ============================================
+   TABLEAU DES ARTICLES
+   ============================================ */
+
+.receipt-lines-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border-color);
+    margin-top: 20px;
+}
+
+    .receipt-lines-table thead {
+        background-color: var(--light-color);
+    }
+
+    .receipt-lines-table th {
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--dark-color);
+        border-bottom: 2px solid var(--border-color);
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+
+    .receipt-lines-table td {
+        padding: 12px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 13px;
+    }
+
+    .receipt-lines-table tbody tr:nth-child(even) {
+        background-color: #fafbfc;
+    }
+
+    .receipt-lines-table tbody tr:hover {
+        background-color: var(--light-color);
+    }
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+/* ============================================
+   ÉTAT VIDE
+   ============================================ */
+
+.empty-message {
+    text-align: center;
+    padding: 40px;
+    background: var(--light-color);
+    border-radius: 4px;
+    color: #666;
+}
+
+    .empty-message i {
+        font-size: 48px;
+        color: #ddd;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    .empty-message p {
+        margin: 0;
+        font-size: 14px;
+    }
+
+/* ============================================
+   COMMENTAIRES
+   ============================================ */
+
+.comments-box {
+    background: var(--light-color);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--info-color);
+    padding: 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--dark-color);
+}
+
+/* ============================================
+   PIED DE PAGE
+   ============================================ */
+
+.receipt-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.footer-info {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+    .footer-info small {
+        font-size: 12px;
+        color: #999;
+    }
+
+/* ============================================
+   BOUTONS D'ACTION
+   ============================================ */
+
+.receipt-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: center;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-print {
+    background-color: var(--info-color);
+    color: white;
+}
+
+    .btn-print:hover {
+        background-color: #117a8b;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+.btn-close {
+    background-color: #6c757d;
+    color: white;
+}
+
+    .btn-close:hover {
+        background-color: #545b62;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+/* ============================================
+   IMPRESSION
+   ============================================ */
+
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+        background: white;
+    }
+
+    .receipt-container {
+        max-width: 100%;
+        padding: 20px;
+        box-shadow: none;
+    }
+
+    .receipt-actions {
+        display: none !important;
+    }
+
+    .receipt-section {
+        page-break-inside: avoid;
+    }
+
+    a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .receipt-header,
+    .section-title {
+        border-color: #000 !important;
+    }
+
+    .status-badge {
+        border: 2px solid #000;
+    }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .receipt-container {
+        padding: 20px 10px;
+    }
+
+    .receipt-header {
+        flex-direction: column;
+        gap: 20px;
+        padding-bottom: 20px;
+    }
+
+    .receipt-title h1 {
+        font-size: 28px;
+    }
+
+    .receipt-status {
+        text-align: left;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .amounts-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .receipt-lines-table {
+        font-size: 12px;
+    }
+
+        .receipt-lines-table th,
+        .receipt-lines-table td {
+            padding: 8px;
+        }
+
+    .receipt-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .receipt-container {
+        padding: 15px 5px;
+    }
+
+    .receipt-title h1 {
+        font-size: 24px;
+        letter-spacing: 1px;
+    }
+
+    .receipt-number {
+        font-size: 16px;
+    }
+
+    .info-grid {
+        gap: 15px;
+    }
+
+    .info-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+        .info-row label {
+            min-width: auto;
+        }
+
+        .info-row span {
+            text-align: left;
+        }
+
+    .amounts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .amount-value {
+        font-size: 20px;
+    }
+
+    .receipt-lines-table {
+        font-size: 11px;
+    }
+
+        .receipt-lines-table th,
+        .receipt-lines-table td {
+            padding: 6px;
+        }
+
+    .section-title {
+        font-size: 12px;
+        margin-bottom: 15px;
+    }
+
+    .receipt-footer {
+        margin-top: 20px;
+        padding-top: 15px;
+    }
+}

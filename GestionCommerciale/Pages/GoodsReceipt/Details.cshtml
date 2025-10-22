@@ -1,0 +1,221 @@
+﻿@page "/GoodsReceipt/Details/{id:int?}"
+@model GestionCommerciale.Pages.GoodsReceipt.DetailsModel
+@{
+    ViewData["Title"] = "Bon de Réception";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bon de Réception - @Model.GoodsReceipt.InternalNumber</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="~/css/goods-receipt-details.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="receipt-container" data-receipt-id="@Model.GoodsReceipt.Id">
+        <!-- En-tête du bon -->
+        <div class="receipt-header">
+            <div class="receipt-title">
+                <h1>BON DE RECEPTION</h1>
+                <p class="receipt-number">N° @Model.GoodsReceipt.InternalNumber</p>
+            </div>
+            <div class="receipt-status">
+                <span class="status-badge status-@Model.GoodsReceipt.Status.ToLower()">
+                    @Model.GoodsReceipt.Status
+                </span>
+            </div>
+        </div>
+
+        <!-- Section Fournisseur et Dates -->
+        <div class="receipt-section">
+            <div class="section-title">INFORMATIONS DE RECEPTION</div>
+
+            <div class="info-grid">
+                <div class="info-column">
+                    <div class="info-row">
+                        <label>Code Fournisseur:</label>
+                        <span>@Model.GoodsReceipt.SupplierCode</span>
+                    </div>
+                    <div class="info-row">
+                        <label>Fournisseur:</label>
+                        <span>@Model.GoodsReceipt.SupplierName</span>
+                    </div>
+                    <div class="info-row">
+                        <label>Ref. Fournisseur:</label>
+                        <span>@(string.IsNullOrEmpty(Model.GoodsReceipt.SupplierReference) ? "-" : Model.GoodsReceipt.SupplierReference)</span>
+                    </div>
+                </div>
+
+                <div class="info-column">
+                    <div class="info-row">
+                        <label>Date de Saisie:</label>
+                        <span>@Model.GoodsReceipt.ReceiptDate.ToString("dd/MM/yyyy")</span>
+                    </div>
+                    <div class="info-row">
+                        <label>Heure:</label>
+                        <span>@Model.GoodsReceipt.ReceiptTime.ToString(@"hh\:mm\:ss")</span>
+                    </div>
+                    <div class="info-row">
+                        <label>Date Facture:</label>
+                        <span>@(Model.GoodsReceipt.InvoiceDate.HasValue ? Model.GoodsReceipt.InvoiceDate.Value.ToString("dd/MM/yyyy") : "-")</span>
+                    </div>
+                </div>
+
+                <div class="info-column">
+                    <div class="info-row">
+                        <label>N° Commande:</label>
+                        <span>@(string.IsNullOrEmpty(Model.GoodsReceipt.OrderNumber) ? "-" : Model.GoodsReceipt.OrderNumber)</span>
+                    </div>
+                    <div class="info-row">
+                        <label>Date Commande:</label>
+                        <span>@(Model.GoodsReceipt.OrderDate.HasValue ? Model.GoodsReceipt.OrderDate.Value.ToString("dd/MM/yyyy") : "-")</span>
+                    </div>
+                    <div class="info-row">
+                        <label>Créé par:</label>
+                        <span>@Model.GoodsReceipt.CreatedBy</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Montants -->
+        <div class="receipt-section">
+            <div class="section-title">MONTANTS</div>
+
+            <div class="amounts-grid">
+                <div class="amount-box">
+                    <div class="amount-label">TTC</div>
+                    <div class="amount-value">@Model.GoodsReceipt.AmountIncludingTax.ToString("N2")</div>
+                    <div class="amount-currency">€</div>
+                </div>
+
+                <div class="amount-box">
+                    <div class="amount-label">À Recevoir</div>
+                    <div class="amount-value">@Model.GoodsReceipt.AmountToReceive.ToString("N2")</div>
+                    <div class="amount-currency">€</div>
+                </div>
+
+                <div class="amount-box">
+                    <div class="amount-label">Réglé</div>
+                    <div class="amount-value">@Model.GoodsReceipt.AmountPaid.ToString("N2")</div>
+                    <div class="amount-currency">€</div>
+                </div>
+
+                <div class="amount-box">
+                    <div class="amount-label">Régularisé</div>
+                    <div class="amount-value">@Model.GoodsReceipt.AmountRegularized.ToString("N2")</div>
+                    <div class="amount-currency">€</div>
+                </div>
+
+                <div class="amount-box">
+                    <div class="amount-label">Reste</div>
+                    <div class="amount-value">@Model.GoodsReceipt.AmountRemaining.ToString("N2")</div>
+                    <div class="amount-currency">€</div>
+                </div>
+
+                <div class="amount-box">
+                    <div class="amount-label">Imputé</div>
+                    <div class="amount-value">@Model.GoodsReceipt.AmountCharged.ToString("N2")</div>
+                    <div class="amount-currency">€</div>
+                </div>
+            </div>
+
+            <div class="vat-info">
+                <span>@(Model.GoodsReceipt.IsVatSubject ? "Assujetti à la TVA" : "Non assujetti à la TVA")</span>
+                <span class="separator">|</span>
+                <span>TVA: @Model.GoodsReceipt.VatRate%</span>
+                <span class="separator">|</span>
+                <span>Devise: @Model.GoodsReceipt.Currency</span>
+                @if (Model.GoodsReceipt.ExchangeRate != 1)
+                {
+                    <span class="separator">|</span>
+                    <span>Change: @Model.GoodsReceipt.ExchangeRate</span>
+                }
+            </div>
+        </div>
+
+        <!-- Section Lignes du bon -->
+        <div class="receipt-section">
+            <div class="section-title">ARTICLES REÇUS</div>
+
+            @if (Model.GoodsReceipt.Lines.Any())
+            {
+                <table class="receipt-lines-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Désignation Article</th>
+                            <th class="text-center">Px U.HT</th>
+                            <th class="text-center">Quantité</th>
+                            <th>Uni.</th>
+                            <th class="text-center">%</th>
+                            <th class="text-center">D</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in Model.GoodsReceipt.Lines)
+                        {
+                            <tr>
+                                <td>@line.ArticleCode</td>
+                                <td>@line.ArticleDescription</td>
+                                <td class="text-center">@line.UnitPrice.ToString("N2")</td>
+                                <td class="text-center">@line.Quantity</td>
+                                <td>@line.Unit</td>
+                                <td class="text-center">@line.VatRate.ToString("N0")</td>
+                                <td class="text-center">@line.DiscountPercent.ToString("N0")</td>
+                                <td class="text-right">@line.LineAmountIncludingTax.ToString("N2") €</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-message">
+                    <i class="fas fa-inbox"></i>
+                    <p>Aucun article dans ce bon de réception</p>
+                </div>
+            }
+        </div>
+
+        <!-- Section Commentaires -->
+        @if (!string.IsNullOrEmpty(Model.GoodsReceipt.Comments))
+        {
+            <div class="receipt-section">
+                <div class="section-title">COMMENTAIRES</div>
+                <div class="comments-box">
+                    @Model.GoodsReceipt.Comments
+                </div>
+            </div>
+        }
+
+        <!-- Pied de page -->
+        <div class="receipt-footer">
+            <div class="footer-info">
+                <small>Créé le: @Model.GoodsReceipt.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                @if (Model.GoodsReceipt.UpdatedAt.HasValue)
+                {
+                    <small>Modifié le: @Model.GoodsReceipt.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                }
+            </div>
+        </div>
+
+        <!-- Boutons d'action (visibles uniquement hors modal) -->
+        <div class="receipt-actions" id="receiptActions">
+            <button type="button" class="btn btn-print" onclick="window.print()">
+                <i class="fas fa-print"></i> Imprimer
+            </button>
+            <button type="button" class="btn btn-close" onclick="window.close()">
+                <i class="fas fa-times"></i> Fermer
+            </button>
+        </div>
+    </div>
+
+    <link href="~/css/goods-receipt-details.css" rel="stylesheet" />
+    <script src="~/js/goods-receipt-details.js"></script>
+</body>
+</html>

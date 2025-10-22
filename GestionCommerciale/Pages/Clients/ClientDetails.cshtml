@@ -1,0 +1,775 @@
+﻿@page "/clients/details/{id:int?}"
+@model GestionCommerciale.Pages.Clients.ClientDetailsModel
+@{
+    ViewData["Title"] = "Détails du Client";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="text-dark mb-1">
+                <i class="fas fa-user-tie text-primary me-2"></i>
+                Détails du Client
+            </h2>
+            <p class="text-muted mb-0">Code: @Model.Client.CodeClient</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="@Url.Page("./Index")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages de notification -->
+    @if (TempData["SuccessMessage"] != null)
+
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- ONGLETS STYLE DOSSIER MODERNE -->
+    <div class="tabs-main-container">
+
+        <!-- HEADER DES ONGLETS -->
+        <div class="tabs-header-container">
+            <button id="tab1" class="simple-tab active" onclick="openTab('general')">
+                <i class="fas fa-user"></i> <span class="tab-text">Général</span>
+            </button>
+            <button id="tab2" class="simple-tab" onclick="openTab('address')">
+                <i class="fas fa-map-marker-alt"></i> <span class="tab-text">Adresse</span>
+            </button>
+            <button id="tab3" class="simple-tab" onclick="openTab('commercial')">
+                <i class="fas fa-chart-line"></i> <span class="tab-text">Commercial</span>
+            </button>
+            <button id="tab4" class="simple-tab" onclick="openTab('fiscal')">
+                <i class="fas fa-university"></i> <span class="tab-text">Fiscal</span>
+            </button>
+            <button id="tab5" class="simple-tab" onclick="openTab('notes')">
+                <i class="fas fa-sticky-note"></i> <span class="tab-text">Notes</span>
+            </button>
+            <button id="tab6" class="simple-tab" onclick="openTab('system')">
+                <i class="fas fa-cog"></i> <span class="tab-text">Système</span>
+            </button>
+        </div>
+
+        <!-- CONTENU DES ONGLETS -->
+        <div class="tabs-content-container">
+
+            <!-- ONGLET GÉNÉRAL -->
+            <div id="general" class="tab-content-simple active">
+                <div class="section-title-modern">
+                    <i class="fas fa-info-circle"></i> Informations Générales
+                </div>
+                <div style="padding: 0 2rem 2rem 2rem;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Code Client</label>
+                                <div class="field-container">@Model.Client.CodeClient</div>
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Nom</label>
+                                <div class="field-container">@Model.Client.Nom</div>
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Prénom</label>
+                                <div class="field-container">@Model.Client.Prenom</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Téléphone</label>
+                                <div class="field-container">
+                                    @if (!string.IsNullOrEmpty(Model.Client.Telephone))
+
+                                    {
+                                        <a href="tel:@Model.Client.Telephone" style="text-decoration: none; color: inherit;">
+                                            <i class="fas fa-phone text-success"></i> @Model.Client.Telephone
+                                        </a>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span style="color: #6c757d;">-</span>
+                                    }
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Email</label>
+                                <div class="field-container">
+                                    @if (!string.IsNullOrEmpty(Model.Client.Email))
+
+                                    {
+                                        <a href="mailto:@Model.Client.Email" style="text-decoration: none; color: inherit;">
+                                            <i class="fas fa-envelope text-primary"></i> @Model.Client.Email
+                                        </a>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span style="color: #6c757d;">-</span>
+                                    }
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Zone</label>
+                                <div class="field-container">
+                                    @if (!string.IsNullOrEmpty(Model.Client.Zone))
+
+                                    {
+                                        <span class="modern-badge bg-info text-white">@Model.Client.Zone</span>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span style="color: #6c757d;">-</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ONGLET ADRESSE -->
+            <div id="address" class="tab-content-simple">
+                <div class="section-title-modern">
+                    <i class="fas fa-map-marker-alt"></i> Informations d'Adresse
+                </div>
+                <div style="padding: 0 2rem 2rem 2rem;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="subsection-title">
+                                <i class="fas fa-home"></i> Adresse Principale
+                            </h5>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Adresse</label>
+                                <div class="field-container" style="min-height: 80px; white-space: pre-wrap;">@Model.Client.Adresse</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4">
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <label class="field-label-modern">Code Postal</label>
+                                        <div class="field-container">@Model.Client.CodePostal</div>
+                                    </div>
+                                </div>
+                                <div class="col-8">
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <label class="field-label-modern">Ville</label>
+                                        <div class="field-container">
+                                            @if (!string.IsNullOrEmpty(Model.Client.Ville))
+
+                                            {
+                                                <i class="fas fa-map-marker-alt text-danger"></i> @Model.Client.Ville
+                                            }
+
+                                            else
+
+                                            {
+                                                <span style="color: #6c757d;">-</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="subsection-title">
+                                <i class="fas fa-truck"></i> Adresse de Livraison
+                            </h5>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Adresse de Livraison</label>
+                                <div class="field-container" style="min-height: 80px; white-space: pre-wrap;">
+                                    @if (!string.IsNullOrEmpty(Model.Client.AdresseLivraison))
+
+                                    {
+                                        @Model.Client.AdresseLivraison
+                                    }
+
+                                    else
+
+                                    {
+                                        <span style="color: #6c757d; font-style: italic;">Identique à l'adresse principale</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ONGLET COMMERCIAL -->
+            <div id="commercial" class="tab-content-simple">
+                <div class="section-title-modern">
+                    <i class="fas fa-chart-line"></i> Informations Commerciales
+                </div>
+                <div style="padding: 0 2rem 2rem 2rem;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="subsection-title">
+                                <i class="fas fa-tags"></i> Catégorie & Remises
+                            </h5>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Type de Catégorie</label>
+                                <div class="field-container">
+                                    @if (!string.IsNullOrEmpty(Model.Client.TypeCategorie))
+
+                                    {
+                                        <span class="modern-badge bg-success text-white">@Model.Client.TypeCategorie</span>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span style="color: #6c757d;">-</span>
+                                    }
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Remise Par Défaut</label>
+                                <div class="field-container">
+                                    @if (Model.Client.RemiseParDefaut.HasValue)
+
+                                    {
+                                        <span style="color: #28a745; font-weight: bold; font-size: 16px;">@Model.Client.RemiseParDefaut.Value%</span>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span style="color: #6c757d;">0%</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="subsection-title">
+                                <i class="fas fa-euro-sign"></i> Finances
+                            </h5>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Montant Crédit</label>
+                                <div class="field-container">
+                                    @if (Model.Client.MontantCredit.HasValue)
+
+                                    {
+                                        <span style="color: #007bff; font-weight: bold; font-size: 18px;">@Model.Client.MontantCredit.Value.ToString("C")</span>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span style="color: #6c757d;">-</span>
+                                    }
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Solde</label>
+                                <div class="field-container">
+                                    @if (Model.Client.Solde.HasValue)
+
+                                    {
+                                        <span style="color: @(Model.Client.Solde > 0 ? "#28a745" : "#6c757d"); font-weight: bold; font-size: 18px;">
+                                            @Model.Client.Solde.Value.ToString("C")
+                                        </span>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span style="color: #6c757d;">0,00 €</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ONGLET FISCAL -->
+            <div id="fiscal" class="tab-content-simple">
+                <div class="section-title-modern">
+                    <i class="fas fa-university"></i> Informations Fiscales et Bancaires
+                </div>
+                <div style="padding: 0 2rem 2rem 2rem;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="subsection-title">
+                                <i class="fas fa-file-invoice"></i> Fiscal
+                            </h5>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Matricule Fiscal</label>
+                                <div class="field-container">@Model.Client.MatriculeFiscal</div>
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Code TVA</label>
+                                <div class="field-container">@Model.Client.CodeTva</div>
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">CIN</label>
+                                <div class="field-container">@Model.Client.Cin</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="subsection-title">
+                                <i class="fas fa-university"></i> Bancaire
+                            </h5>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Banque</label>
+                                <div class="field-container">@Model.Client.Banque</div>
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Compte</label>
+                                <div class="field-container">@Model.Client.Compte</div>
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">RIB</label>
+                                <div class="field-container">@Model.Client.Rib</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ONGLET NOTES -->
+            <div id="notes" class="tab-content-simple">
+                <div class="section-title-modern">
+                    <i class="fas fa-sticky-note"></i> Critères et Notes
+                </div>
+                <div style="padding: 0 2rem 2rem 2rem;">
+                    @if (!string.IsNullOrEmpty(Model.Client.Criteres))
+
+                    {
+                        <div class="field-container" style="min-height: 200px; white-space: pre-wrap; font-size: 15px; line-height: 1.6;">
+                            @Model.Client.Criteres
+                        </div>
+                    }
+
+                    else
+
+                    {
+                        <div class="empty-state-modern">
+                            <i class="fas fa-sticky-note"></i>
+                            <div style="font-weight: 500;">Aucune note ou critère spécifique</div>
+                            <div style="font-size: 14px; margin-top: 8px;">Les critères et notes concernant ce client apparaîtront ici</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ONGLET SYSTÈME -->
+            <div id="system" class="tab-content-simple">
+                <div class="section-title-modern">
+                    <i class="fas fa-cog"></i> Informations Système
+                </div>
+                <div style="padding: 0 2rem 2rem 2rem;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="subsection-title">
+                                <i class="fas fa-clock"></i> Historique
+                            </h5>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Date de création</label>
+                                <div class="field-container">
+                                    @if (Model.Client.DateCreation.HasValue)
+
+                                    {
+                                        <i class="fas fa-calendar-plus text-success"></i>
+                                        @Model.Client.DateCreation.Value.ToString("dd/MM/yyyy à HH:mm")
+                                    }
+
+                                    else
+
+                                    {
+                                        <span style="color: #6c757d;">Non renseignée</span>
+                                    }
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label class="field-label-modern">Dernière modification</label>
+                                <div class="field-container">
+                                    @if (Model.Client.DateModification.HasValue)
+
+                                    {
+                                        <i class="fas fa-calendar-edit text-primary"></i>
+                                        @Model.Client.DateModification.Value.ToString("dd/MM/yyyy à HH:mm")
+                                    }
+
+                                    else
+
+                                    {
+                                        <span style="color: #6c757d;">Jamais modifié</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="subsection-title">
+                                <i class="fas fa-info-circle"></i> Détails Système
+                            </h5>
+                            <div style="background: linear-gradient(145deg, #f8f9fa, #ffffff); padding: 24px; border-radius: 12px; border: 1px solid #e9ecef;">
+                                <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                                    <label class="field-label-modern" style="margin-bottom: 0;">ID Client:</label>
+                                    <span style="font-weight: 600; color: #007bff; font-size: 16px;">#@Model.Client.Id</span>
+                                </div>
+                                <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                                    <label class="field-label-modern" style="margin-bottom: 0;">Statut:</label>
+                                    <span class="modern-badge bg-success text-white">
+                                        <i class="fas fa-check-circle"></i> Actif
+                                    </span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <label class="field-label-modern" style="margin-bottom: 0;">Dernière sync:</label>
+                                    <span style="color: #28a745; font-weight: 500;">
+                                        <i class="fas fa-sync-alt"></i> @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bouton retour -->
+    <div class="mt-4 text-end">
+        <a href="@Url.Page("./Index")" class="btn btn-outline-secondary btn-lg">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour à la liste
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <style>
+        /* CSS SIMPLIFIE SANS KEYFRAMES NI MEDIA QUERIES */
+        .simple-tab {
+            background: #f8f9fa;
+            border: 2px solid #ced4da;
+            border-bottom: none;
+            padding: 14px 24px 10px 24px;
+            margin-right: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
+            position: relative;
+            transition: all 0.3s ease;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 -3px 6px rgba(0,0,0,0.1);
+            transform: translateY(2px);
+            min-width: 130px;
+            text-align: center;
+        }
+
+            .simple-tab::before {
+                content: '';
+                position: absolute;
+                top: -2px;
+                left: -2px;
+                right: -2px;
+                height: 4px;
+                background: transparent;
+                border-radius: 12px 12px 0 0;
+                transition: all 0.3s ease;
+            }
+
+            .simple-tab:hover {
+                background: #ffffff;
+                color: #343a40;
+                transform: translateY(-1px);
+                box-shadow: 0 -6px 12px rgba(0,0,0,0.15);
+                border-color: #adb5bd;
+            }
+
+                .simple-tab:hover::before {
+                    background: linear-gradient(90deg, #007bff, #0056b3);
+                    box-shadow: 0 0 8px rgba(0,123,255,0.4);
+                }
+
+            .simple-tab.active {
+                background: #ffffff;
+                color: #007bff;
+                font-weight: 600;
+                transform: translateY(-4px);
+                border-color: #007bff;
+                box-shadow: 0 -8px 16px rgba(0,123,255,0.2);
+                z-index: 10;
+            }
+
+                .simple-tab.active::before {
+                    background: linear-gradient(90deg, #007bff, #0056b3);
+                    box-shadow: 0 0 12px rgba(0,123,255,0.6);
+                }
+
+            .simple-tab i {
+                margin-right: 8px;
+                font-size: 15px;
+                transition: transform 0.3s ease;
+            }
+
+            .simple-tab:hover i {
+                transform: scale(1.1);
+            }
+
+            .simple-tab.active i {
+                transform: scale(1.15);
+                color: #007bff;
+            }
+
+        /* Conteneur principal */
+        .tabs-main-container {
+            border: 2px solid #007bff;
+            border-radius: 0 12px 12px 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            position: relative;
+            background: #ffffff;
+        }
+
+            .tabs-main-container::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #007bff, #0056b3);
+                z-index: 5;
+            }
+
+        .tabs-header-container {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            position: relative;
+            padding: 0 10px;
+        }
+
+        .tabs-content-container {
+            background: #ffffff;
+            min-height: 400px;
+        }
+
+        /* Contenu des onglets */
+        .tab-content-simple {
+            display: none;
+        }
+
+            .tab-content-simple.active {
+                display: block;
+                animation: fadeInSimple 0.4s ease;
+            }
+
+        .fadeInSimple {
+            opacity: 1;
+        }
+
+        /* Champs */
+        .field-container {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 8px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+            .field-container:hover {
+                background: #ffffff;
+                border-color: #007bff;
+                box-shadow: 0 4px 12px rgba(0,123,255,0.1);
+                transform: translateY(-1px);
+            }
+
+        /* Titres */
+        .section-title-modern {
+            color: #007bff;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding: 15px 20px;
+            background: rgba(0,123,255,0.1);
+            border-left: 4px solid #007bff;
+            border-radius: 0 8px 8px 0;
+            position: relative;
+        }
+
+            .section-title-modern::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 2px;
+                background: linear-gradient(90deg, #007bff, transparent);
+            }
+
+        .subsection-title {
+            color: #495057;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding: 8px 0;
+            border-bottom: 2px solid #e9ecef;
+            position: relative;
+        }
+
+            .subsection-title::before {
+                content: '';
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                width: 60px;
+                height: 2px;
+                background: #007bff;
+            }
+
+        .field-label-modern {
+            font-weight: 600;
+            color: #495057;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        /* Badges */
+        .modern-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+
+            .modern-badge:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+
+        /* État vide */
+        .empty-state-modern {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px dashed #dee2e6;
+        }
+
+            .empty-state-modern i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+                opacity: 0.4;
+                transition: all 0.3s ease;
+            }
+
+            .empty-state-modern:hover i {
+                opacity: 0.6;
+                transform: scale(1.1);
+            }
+
+        .simple-tab:focus {
+            outline: 3px solid rgba(0,123,255,0.3);
+            outline-offset: 2px;
+        }
+    </style>
+
+    <script>
+        function openTab(tabName) {
+            console.log('Opening tab: ' + tabName);
+
+            var contents = document.querySelectorAll('.tab-content-simple');
+            for (var i = 0; i < contents.length; i++) {
+                contents[i].classList.remove('active');
+            }
+
+            var tabs = document.querySelectorAll('.simple-tab');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            localStorage.setItem('activeClientTab', tabName);
+            console.log('Tab opened successfully');
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Page loaded, tabs ready');
+
+            var savedTab = localStorage.getItem('activeClientTab');
+            if (savedTab && document.getElementById(savedTab)) {
+                var savedTabButton = document.querySelector('[onclick*="' + savedTab + '"]');
+                if (savedTabButton) {
+                    var allTabs = document.querySelectorAll('.simple-tab');
+                    var allContents = document.querySelectorAll('.tab-content-simple');
+
+                    for (var i = 0; i < allTabs.length; i++) {
+                        allTabs[i].classList.remove('active');
+                    }
+                    for (var i = 0; i < allContents.length; i++) {
+                        allContents[i].classList.remove('active');
+                    }
+
+                    savedTabButton.classList.add('active');
+                    document.getElementById(savedTab).classList.add('active');
+                }
+            }
+        });
+    </script>
+}
+
+@functions {
+    private string GetTypeCategorieClass(string typeCategorie)
+
+    {
+
+        return typeCategorie?.ToLower() switch
+
+        {
+
+            "vip" => "vip",
+
+            "grossiste" => "grossiste",
+
+            "détaillant" => "standard",
+
+            "standard" => "standard",
+
+            _ => "standard"
+
+        };
+
+    }
+}

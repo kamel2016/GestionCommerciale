@@ -1,0 +1,551 @@
+﻿@page "/Suppliers/Create"
+@model GestionCommerciale.Pages.Suppliers.CreateModel
+@{
+    ViewData["Title"] = "Nouveau Fournisseur";
+    Layout = "_Layout";
+}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="~/css/supplier-create.css" rel="stylesheet" />
+
+<div class="supplier-container">
+    <!-- En-tête -->
+    <div class="supplier-header">
+        <div>
+            <h1><i class="fas fa-plus-circle"></i> Nouveau Fournisseur</h1>
+            <div class="header-info">Création d'une nouvelle fiche fournisseur</div>
+        </div>
+        <div class="btn-group">
+            @if (Model.DuplicateId.HasValue)
+            {
+                <span class="btn btn-info" style="cursor: default;">
+                    <i class="fas fa-copy"></i> Duplication depuis ID: @Model.DuplicateId
+                </span>
+            }
+            <a asp-page="./Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <!-- Barre de progression -->
+    <div class="progress-indicator">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Messages d'alerte -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="close">&times;</button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="close">&times;</button>
+        </div>
+    }
+
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            @TempData["WarningMessage"]
+            <button type="button" class="close">&times;</button>
+        </div>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            @TempData["InfoMessage"]
+            <button type="button" class="close">&times;</button>
+        </div>
+    }
+
+    <!-- Résumé des erreurs de validation -->
+    <div asp-validation-summary="All" class="validation-summary-errors" style="display: none;"></div>
+
+    <!-- Formulaire de création -->
+    <form method="post" id="createSupplierForm" novalidate>
+        <input type="hidden" asp-for="DuplicateId" />
+
+        <div class="tabs-container">
+            <div class="tabs-nav">
+                <button type="button" class="tab-btn active" data-tab="general" data-step="1">
+                    <i class="fas fa-info-circle"></i> Général
+                </button>
+                <button type="button" class="tab-btn" data-tab="contact" data-step="2">
+                    <i class="fas fa-address-book"></i> Contact
+                </button>
+                <button type="button" class="tab-btn" data-tab="address" data-step="3">
+                    <i class="fas fa-map-marker-alt"></i> Adresse
+                </button>
+                <button type="button" class="tab-btn" data-tab="commercial" data-step="4">
+                    <i class="fas fa-handshake"></i> Commercial
+                </button>
+                <button type="button" class="tab-btn" data-tab="fiscal" data-step="5">
+                    <i class="fas fa-file-invoice"></i> Fiscal
+                </button>
+                <button type="button" class="tab-btn" data-tab="financial" data-step="6">
+                    <i class="fas fa-euro-sign"></i> Financier
+                </button>
+                <button type="button" class="tab-btn" data-tab="notes" data-step="7">
+                    <i class="fas fa-sticky-note"></i> Notes
+                </button>
+                <button type="button" class="tab-btn" data-tab="summary" data-step="8">
+                    <i class="fas fa-clipboard-check"></i> Résumé
+                </button>
+            </div>
+
+            <!-- Onglet Général -->
+            <div class="tab-content active" id="general">
+                <h3><i class="fas fa-info-circle text-success"></i> Informations Générales</h3>
+                <p class="text-muted mb-4">Renseignez les informations de base du fournisseur.</p>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label asp-for="Supplier.CodeFournisseur" class="required">Code Fournisseur</label>
+                        <input asp-for="Supplier.CodeFournisseur" 
+                               class="form-control" 
+                               placeholder="Ex: FOUR001"
+                               data-validation-url="@Url.Page("./Create", "CheckCodeSupplier")"
+                               required />
+                        <span asp-validation-for="Supplier.CodeFournisseur" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Code unique pour identifier le fournisseur (minimum 3 caractères)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.RaisonSociale" class="required">Raison Sociale</label>
+                        <input asp-for="Supplier.RaisonSociale" 
+                               class="form-control" 
+                               placeholder="Ex: TECH SUPPLIES SARL"
+                               required />
+                        <span asp-validation-for="Supplier.RaisonSociale" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Nom officiel de l'entreprise</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.ContactPrincipal">Contact Principal</label>
+                        <input asp-for="Supplier.ContactPrincipal" 
+                               class="form-control" 
+                               placeholder="Ex: Marie TECHNOLOGIE" />
+                        <span asp-validation-for="Supplier.ContactPrincipal" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Nom de votre interlocuteur principal</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.TypeFournisseur">Type de Fournisseur</label>
+                        <select asp-for="Supplier.TypeFournisseur" 
+                                asp-items="Model.TypesFournisseur" 
+                                class="form-control">
+                        </select>
+                        <span asp-validation-for="Supplier.TypeFournisseur" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Nature de l'activité du fournisseur</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.TypeCategorie">Catégorie</label>
+                        <select asp-for="Supplier.TypeCategorie" 
+                                asp-items="Model.TypesCategorie" 
+                                class="form-control">
+                        </select>
+                        <span asp-validation-for="Supplier.TypeCategorie" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Catégorie de produits/services fournis</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.Zone">Zone Géographique</label>
+                        <select asp-for="Supplier.Zone" 
+                                asp-items="Model.Zones" 
+                                class="form-control">
+                        </select>
+                        <span asp-validation-for="Supplier.Zone" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Zone de couverture principale</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Contact -->
+            <div class="tab-content" id="contact">
+                <h3><i class="fas fa-address-book text-primary"></i> Informations de Contact</h3>
+                <p class="text-muted mb-4">Coordonnées pour joindre le fournisseur.</p>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label asp-for="Supplier.Telephone">Téléphone</label>
+                        <input asp-for="Supplier.Telephone" 
+                               type="tel" 
+                               class="form-control" 
+                               placeholder="Ex: 01.23.45.67.89" />
+                        <span asp-validation-for="Supplier.Telephone" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Numéro de téléphone principal</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.Fax">Fax</label>
+                        <input asp-for="Supplier.Fax" 
+                               type="tel" 
+                               class="form-control" 
+                               placeholder="Ex: 01.23.45.67.90" />
+                        <span asp-validation-for="Supplier.Fax" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Numéro de fax (optionnel)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.Email">Email</label>
+                        <input asp-for="Supplier.Email" 
+                               type="email" 
+                               class="form-control" 
+                               placeholder="Ex: contact@entreprise.fr"
+                               data-validation-url="@Url.Page("./Create", "CheckEmail")" />
+                        <span asp-validation-for="Supplier.Email" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Adresse email de contact</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.SiteWeb">Site Web</label>
+                        <input asp-for="Supplier.SiteWeb" 
+                               type="url" 
+                               class="form-control" 
+                               placeholder="Ex: www.entreprise.fr" />
+                        <span asp-validation-for="Supplier.SiteWeb" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Site internet de l'entreprise</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Adresse -->
+            <div class="tab-content" id="address">
+                <h3><i class="fas fa-map-marker-alt text-info"></i> Adresse</h3>
+                <p class="text-muted mb-4">Localisation du fournisseur.</p>
+                
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label asp-for="Supplier.Adresse">Adresse</label>
+                        <input asp-for="Supplier.Adresse" 
+                               class="form-control" 
+                               placeholder="Ex: 123 Avenue de l'Innovation" />
+                        <span asp-validation-for="Supplier.Adresse" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Adresse complète (rue, numéro)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.CodePostal">Code Postal</label>
+                        <input asp-for="Supplier.CodePostal" 
+                               class="form-control" 
+                               placeholder="Ex: 75001"
+                               maxlength="5"
+                               data-city-suggestions="@Url.Page("./Create", "GetCitySuggestions")" />
+                        <span asp-validation-for="Supplier.CodePostal" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Code postal (5 chiffres)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.Ville">Ville</label>
+                        <input asp-for="Supplier.Ville" 
+                               class="form-control" 
+                               placeholder="Ex: Paris" />
+                        <span asp-validation-for="Supplier.Ville" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Ville de localisation</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.Pays">Pays</label>
+                        <input asp-for="Supplier.Pays" 
+                               class="form-control" 
+                               value="France" />
+                        <span asp-validation-for="Supplier.Pays" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Pays de localisation</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Commercial -->
+            <div class="tab-content" id="commercial">
+                <h3><i class="fas fa-handshake text-warning"></i> Conditions Commerciales</h3>
+                <p class="text-muted mb-4">Paramètres commerciaux et conditions de vente.</p>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label asp-for="Supplier.ConditionPaiement">Condition de Paiement</label>
+                        <select asp-for="Supplier.ConditionPaiement" 
+                                asp-items="Model.ConditionsPaiement" 
+                                class="form-control">
+                        </select>
+                        <span asp-validation-for="Supplier.ConditionPaiement" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Délais de paiement accordés</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.DelaiLivraison">Délai de Livraison (jours)</label>
+                        <input asp-for="Supplier.DelaiLivraison" 
+                               type="number" 
+                               class="form-control" 
+                               min="0" 
+                               max="365"
+                               placeholder="Ex: 7" />
+                        <span asp-validation-for="Supplier.DelaiLivraison" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Délai moyen de livraison en jours</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.RemiseNegociee">Remise Négociée (%)</label>
+                        <input asp-for="Supplier.RemiseNegociee" 
+                               type="number" 
+                               step="0.1" 
+                               min="0" 
+                               max="100"
+                               class="form-control" 
+                               placeholder="Ex: 12.5" />
+                        <span asp-validation-for="Supplier.RemiseNegociee" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Pourcentage de remise obtenu</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.PlafondCredit">Plafond de Crédit (€)</label>
+                        <input asp-for="Supplier.PlafondCredit" 
+                               type="number" 
+                               step="0.01" 
+                               min="0"
+                               class="form-control" 
+                               placeholder="Ex: 50000" />
+                        <span asp-validation-for="Supplier.PlafondCredit" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Limite de crédit autorisée</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Fiscal -->
+            <div class="tab-content" id="fiscal">
+                <h3><i class="fas fa-file-invoice text-danger"></i> Informations Fiscales</h3>
+                <p class="text-muted mb-4">Identifiants fiscaux et légaux du fournisseur.</p>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label asp-for="Supplier.MatriculeFiscal">Matricule Fiscal</label>
+                        <input asp-for="Supplier.MatriculeFiscal" 
+                               class="form-control" 
+                               placeholder="Ex: MF123456789" />
+                        <span asp-validation-for="Supplier.MatriculeFiscal" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Numéro d'identification fiscale</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.NumeroTva">Numéro TVA</label>
+                        <input asp-for="Supplier.NumeroTva" 
+                               class="form-control" 
+                               placeholder="Ex: FR12345678901" />
+                        <span asp-validation-for="Supplier.NumeroTva" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Numéro de TVA intracommunautaire</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.Siret">SIRET</label>
+                        <input asp-for="Supplier.Siret" 
+                               class="form-control" 
+                               placeholder="Ex: 12345678901234" 
+                               maxlength="14" />
+                        <span asp-validation-for="Supplier.Siret" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Numéro SIRET (14 chiffres)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.CodeNaf">Code NAF</label>
+                        <input asp-for="Supplier.CodeNaf" 
+                               class="form-control" 
+                               placeholder="Ex: 4651Z" 
+                               maxlength="10" />
+                        <span asp-validation-for="Supplier.CodeNaf" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Code d'activité économique</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Financier -->
+            <div class="tab-content" id="financial">
+                <h3><i class="fas fa-euro-sign text-success"></i> Informations Financières</h3>
+                <p class="text-muted mb-4">Coordonnées bancaires et informations financières.</p>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label asp-for="Supplier.Banque">Banque</label>
+                        <input asp-for="Supplier.Banque" 
+                               class="form-control" 
+                               placeholder="Ex: BNP Paribas Entreprises" />
+                        <span asp-validation-for="Supplier.Banque" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Nom de l'établissement bancaire</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.Iban">IBAN</label>
+                        <input asp-for="Supplier.Iban" 
+                               class="form-control" 
+                               placeholder="Ex: FR7630001007941234567890185" 
+                               maxlength="34" />
+                        <span asp-validation-for="Supplier.Iban" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Identifiant bancaire international</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.Bic">BIC</label>
+                        <input asp-for="Supplier.Bic" 
+                               class="form-control" 
+                               placeholder="Ex: BNPAFRPPXXX" 
+                               maxlength="11" />
+                        <span asp-validation-for="Supplier.Bic" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Code d'identification de la banque</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Supplier.SoldeActuel">Solde Initial (€)</label>
+                        <input asp-for="Supplier.SoldeActuel" 
+                               type="number" 
+                               step="0.01" 
+                               class="form-control" 
+                               placeholder="0.00" 
+                               value="0" />
+                        <span asp-validation-for="Supplier.SoldeActuel" class="field-validation-error"></span>
+                        <small class="form-text text-muted">Solde de départ du compte fournisseur</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Notes -->
+            <div class="tab-content" id="notes">
+                <h3><i class="fas fa-sticky-note text-warning"></i> Notes et Commentaires</h3>
+                <p class="text-muted mb-4">Informations complémentaires et remarques.</p>
+                
+                <div class="form-group">
+                    <label asp-for="Supplier.Commentaires">Notes et Commentaires</label>
+                    <textarea asp-for="Supplier.Commentaires" 
+                              class="form-control" 
+                              rows="8" 
+                              placeholder="Ex: Fournisseur principal pour le matériel informatique.&#10;Excellente réactivité et qualité de service."></textarea>
+                    <span asp-validation-for="Supplier.Commentaires" class="field-validation-error"></span>
+                    <small class="form-text text-muted">Remarques particulières, historique, notes internes...</small>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-check">
+                        <input asp-for="Supplier.IsActive" type="checkbox" class="form-check-input" id="isActiveCheck" checked />
+                        <label for="isActiveCheck" class="form-check-label">
+                            Fournisseur actif
+                        </label>
+                    </div>
+                    <small class="form-text text-muted">Décochez pour créer un fournisseur inactif</small>
+                </div>
+            </div>
+
+            <!-- Onglet Résumé -->
+            <div class="tab-content" id="summary">
+                <h3><i class="fas fa-clipboard-check text-primary"></i> Résumé et Validation</h3>
+                <p class="text-muted mb-4">Vérifiez les informations saisies avant de créer le fournisseur.</p>
+                
+                <div class="info-card">
+                    <h4><i class="fas fa-info-circle"></i> Informations Générales</h4>
+                    <div class="info-item">
+                        <span class="info-label">Code Fournisseur</span>
+                        <span class="info-value" id="summary-code">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Raison Sociale</span>
+                        <span class="info-value" id="summary-company">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Contact Principal</span>
+                        <span class="info-value" id="summary-contact">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Type</span>
+                        <span class="info-value" id="summary-type">-</span>
+                    </div>
+                </div>
+
+                <div class="info-card mt-3">
+                    <h4><i class="fas fa-address-book"></i> Contact & Adresse</h4>
+                    <div class="info-item">
+                        <span class="info-label">Email</span>
+                        <span class="info-value" id="summary-email">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Téléphone</span>
+                        <span class="info-value" id="summary-phone">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Adresse</span>
+                        <span class="info-value" id="summary-address">-</span>
+                    </div>
+                </div>
+
+                <div class="info-card mt-3">
+                    <h4><i class="fas fa-handshake"></i> Conditions Commerciales</h4>
+                    <div class="info-item">
+                        <span class="info-label">Condition de Paiement</span>
+                        <span class="info-value" id="summary-payment">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Délai de Livraison</span>
+                        <span class="info-value" id="summary-delivery">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Remise Négociée</span>
+                        <span class="info-value" id="summary-discount">-</span>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-4">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Prêt à créer le fournisseur !</strong><br>
+                    Vérifiez une dernière fois les informations ci-dessus, puis cliquez sur "Créer le Fournisseur" pour finaliser.
+                </div>
+            </div>
+        </div>
+
+        <!-- Boutons de navigation et d'action -->
+        <div class="navigation-buttons">
+            <div>
+                <button type="button" id="prevBtn" class="btn btn-secondary" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Précédent
+                </button>
+            </div>
+            
+            <div class="text-center">
+                <small class="text-muted">
+                    <span id="stepIndicator">Étape 1 sur 8</span>
+                </small>
+            </div>
+            
+            <div>
+                <button type="button" id="nextBtn" class="btn btn-info">
+                    Suivant <i class="fas fa-arrow-right"></i>
+                </button>
+                <button type="submit" id="createBtn" class="btn btn-success btn-lg" style="display: none;">
+                    <i class="fas fa-save"></i> Créer le Fournisseur
+                </button>
+                <a asp-page="./Index" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Bouton d'aide flottant -->
+<button type="button" class="floating-help" id="helpBtn">
+    <i class="fas fa-question"></i>
+    <div class="help-tooltip" id="helpTooltip">Besoin d'aide ? Cliquez pour afficher les conseils</div>
+</button>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/supplier-create.js"></script>
+
+}

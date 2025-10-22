@@ -1,0 +1,738 @@
+﻿@page
+@model GestionCommerciale.Pages.Clients.IndexModel
+@{
+    ViewData["Title"] = "Gestion des Clients";
+}
+
+<div class="container-fluid py-4" style="width:120%">
+    <!-- En-tête avec titre et statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="text-dark mb-2">
+                <i class="fas fa-users text-primary me-2"></i>
+                Gestion des Clients
+            </h2>
+            <div class="row g-3">
+                <div class="col-auto">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="fas fa-users text-white"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Total</div>
+                            <div class="fw-bold">@Model.PageModel.TotalClients</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="fas fa-check text-white"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Actifs</div>
+                            <div class="fw-bold text-success">@Model.PageModel.ClientsActifs</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="fas fa-pause text-white"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Inactifs</div>
+                            <div class="fw-bold text-secondary">@Model.PageModel.ClientsInactifs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="@Url.Page("./Create", new { mode = "create" })" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>
+                Nouveau Client
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages de notification -->
+    @if (TempData["SuccessMessage"] != null)
+
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filtres et recherche -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-2"></i>
+                Recherche et Filtres
+                <button class="btn btn-sm btn-outline-secondary float-end" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="false">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </h5>
+        </div>
+        <div class="collapse" id="filtersCollapse">
+            <div class="card-body">
+                <form method="post" asp-page-handler="Search">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="PageModel.Filters.SearchTerm" class="form-label fw-semibold"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input asp-for="PageModel.Filters.SearchTerm" class="form-control"
+                                       placeholder="Nom, email ou code client..." />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label asp-for="PageModel.Filters.Ville" class="form-label fw-semibold"></label>
+                            <select asp-for="PageModel.Filters.Ville" class="form-select">
+                                <option value="">Toutes les villes</option>
+                                @foreach (var ville in Model.PageModel.VillesDisponibles)
+
+                                {
+                                    <option value="@ville">@ville</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label asp-for="PageModel.Filters.Zone" class="form-label fw-semibold"></label>
+                            <select asp-for="PageModel.Filters.Zone" class="form-select">
+                                <option value="">Toutes les zones</option>
+                                @foreach (var zone in Model.PageModel.ZonesDisponibles)
+
+                                {
+                                    <option value="@zone">@zone</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label asp-for="PageModel.Filters.TypeCategorie" class="form-label fw-semibold"></label>
+                            <select asp-for="PageModel.Filters.TypeCategorie" class="form-select">
+                                <option value="">Tous les types</option>
+                                @foreach (var type in Model.PageModel.TypesCategoriesDisponibles)
+
+                                {
+                                    <option value="@type">@type</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i>
+                                    Rechercher
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-3">
+                            <label asp-for="PageModel.Filters.DateCreationDebut" class="form-label fw-semibold"></label>
+                            <input asp-for="PageModel.Filters.DateCreationDebut" class="form-control" type="date" />
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="PageModel.Filters.DateCreationFin" class="form-label fw-semibold"></label>
+                            <input asp-for="PageModel.Filters.DateCreationFin" class="form-control" type="date" />
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mt-4">
+                                <input asp-for="PageModel.Filters.ClientsActifsUniquement" class="form-check-input" type="checkbox" />
+                                <label asp-for="PageModel.Filters.ClientsActifsUniquement" class="form-check-label fw-semibold"></label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">&nbsp;</label>
+                            <div class="d-grid">
+                                <a href="@Url.Page("./Index")" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i>
+                                    Réinitialiser
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contrôles du tableau -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <span class="text-muted me-3">
+                            Affichage de @Model.PageModel.Pagination.StartItem à @Model.PageModel.Pagination.EndItem
+                            sur @Model.PageModel.Pagination.TotalItems résultats
+                        </span>
+                        <div class="d-flex align-items-center">
+                            <label class="form-label mb-0 me-2">Éléments par page:</label>
+                            <select class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
+                                @foreach (var size in Model.PageModel.Pagination.PageSizeOptions)
+
+                                {
+                                    <option value="@size" selected="@(size == Model.PageModel.Pagination.PageSize)">@size</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel text-success me-1"></i>
+                            Excel
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportToPdf()">
+                            <i class="fas fa-file-pdf text-danger me-1"></i>
+                            PDF
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                            <i class="fas fa-print me-1"></i>
+                            Imprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau des clients -->
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>
+                            <a href="@GetSortUrl("CodeClient")" class="text-decoration-none text-dark">
+                                Code Client
+                                @if (Model.PageModel.Pagination.SortBy == "CodeClient")
+
+                                {
+                                    <i class="fas fa-sort-@(Model.PageModel.Pagination.SortDirection == "asc" ? "up" : "down") ms-1"></i>
+                                }
+
+                                else
+
+                                {
+                                    <i class="fas fa-sort text-muted ms-1"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a href="@GetSortUrl("NomComplet")" class="text-decoration-none text-dark">
+                                Nom complet
+                                @if (Model.PageModel.Pagination.SortBy == "NomComplet")
+
+                                {
+                                    <i class="fas fa-sort-@(Model.PageModel.Pagination.SortDirection == "asc" ? "up" : "down") ms-1"></i>
+                                }
+
+                                else
+
+                                {
+                                    <i class="fas fa-sort text-muted ms-1"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a href="@GetSortUrl("Email")" class="text-decoration-none text-dark">
+                                Email
+                                @if (Model.PageModel.Pagination.SortBy == "Email")
+
+                                {
+                                    <i class="fas fa-sort-@(Model.PageModel.Pagination.SortDirection == "asc" ? "up" : "down") ms-1"></i>
+                                }
+
+                                else
+
+                                {
+                                    <i class="fas fa-sort text-muted ms-1"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>Téléphone</th>
+                        <th>
+                            <a href="@GetSortUrl("Ville")" class="text-decoration-none text-dark">
+                                Ville
+                                @if (Model.PageModel.Pagination.SortBy == "Ville")
+
+                                {
+                                    <i class="fas fa-sort-@(Model.PageModel.Pagination.SortDirection == "asc" ? "up" : "down") ms-1"></i>
+                                }
+
+                                else
+
+                                {
+                                    <i class="fas fa-sort text-muted ms-1"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>Zone</th>
+                        <th>Type</th>
+                        <th>
+                            <a href="@GetSortUrl("DateCreation")" class="text-decoration-none text-dark">
+                                Date d'inscription
+                                @if (Model.PageModel.Pagination.SortBy == "DateCreation")
+
+                                {
+                                    <i class="fas fa-sort-@(Model.PageModel.Pagination.SortDirection == "asc" ? "up" : "down") ms-1"></i>
+                                }
+
+                                else
+
+                                {
+                                    <i class="fas fa-sort text-muted ms-1"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a href="@GetSortUrl("Solde")" class="text-decoration-none text-dark">
+                                Solde
+                                @if (Model.PageModel.Pagination.SortBy == "Solde")
+
+                                {
+                                    <i class="fas fa-sort-@(Model.PageModel.Pagination.SortDirection == "asc" ? "up" : "down") ms-1"></i>
+                                }
+
+                                else
+
+                                {
+                                    <i class="fas fa-sort text-muted ms-1"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>Statut</th>
+                        <th width="200">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.PageModel.Clients.Any())
+
+                    {
+                        @foreach (var client in Model.PageModel.Clients)
+
+                        {
+                            <tr>
+                                <td>
+                                    <span class="fw-semibold text-primary">@client.CodeClient</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center text-white fw-bold" style="width: 32px; height: 32px; font-size: 12px;">
+                                            @(client.NomComplet.Split(' ').Length > 1 ?
+                                                client.NomComplet.Split(' ')[0].Substring(0, 1) + client.NomComplet.Split(' ')[1].Substring(0, 1) :
+                                                client.NomComplet.Substring(0, 1))
+                                        </div>
+                                        <span class="fw-semibold">@client.NomComplet</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(client.Email))
+
+                                    {
+                                        <a href="mailto:@client.Email" class="text-decoration-none">
+                                            <i class="fas fa-envelope text-muted me-1"></i>
+                                            @client.Email
+                                        </a>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(client.Telephone))
+
+                                    {
+                                        <a href="tel:@client.Telephone" class="text-decoration-none">
+                                            <i class="fas fa-phone text-muted me-1"></i>
+                                            @client.Telephone
+                                        </a>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(client.Ville))
+
+                                    {
+                                        <i class="fas fa-map-marker-alt text-muted me-1"></i>
+                                        @client.Ville
+                                    }
+
+                                    else
+
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(client.Zone))
+
+                                    {
+                                        <span class="badge bg-info">@client.Zone</span>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(client.TypeCategorie))
+
+                                    {
+                                        <span class="badge @GetTypeCategorieClass(client.TypeCategorie)">@client.TypeCategorie</span>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (client.DateCreation.HasValue)
+
+                                    {
+                                        <small class="text-muted">@client.DateCreation.Value.ToString("dd/MM/yyyy")</small>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (client.Solde.HasValue)
+
+                                    {
+                                        <span class="fw-semibold @(client.Solde > 0 ? "text-success" : "text-secondary")">
+                                            @client.Solde.Value.ToString("C")
+                                        </span>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (client.EstActif)
+
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>
+                                            Actif
+                                        </span>
+                                    }
+
+                                    else
+
+                                    {
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-pause me-1"></i>
+                                            Inactif
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="@Url.Page("./ClientDetails", new { id = client.Id })"
+                                           class="btn btn-sm btn-outline-info" title="Voir les détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="@Url.Page("./Edit", new { id = client.Id, mode = "edit" })"
+                                           class="btn btn-sm btn-outline-warning" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                title="Supprimer" onclick="confirmDelete(@client.Id, '@client.NomComplet')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    else
+
+                    {
+                        <tr>
+                            <td colspan="11" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-search fa-3x mb-3"></i>
+                                    <h5>Aucun client trouvé</h5>
+                                    <p>
+                                        Essayez de modifier vos critères de recherche ou
+                                        <a href="@Url.Page("./Create")" class="text-primary">créez un nouveau client</a>.
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.PageModel.Pagination.TotalPages > 1)
+
+        {
+            <div class="card-footer bg-white">
+                <nav aria-label="Pagination des clients">
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item @(!Model.PageModel.Pagination.HasPreviousPage ? "disabled" : "")">
+                            <a class="page-link" href="@GetPageUrl(1)" aria-label="Première page">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item @(!Model.PageModel.Pagination.HasPreviousPage ? "disabled" : "")">
+                            <a class="page-link" href="@GetPageUrl(Model.PageModel.Pagination.CurrentPage - 1)" aria-label="Page précédente">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+
+                        @{
+                            int startPage = Math.Max(1, Model.PageModel.Pagination.CurrentPage - 2);
+
+                            int endPage = Math.Min(Model.PageModel.Pagination.TotalPages, Model.PageModel.Pagination.CurrentPage + 2);
+                        }
+
+                        @if (startPage > 1)
+
+                        {
+                            <li class="page-item"><a class="page-link" href="@GetPageUrl(1)">1</a></li>
+                            @if (startPage > 2)
+                            {
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            }
+                        }
+
+                        @for (int i = startPage; i <= endPage; i++)
+
+                        {
+                            <li class="page-item @(i == Model.PageModel.Pagination.CurrentPage ? "active" : "")">
+                                <a class="page-link" href="@GetPageUrl(i)">@i</a>
+                            </li>
+                        }
+
+                        @if (endPage < Model.PageModel.Pagination.TotalPages)
+
+                        {
+                            @if (endPage < Model.PageModel.Pagination.TotalPages - 1)
+                            {
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            }
+                            <li class="page-item"><a class="page-link" href="@GetPageUrl(Model.PageModel.Pagination.TotalPages)">@Model.PageModel.Pagination.TotalPages</a></li>
+                        }
+
+                        <li class="page-item @(!Model.PageModel.Pagination.HasNextPage ? "disabled" : "")">
+                            <a class="page-link" href="@GetPageUrl(Model.PageModel.Pagination.CurrentPage + 1)" aria-label="Page suivante">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item @(!Model.PageModel.Pagination.HasNextPage ? "disabled" : "")">
+                            <a class="page-link" href="@GetPageUrl(Model.PageModel.Pagination.TotalPages)" aria-label="Dernière page">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirmation de suppression
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer ce client ?</p>
+                <div class="alert alert-warning" role="alert">
+                    <strong>Attention :</strong> Cette action est irréversible. Le client
+                    <strong id="clientName"></strong> sera définitivement supprimé.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    Annuler
+                </button>
+                <form method="post" asp-page-handler="Delete" class="d-inline" id="deleteForm">
+                    <input type="hidden" name="id" id="deleteClientId" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>
+                        Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Fonction pour confirmer la suppression
+        function confirmDelete(clientId, clientName) {
+            document.getElementById('deleteClientId').value = clientId;
+            document.getElementById('clientName').textContent = clientName;
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        }
+
+        // Fonction pour changer la taille de page
+        function changePageSize(pageSize) {
+            var url = new URL(window.location);
+            url.searchParams.set('PageSize', pageSize);
+            url.searchParams.set('CurrentPage', '1'); // Reset à la première page
+            window.location.href = url.toString();
+        }
+
+        // Fonctions d'export (à implémenter selon vos besoins)
+        function exportToExcel() {
+            alert('Fonctionnalité d\'export Excel à implémenter');
+        }
+
+        function exportToPdf() {
+            alert('Fonctionnalité d\'export PDF à implémenter');
+        }
+
+        // Auto-expand des filtres si des filtres sont appliqués
+        $(document).ready(function () {
+        @if (!string.IsNullOrEmpty(Model.SearchTerm) ||
+           !string.IsNullOrEmpty(Model.Ville) ||
+           !string.IsNullOrEmpty(Model.Zone) ||
+           !string.IsNullOrEmpty(Model.TypeCategorie) ||
+           Model.DateCreationDebut.HasValue ||
+           Model.DateCreationFin.HasValue)
+
+        {
+            <text>
+                        $('#filtersCollapse').collapse('show');
+            </text>
+        }
+                });
+
+        // Amélioration UX : highlight des lignes survolées
+        $('tbody tr').hover(
+            function () { $(this).addClass('table-active'); },
+            function () { $(this).removeClass('table-active'); }
+        );
+    </script>
+}
+
+@functions {
+    private string GetSortUrl(string sortBy)
+
+    {
+
+        var routeValues = new Dictionary<string, object?>
+        {
+            { nameof(Model.SearchTerm), Model.SearchTerm },
+            { nameof(Model.Ville), Model.Ville },
+            { nameof(Model.Zone), Model.Zone },
+            { nameof(Model.TypeCategorie), Model.TypeCategorie },
+            { nameof(Model.DateCreationDebut), Model.DateCreationDebut?.ToString("yyyy-MM-dd") },
+            { nameof(Model.DateCreationFin), Model.DateCreationFin?.ToString("yyyy-MM-dd") },
+            { nameof(Model.ClientsActifsUniquement), Model.ClientsActifsUniquement },
+            { nameof(Model.CurrentPage), Model.CurrentPage },
+            { nameof(Model.PageSize), Model.PageSize },
+            { nameof(Model.SortBy), sortBy },
+            { nameof(Model.SortDirection), Model.SortBy == sortBy && Model.SortDirection == "asc" ? "desc" : "asc" }
+        };
+
+
+
+        return Url.Page("./Index", routeValues) ?? "#";
+
+    }
+
+
+
+    private string GetPageUrl(int page)
+
+    {
+
+        var routeValues = new Dictionary<string, object?>
+        {
+            { nameof(Model.SearchTerm), Model.SearchTerm },
+            { nameof(Model.Ville), Model.Ville },
+            { nameof(Model.Zone), Model.Zone },
+            { nameof(Model.TypeCategorie), Model.TypeCategorie },
+            { nameof(Model.DateCreationDebut), Model.DateCreationDebut?.ToString("yyyy-MM-dd") },
+            { nameof(Model.DateCreationFin), Model.DateCreationFin?.ToString("yyyy-MM-dd") },
+            { nameof(Model.ClientsActifsUniquement), Model.ClientsActifsUniquement },
+            { nameof(Model.CurrentPage), page },
+            { nameof(Model.PageSize), Model.PageSize },
+            { nameof(Model.SortBy), Model.SortBy },
+            { nameof(Model.SortDirection), Model.SortDirection }
+        };
+
+
+
+        return Url.Page("./Index", routeValues) ?? "#";
+
+    }
+
+
+
+    private string GetTypeCategorieClass(string typeCategorie)
+
+    {
+
+        return typeCategorie?.ToLower() switch
+
+        {
+
+            "vip" => "bg-warning text-dark",
+
+            "grossiste" => "bg-success",
+
+            "détaillant" => "bg-info",
+
+            "standard" => "bg-secondary",
+
+            _ => "bg-light text-dark"
+
+        };
+
+    }
+}

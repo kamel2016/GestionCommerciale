@@ -1,0 +1,786 @@
+﻿/* ============================================
+   ARTICLE DETAILS CSS
+   ============================================ */
+
+:root {
+    --primary-color: #007bff;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --border-color: #dee2e6;
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   CONTAINER ET LAYOUT
+   ============================================ */
+
+.article-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ============================================
+   EN-TÊTE
+   ============================================ */
+
+.article-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+    .article-header h1 {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--dark-color);
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .article-header h1 i {
+            color: var(--primary-color);
+        }
+
+.header-info {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+    .btn-secondary:hover {
+        background-color: #545b62;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+/* ============================================
+   ALERTES
+   ============================================ */
+
+.alert {
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    border-left: 4px solid;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border-color: var(--success-color);
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: var(--danger-color);
+    color: #721c24;
+}
+
+.alert i {
+    font-size: 20px;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: inherit;
+    padding: 0;
+    margin-left: auto;
+}
+
+/* ============================================
+   ONGLETS
+   ============================================ */
+
+.tabs-container {
+    background: white;
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+.tabs-nav {
+    display: flex;
+    background-color: var(--light-color);
+    border-bottom: 2px solid var(--border-color);
+    overflow-x: auto;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 16px 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    margin: 0 -3px;
+}
+
+    .tab-btn:hover {
+        background-color: #f0f0f0;
+        color: var(--primary-color);
+    }
+
+    .tab-btn.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+        background-color: white;
+    }
+
+.tabs-content {
+    padding: 30px;
+}
+
+.tab-content {
+    display: none;
+}
+
+    .tab-content.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.tab-content h3 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--dark-color);
+    margin: 0 0 20px 0;
+}
+
+/* ============================================
+   CONTENU DES ONGLETS - GÉNÉRAL
+   ============================================ */
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.info-card {
+    background: var(--light-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+    .info-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+.info-item {
+    margin-bottom: 16px;
+}
+
+    .info-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .info-item label {
+        display: block;
+        font-weight: 600;
+        color: #666;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+    }
+
+    .info-item .value {
+        display: block;
+        font-size: 16px;
+        color: var(--dark-color);
+        word-break: break-word;
+    }
+
+/* ============================================
+   BADGES ET STATUS
+   ============================================ */
+
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.badge-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.badge-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.text-muted {
+    color: #999;
+    font-style: italic;
+}
+
+/* ============================================
+   CONTENU DES ONGLETS - DESCRIPTION
+   ============================================ */
+
+.description-section {
+    margin-bottom: 30px;
+}
+
+.description-text {
+    background: var(--light-color);
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--primary-color);
+}
+
+    .description-text h4 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin: 0 0 12px 0;
+    }
+
+    .description-text p {
+        color: #333;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+.characteristics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.characteristic-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.characteristic-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+    .characteristic-item:last-child {
+        border-bottom: none;
+    }
+
+    .characteristic-item label {
+        font-weight: 600;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .characteristic-item .value {
+        color: var(--dark-color);
+        font-size: 15px;
+    }
+
+.unit {
+    font-size: 12px;
+    color: #999;
+    margin-left: 4px;
+}
+
+/* ============================================
+   CONTENU DES ONGLETS - TARIFICATION
+   ============================================ */
+
+.pricing-table-wrapper {
+    overflow-x: auto;
+}
+
+.pricing-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+    .pricing-table thead {
+        background-color: var(--light-color);
+    }
+
+    .pricing-table th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--dark-color);
+        border-bottom: 2px solid var(--border-color);
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+
+    .pricing-table td {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 14px;
+    }
+
+    .pricing-table tbody tr:hover {
+        background-color: var(--light-color);
+    }
+
+.text-right {
+    text-align: right;
+}
+
+.supplier-code {
+    color: #999;
+    font-size: 12px;
+}
+
+.price-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background-color: #fff3cd;
+    color: #856404;
+    font-weight: 500;
+}
+
+    .price-badge.promo {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+.margin-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background-color: #d1ecf1;
+    color: #0c5460;
+    font-weight: 500;
+}
+
+.date-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background-color: #e7e7ff;
+    color: #383d6b;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ============================================
+   CONTENU DES ONGLETS - STOCK
+   ============================================ */
+
+.stock-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stock-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 24px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.3s ease;
+}
+
+    .stock-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .stock-card:nth-child(2) {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .stock-card:nth-child(3) {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .stock-card:nth-child(4) {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+.stock-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.stock-value {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.stock-unit {
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+/* Paramètres de stock */
+
+.stock-parameters {
+    background: var(--light-color);
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 30px;
+    border-left: 4px solid var(--info-color);
+}
+
+    .stock-parameters h4 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin: 0 0 16px 0;
+    }
+
+.param-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.param-item {
+    background: white;
+    padding: 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+    .param-item label {
+        display: block;
+        font-weight: 600;
+        color: #666;
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+
+    .param-item span {
+        display: block;
+        font-size: 16px;
+        color: var(--dark-color);
+    }
+
+/* Historique des mouvements */
+
+.stock-history {
+    margin-top: 30px;
+}
+
+    .stock-history h4 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin: 0 0 16px 0;
+    }
+
+.movements-table-wrapper {
+    overflow-x: auto;
+}
+
+.movements-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+    .movements-table thead {
+        background-color: var(--light-color);
+    }
+
+    .movements-table th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--dark-color);
+        border-bottom: 2px solid var(--border-color);
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+
+    .movements-table td {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 14px;
+    }
+
+    .movements-table tbody tr {
+        transition: background-color 0.3s ease;
+    }
+
+        .movements-table tbody tr:hover {
+            background-color: var(--light-color);
+        }
+
+.movement-in {
+    border-left: 3px solid var(--success-color);
+}
+
+.movement-out {
+    border-left: 3px solid var(--danger-color);
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+    .type-badge.réception {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .type-badge.vente {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .type-badge.réservation {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .type-badge.ajustement {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+.quantity {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.text-success {
+    color: var(--success-color);
+}
+
+.text-danger {
+    color: var(--danger-color);
+}
+
+code {
+    background-color: #f5f5f5;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #333;
+}
+
+/* ============================================
+   ÉTAT VIDE
+   ============================================ */
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+    .empty-state i {
+        font-size: 64px;
+        color: #ddd;
+        margin-bottom: 20px;
+        display: block;
+    }
+
+    .empty-state p {
+        font-size: 18px;
+        margin: 0;
+    }
+
+/* ============================================
+   BOUTONS D'ACTION
+   ============================================ */
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .article-header {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .btn-group {
+        width: 100%;
+    }
+
+    .btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .tabs-nav {
+        flex-wrap: wrap;
+    }
+
+    .tab-btn {
+        flex: 1 1 auto;
+        min-width: 100px;
+        font-size: 13px;
+        padding: 12px 10px;
+    }
+
+    .tabs-content {
+        padding: 20px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stock-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .pricing-table,
+    .movements-table {
+        font-size: 13px;
+    }
+
+        .pricing-table th,
+        .movements-table th {
+            padding: 12px;
+        }
+
+        .pricing-table td,
+        .movements-table td {
+            padding: 12px;
+        }
+
+    table {
+        display: block;
+        overflow-x: auto;
+    }
+
+    [data-label] {
+        display: flex;
+        align-items: center;
+    }
+
+        [data-label]::before {
+            content: attr(data-label);
+            font-weight: 600;
+            min-width: 120px;
+            margin-right: 10px;
+        }
+}

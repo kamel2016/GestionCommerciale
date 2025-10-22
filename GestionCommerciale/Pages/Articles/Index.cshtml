@@ -1,0 +1,548 @@
+﻿@* @page
+@model GestionCommerciale.Pages.Articles.IndexModel
+@{
+    ViewBag.Title = "Liste des articles";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="container fade-in">
+    <h1>Liste des articles</h1>
+
+    <!-- Bouton Nouvel Article -->
+    <div class="mb-4">
+        <a asp-page="Create" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            Nouvel Article
+        </a>
+    </div>
+
+    <!-- Barre de recherche -->
+    <div class="search-container">
+        <form method="get" class="search-form">
+            <div class="search-input">
+                <input type="text" name="Filtre" value="@Model.Filtre" class="form-control" placeholder="Rechercher par référence, libellé ou code barre..." />
+            </div>
+            <button type="submit" class="btn btn-secondary">
+                <i class="fas fa-search"></i>
+                Rechercher
+            </button>
+        </form>
+    </div>
+
+    <!-- Tableau des articles -->
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>@Html.DisplayNameFor(model => model.Articles.First().Reference)</th>
+                    <th>@Html.DisplayNameFor(model => model.Articles.First().Libelle)</th>
+                    <th>@Html.DisplayNameFor(model => model.Articles.First().CodeBarre)</th>
+                    <th>@Html.DisplayNameFor(model => model.Articles.First().Quantite)</th>
+                    <th>@Html.DisplayNameFor(model => model.Articles.First().PrixVenteHT)</th>
+                    <th>@Html.DisplayNameFor(model => model.Articles.First().PrixVenteTTC)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Articles != null && Model.Articles.Any())
+                {
+                    foreach (var item in Model.Articles)
+                    {
+                                <tr>
+                                    <td>@Html.DisplayFor(modelItem => item.Reference)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Libelle)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.CodeBarre)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Quantite)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.PrixVenteHT) €</td>
+                                    <td>@Html.DisplayFor(modelItem => item.PrixVenteTTC) €</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <a asp-page="Edit" asp-route-id="@item.ID" class="action-edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a asp-page="Details" asp-route-id="@item.ID" class="action-details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a asp-page="Delete" asp-route-id="@item.ID" class="action-delete">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                    }
+                }
+                else
+                {
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <h3>Aucun article trouvé</h3>
+                                <p>Essayez de modifier vos critères de recherche</p>
+                            </td>
+                        </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div> *@
+
+@page "/Articles"
+@model GestionCommerciale.Pages.Articles.IndexModel
+@{
+    ViewData["Title"] = "Gestion des Articles";
+    Layout = "_Layout";
+}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="~/css/article-index.css" rel="stylesheet" />
+
+<div class="articles-container">
+    <!-- En-tête -->
+    <div class="articles-header">
+        <div>
+            <h1><i class="fas fa-boxes"></i> Gestion des Articles</h1>
+            <div class="header-info">@Model.TotalRecords article(s) au total</div>
+        </div>
+        <div class="btn-group">
+            <a asp-page="./Edit" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nouvel article
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages d'alerte -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="close">&times;</button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="close">&times;</button>
+        </div>
+    }
+
+    <!-- Panneau de recherche et filtres -->
+    <div class="search-panel">
+        <form method="get" id="searchForm" class="search-form">
+            <div class="search-row">
+                <div class="search-input-group">
+                    <input type="text"
+                           name="searchTerm"
+                           class="form-control search-input"
+                           placeholder="Rechercher par référence, code-barre, nom ou marque..."
+                           value="@Model.SearchTerm" />
+                    <button type="submit" class="btn-search">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label>Catégorie</label>
+                    <select name="category" class="form-control filter-select" onchange="this.form.submit()">
+                        <option value="">-- Toutes les catégories --</option>
+                        @foreach (var category in Model.Categories)
+                        {
+                            if (Model.SelectedCategory == category)
+                            {
+                                <option value="@category" selected>@category</option>
+                            }
+                            else
+                            {
+                                <option value="@category">@category</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Statut</label>
+                    <select name="status" class="form-control filter-select" onchange="this.form.submit()">
+                        <option value="">-- Tous les statuts --</option>
+                        @if (Model.SelectedStatus == "active")
+                        {
+                            <option value="active" selected>Actif</option>
+                            <option value="inactive">Inactif</option>
+                        }
+                        else if (Model.SelectedStatus == "inactive")
+                        {
+                            <option value="active">Actif</option>
+                            <option value="inactive" selected>Inactif</option>
+                        }
+                        else
+                        {
+                            <option value="active">Actif</option>
+                            <option value="inactive">Inactif</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Stock</label>
+                    <select name="stockFilter" class="form-control filter-select" onchange="this.form.submit()">
+                        <option value="">-- Tous les articles --</option>
+                        @if (Model.SelectedStockFilter == "low")
+                        {
+                            <option value="low" selected>Stock faible</option>
+                            <option value="out">Rupture de stock</option>
+                            <option value="high">Stock élevé</option>
+                        }
+                        else if (Model.SelectedStockFilter == "out")
+                        {
+                            <option value="low">Stock faible</option>
+                            <option value="out" selected>Rupture de stock</option>
+                            <option value="high">Stock élevé</option>
+                        }
+                        else if (Model.SelectedStockFilter == "high")
+                        {
+                            <option value="low">Stock faible</option>
+                            <option value="out">Rupture de stock</option>
+                            <option value="high" selected>Stock élevé</option>
+                        }
+                        else
+                        {
+                            <option value="low">Stock faible</option>
+                            <option value="out">Rupture de stock</option>
+                            <option value="high">Stock élevé</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Affichage par page</label>
+                    <select name="pageSize" class="form-control filter-select" onchange="this.form.submit()">
+                        @if (Model.PageSize == 10)
+                        {
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        }
+                        else if (Model.PageSize == 50)
+                        {
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50" selected>50</option>
+                            <option value="100">100</option>
+                        }
+                        else if (Model.PageSize == 100)
+                        {
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100" selected>100</option>
+                        }
+                        else
+                        {
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Tri</label>
+                    <select name="sortBy" class="form-control filter-select" onchange="this.form.submit()">
+                        @if (Model.SortBy == "name")
+                        {
+                            <option value="name" selected>Nom (A-Z)</option>
+                            <option value="name_desc">Nom (Z-A)</option>
+                            <option value="reference">Référence</option>
+                            <option value="newest">Plus récents</option>
+                            <option value="oldest">Plus anciens</option>
+                        }
+                        else if (Model.SortBy == "name_desc")
+                        {
+                            <option value="name">Nom (A-Z)</option>
+                            <option value="name_desc" selected>Nom (Z-A)</option>
+                            <option value="reference">Référence</option>
+                            <option value="newest">Plus récents</option>
+                            <option value="oldest">Plus anciens</option>
+                        }
+                        else if (Model.SortBy == "reference")
+                        {
+                            <option value="name">Nom (A-Z)</option>
+                            <option value="name_desc">Nom (Z-A)</option>
+                            <option value="reference" selected>Référence</option>
+                            <option value="newest">Plus récents</option>
+                            <option value="oldest">Plus anciens</option>
+                        }
+                        else if (Model.SortBy == "newest")
+                        {
+                            <option value="name">Nom (A-Z)</option>
+                            <option value="name_desc">Nom (Z-A)</option>
+                            <option value="reference">Référence</option>
+                            <option value="newest" selected>Plus récents</option>
+                            <option value="oldest">Plus anciens</option>
+                        }
+                        else if (Model.SortBy == "oldest")
+                        {
+                            <option value="name">Nom (A-Z)</option>
+                            <option value="name_desc">Nom (Z-A)</option>
+                            <option value="reference">Référence</option>
+                            <option value="newest">Plus récents</option>
+                            <option value="oldest" selected>Plus anciens</option>
+                        }
+                        else
+                        {
+                            <option value="name" selected>Nom (A-Z)</option>
+                            <option value="name_desc">Nom (Z-A)</option>
+                            <option value="reference">Référence</option>
+                            <option value="newest">Plus récents</option>
+                            <option value="oldest">Plus anciens</option>
+                        }
+                    </select>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.SelectedCategory) || !string.IsNullOrEmpty(Model.SelectedStatus))
+                {
+                    <div class="filter-group">
+                        <label>&nbsp;</label>
+                        <a asp-page="./Index" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-times"></i> Réinitialiser
+                        </a>
+                    </div>
+                }
+            </div>
+        </form>
+    </div>
+
+    <!-- Tableau des articles -->
+    <div class="articles-table-wrapper">
+        @if (Model.Articles.Any())
+        {
+            <table class="articles-table">
+                <thead>
+                    <tr>
+                        <th>Référence</th>
+                        <th>Désignation</th>
+                        <th>Catégorie</th>
+                        <th>Marque</th>
+                        <th>Stock</th>
+                        <th>Statut</th>
+                        <th>Fournisseurs</th>
+                        <th>Créé</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var article in Model.Articles)
+                    {
+                        <tr class="@(article.IsActive ? "" : "inactive-row")">
+                            <td data-label="Référence">
+                                <strong>@article.Reference</strong>
+                                <br />
+                                <small class="barcode">@article.Barcode</small>
+                            </td>
+                            <td data-label="Désignation">
+                                @article.Name
+                                @if (!string.IsNullOrEmpty(article.Brand))
+                                {
+                                    <br />
+                                    <small class="brand">@article.Brand @article.Model</small>
+                                }
+                            </td>
+                            <td data-label="Catégorie">
+                                @if (!string.IsNullOrEmpty(article.Category))
+                                {
+                                    <span class="badge badge-category">@article.Category</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td data-label="Marque">
+                                @(article.Brand ?? "-")
+                            </td>
+                            <td data-label="Stock" class="text-center">
+                                <span class="stock-badge @(article.StockStatus)">
+                                    @article.CurrentStock <span class="unit">@article.Unit</span>
+                                </span>
+                                @if (article.StockStatus == "low")
+                                {
+                                    <br />
+                                    <small class="stock-warning">⚠️ Faible</small>
+                                }
+                                else if (article.StockStatus == "out")
+                                {
+                                    <br />
+                                    <small class="stock-warning">❌ Rupture</small>
+                                }
+                            </td>
+                            <td data-label="Statut">
+                                <span class="badge @(article.IsActive ? "badge-success" : "badge-danger")">
+                                    @(article.IsActive ? "Actif" : "Inactif")
+                                </span>
+                            </td>
+                            <td data-label="Fournisseurs" class="text-center">
+                                @if (article.SupplierCount > 0)
+                                {
+                                    <span class="suppliers-badge">@article.SupplierCount</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">0</span>
+                                }
+                            </td>
+                            <td data-label="Créé">
+                                <span class="date-badge">@article.CreatedAt.ToString("dd/MM/yyyy")</span>
+                            </td>
+                            <td data-label="Actions" class="actions-cell">
+                                <a asp-page="./Edit"
+                                   asp-route-id="@article.Id"
+                                   class="btn-link"
+                                   title="Éditer">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="@($"/Articles/Details/{article.Id}")"
+                                   class="btn-link"
+                                   title="Voir tarification">
+                                    <i class="fas fa-tag"></i>
+                                </a>
+                                <button type="button"
+                                        class="btn-link btn-delete"
+                                        data-article-id="@article.Id"
+                                        data-article-name="@article.Name"
+                                        title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h3>Aucun article trouvé</h3>
+                <p>@(string.IsNullOrEmpty(Model.SearchTerm) ? "Créez votre premier article en cliquant sur le bouton \"Nouvel article\"." : "Aucun article ne correspond à votre recherche.")</p>
+                <a asp-page="./Edit" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Créer un article
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (Model.TotalPages > 1)
+    {
+        <div class="pagination-container">
+            <div class="pagination">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a asp-page="./Index"
+                       asp-route-page="1"
+                       asp-route-searchTerm="@Model.SearchTerm"
+                       asp-route-category="@Model.SelectedCategory"
+                       asp-route-status="@Model.SelectedStatus"
+                       asp-route-sortBy="@Model.SortBy"
+                       asp-route-pageSize="@Model.PageSize"
+                       class="page-link">
+                        <i class="fas fa-chevron-left"></i> Première
+                    </a>
+                    <a asp-page="./Index"
+                       asp-route-page="@(Model.CurrentPage - 1)"
+                       asp-route-searchTerm="@Model.SearchTerm"
+                       asp-route-category="@Model.SelectedCategory"
+                       asp-route-status="@Model.SelectedStatus"
+                       asp-route-sortBy="@Model.SortBy"
+                       asp-route-pageSize="@Model.PageSize"
+                       class="page-link">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                }
+
+                @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+                {
+                    if (i == Model.CurrentPage)
+                    {
+                        <span class="page-link active">@i</span>
+                    }
+                    else
+                    {
+                        <a asp-page="./Index"
+                           asp-route-page="@i"
+                           asp-route-searchTerm="@Model.SearchTerm"
+                           asp-route-category="@Model.SelectedCategory"
+                           asp-route-status="@Model.SelectedStatus"
+                           asp-route-sortBy="@Model.SortBy"
+                           asp-route-pageSize="@Model.PageSize"
+                           class="page-link">@i</a>
+                    }
+                }
+
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a asp-page="./Index"
+                       asp-route-page="@(Model.CurrentPage + 1)"
+                       asp-route-searchTerm="@Model.SearchTerm"
+                       asp-route-category="@Model.SelectedCategory"
+                       asp-route-status="@Model.SelectedStatus"
+                       asp-route-sortBy="@Model.SortBy"
+                       asp-route-pageSize="@Model.PageSize"
+                       class="page-link">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a asp-page="./Index"
+                       asp-route-page="@Model.TotalPages"
+                       asp-route-searchTerm="@Model.SearchTerm"
+                       asp-route-category="@Model.SelectedCategory"
+                       asp-route-status="@Model.SelectedStatus"
+                       asp-route-sortBy="@Model.SortBy"
+                       asp-route-pageSize="@Model.PageSize"
+                       class="page-link">
+                        Dernière <i class="fas fa-chevron-right"></i>
+                    </a>
+                }
+            </div>
+
+            <div class="pagination-info">
+                Page @Model.CurrentPage sur @Model.TotalPages | @((Model.CurrentPage - 1) * Model.PageSize + 1) - @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalRecords)) sur @Model.TotalRecords résultats
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modal : Supprimer l'article -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-danger"></i> Confirmer la suppression
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer l'article <strong id="articleName"></strong> ?</p>
+                <p class="text-danger"><small>Cette action est irréversible.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="post" asp-page-handler="Delete" style="display: inline;">
+                    <input type="hidden" name="articleId" id="articleIdInput" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/article-index.js"></script>
+}

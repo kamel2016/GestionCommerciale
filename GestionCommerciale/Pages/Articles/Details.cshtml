@@ -1,0 +1,451 @@
+﻿@* @page "{id:int}"
+@model GestionCommerciale.Pages.Articles.DetailsModel
+@{
+    ViewData["Title"] = "Détails de l'article";
+}
+
+<div class="container fade-in">
+    <h1>Détails de l'article</h1>
+
+    @if (Model.Article != null)
+    {
+        <div class="details-container">
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Article.Reference)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Article.Reference)</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Article.Libelle)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Article.Libelle)</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Article.CodeBarre)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Article.CodeBarre)</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Article.Quantite)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Article.Quantite)</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Article.PrixVenteHT)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Article.PrixVenteHT) €</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Article.PrixVenteTTC)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Article.PrixVenteTTC) €</div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-page="Edit" asp-route-id="@Model.Article.ID" class="btn btn-primary">
+                <i class="fas fa-edit"></i>
+                Modifier
+            </a>
+            <a asp-page="Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Retour à la liste
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <h3>Article introuvable</h3>
+            <p>L'article demandé n'existe pas.</p>
+            <a asp-page="Index" class="btn btn-secondary">Retour à la liste</a>
+        </div>
+    }
+</div> *@
+
+@page "/Articles/Details/{id:int?}"
+@model GestionCommerciale.Pages.Articles.DetailsModel
+@{
+    ViewData["Title"] = "Détails de l'article";
+    Layout = "_Layout";
+}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="~/css/article-details.css" rel="stylesheet" />
+
+<div class="article-container">
+    <!-- En-tête avec actions -->
+    <div class="article-header">
+        <div>
+            <h1><i class="fas fa-box"></i> Détails de l'article</h1>
+            <div class="header-info">
+                @if (Model.Article.Id > 0)
+                {
+                    <span>ID: @Model.Article.Id | Réf: @Model.Article.Reference | Code-barre: @Model.Article.Barcode</span>
+                }
+            </div>
+        </div>
+        <div class="btn-group">
+            <a asp-page="./Edit" asp-route-id="@Model.Article.Id" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Modifier
+            </a>
+            <a asp-page="./Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages d'alerte -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Onglets -->
+    <div class="tabs-container">
+        <div class="tabs-nav">
+            <button type="button" class="tab-btn active" data-tab="general">
+                <i class="fas fa-info-circle"></i> Général
+            </button>
+            <button type="button" class="tab-btn" data-tab="description">
+                <i class="fas fa-align-left"></i> Description
+            </button>
+            <button type="button" class="tab-btn" data-tab="pricing">
+                <i class="fas fa-tag"></i> Tarification
+            </button>
+            <button type="button" class="tab-btn" data-tab="stock">
+                <i class="fas fa-warehouse"></i> Stock
+            </button>
+        </div>
+
+        <!-- Contenu des onglets -->
+        <div class="tabs-content">
+
+            <!-- Onglet Général -->
+            <div class="tab-content active" id="general">
+                <h3>Informations Générales</h3>
+
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-item">
+                            <label>Référence</label>
+                            <span class="value">@Model.Article.Reference</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Code-barre</label>
+                            <span class="value">@Model.Article.Barcode</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Désignation</label>
+                            <span class="value">@Model.Article.Name</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Catégorie</label>
+                            <span class="value">@(string.IsNullOrEmpty(Model.Article.Category) ? "-" : Model.Article.Category)</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-item">
+                            <label>Marque</label>
+                            <span class="value">@(string.IsNullOrEmpty(Model.Article.Brand) ? "-" : Model.Article.Brand)</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Modèle</label>
+                            <span class="value">@(string.IsNullOrEmpty(Model.Article.Model) ? "-" : Model.Article.Model)</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Unité</label>
+                            <span class="value">@Model.Article.Unit</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Taux TVA</label>
+                            <span class="value">@Model.Article.VatRate%</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-item">
+                            <label>Statut</label>
+                            <span class="value">
+                                <span class="badge @(Model.Article.IsActive ? "badge-success" : "badge-danger")">
+                                    @(Model.Article.IsActive ? "Actif" : "Inactif")
+                                </span>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <label>Date de création</label>
+                            <span class="value">@Model.Article.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Dernière modification</label>
+                            <span class="value">
+                                @if (Model.Article.UpdatedAt != null)
+                                {
+                                    @Model.Article.UpdatedAt.ToString("dd/MM/yyyy HH:mm")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Description -->
+            <div class="tab-content" id="description">
+                <h3>Description et Caractéristiques</h3>
+
+                <div class="description-section">
+                    <div class="description-text">
+                        <h4>Description complète</h4>
+                        <p>@(string.IsNullOrEmpty(Model.Article.Description) ? "<em>Aucune description disponible</em>" : Model.Article.Description)</p>
+                    </div>
+
+                    <div class="characteristics-grid">
+                        <div class="characteristic-card">
+                            <div class="characteristic-item">
+                                <label>Couleur</label>
+                                <span class="value">@(string.IsNullOrEmpty(Model.Article.Color) ? "-" : Model.Article.Color)</span>
+                            </div>
+                            <div class="characteristic-item">
+                                <label>Dimensions</label>
+                                <span class="value">@(string.IsNullOrEmpty(Model.Article.Size) ? "-" : Model.Article.Size)</span>
+                            </div>
+                        </div>
+
+                        <div class="characteristic-card">
+                            <div class="characteristic-item">
+                                <label>Poids</label>
+                                <span class="value">
+                                    @if (Model.Article.Weight > 0)
+                                    {
+                                        @Model.Article.Weight.ToString("N2") <span class="unit">kg</span>
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Tarification -->
+            <div class="tab-content" id="pricing">
+                <h3>Tarification par Fournisseur</h3>
+
+                @if (Model.SupplierPricings.Any())
+                {
+                    <div class="pricing-table-wrapper">
+                        <table class="pricing-table">
+                            <thead>
+                                <tr>
+                                    <th>Fournisseur</th>
+                                    <th>Prix Gros HT</th>
+                                    <th>Prix Détail HT</th>
+                                    <th>Prix Promo HT</th>
+                                    <th>Marge Détail</th>
+                                    <th>Remise Max</th>
+                                    <th>Dernier Achat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var supplier in Model.SupplierPricings)
+                                {
+                                    <tr>
+                                        <td data-label="Fournisseur">
+                                            <strong>@supplier.SupplierName</strong><br />
+                                            <small class="supplier-code">@supplier.SupplierCode</small>
+                                        </td>
+                                        <td data-label="Prix Gros HT" class="text-right">
+                                            <strong>@supplier.WholesalePrice.ToString("N2")</strong> €
+                                        </td>
+                                        <td data-label="Prix Détail HT" class="text-right">
+                                            @supplier.RetailPrice.ToString("N2") €
+                                        </td>
+                                        <td data-label="Prix Promo HT" class="text-right">
+                                            @if (supplier.PromotionalPrice > 0)
+                                            {
+                                                <span class="price-badge promo">@supplier.PromotionalPrice.ToString("N2") €</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td data-label="Marge Détail" class="text-right">
+                                            <span class="margin-badge">@supplier.RetailMargin.ToString("N1")%</span>
+                                        </td>
+                                        <td data-label="Remise Max" class="text-right">
+                                            @supplier.RetailMaxDiscount.ToString("N1")%
+                                        </td>
+                                        <td data-label="Dernier Achat">
+                                            @if (supplier.LastPurchaseDate != null)
+                                            {
+                                                <span class="date-badge">@supplier.LastPurchaseDate.ToString("dd/MM/yyyy")</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Jamais</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>Aucun fournisseur défini pour cet article</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Onglet Stock -->
+            <div class="tab-content" id="stock">
+                <h3>Gestion du Stock</h3>
+
+                <!-- Synthèse du stock -->
+                <div class="stock-summary">
+                    <div class="stock-card">
+                        <div class="stock-label">Stock Actuel</div>
+                        <div class="stock-value">@Model.Article.CurrentStock</div>
+                        <div class="stock-unit">@Model.Article.Unit</div>
+                    </div>
+
+                    <div class="stock-card">
+                        <div class="stock-label">Stock Réservé</div>
+                        <div class="stock-value">@Model.Article.ReservedStock</div>
+                        <div class="stock-unit">@Model.Article.Unit</div>
+                    </div>
+
+                    <div class="stock-card">
+                        <div class="stock-label">En Commande</div>
+                        <div class="stock-value">@Model.Article.OnOrderStock</div>
+                        <div class="stock-unit">@Model.Article.Unit</div>
+                    </div>
+
+                    <div class="stock-card">
+                        <div class="stock-label">Stock Disponible</div>
+                        <div class="stock-value">@(Model.Article.CurrentStock - Model.Article.ReservedStock)</div>
+                        <div class="stock-unit">@Model.Article.Unit</div>
+                    </div>
+                </div>
+
+                <!-- Paramètres de stock -->
+                <div class="stock-parameters">
+                    <h4>Paramètres de gestion</h4>
+                    <div class="param-grid">
+                        <div class="param-item">
+                            <label>Stock Minimum</label>
+                            <span>@Model.Article.StockMinimum @Model.Article.Unit</span>
+                        </div>
+                        <div class="param-item">
+                            <label>Stock Maximum</label>
+                            <span>@Model.Article.StockMaximum @Model.Article.Unit</span>
+                        </div>
+                        <div class="param-item">
+                            <label>Dernière mise à jour</label>
+                            <span>
+                                @if (Model.Article.LastStockUpdate != null)
+                                {
+                                    @Model.Article.LastStockUpdate.ToString("dd/MM/yyyy HH:mm")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Historique des mouvements de stock -->
+                <div class="stock-history">
+                    <h4>Historique des mouvements</h4>
+                    @if (Model.StockHistory.LastMovements.Any())
+                    {
+                        <div class="movements-table-wrapper">
+                            <table class="movements-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Quantité</th>
+                                        <th>Référence</th>
+                                        <th>Commentaire</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var movement in Model.StockHistory.LastMovements)
+                                    {
+                                        <tr class="movement-@(movement.Quantity > 0 ? "in" : "out")">
+                                            <td data-label="Date">
+                                                <span class="date-badge">@movement.Date.ToString("dd/MM/yyyy HH:mm")</span>
+                                            </td>
+                                            <td data-label="Type">
+                                                <span class="type-badge @movement.Type.ToLower()">@movement.Type</span>
+                                            </td>
+                                            <td data-label="Quantité" class="text-right">
+                                                <span class="quantity @(movement.Quantity > 0 ? "text-success" : "text-danger")">
+                                                    @(movement.Quantity > 0 ? "+" : "")@movement.Quantity
+                                                </span>
+                                            </td>
+                                            <td data-label="Référence">
+                                                <code>@movement.Reference</code>
+                                            </td>
+                                            <td data-label="Commentaire">
+                                                @(string.IsNullOrEmpty(movement.Comment) ? "-" : movement.Comment)
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <i class="fas fa-history"></i>
+                            <p>Aucun mouvement enregistré</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Boutons de navigation -->
+    <div class="action-buttons">
+        <a asp-page="./Edit" asp-route-id="@Model.Article.Id" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Modifier cet article
+        </a>
+        <a asp-page="./Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/article-details.js"></script>
+}

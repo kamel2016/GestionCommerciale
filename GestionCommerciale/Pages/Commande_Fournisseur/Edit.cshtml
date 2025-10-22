@@ -1,0 +1,315 @@
+﻿@* Pages/CommandesClient/Edit.cshtml *@
+@page
+@using GestionCommerciale.Enums
+@model GestionCommerciale.Pages.Commande_Client.EditModel
+@{
+    ViewData["Title"] = "Modifier Commande";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        Modifier la Commande @Model.CommandeClient.NumeroCommande
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="commandeForm">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="CommandeClient.Id" />
+                        <input type="hidden" asp-for="CommandeClient.NumeroCommande" />
+                        <input type="hidden" asp-for="CommandeClient.DateCreation" />
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CommandeClient.NumeroCommande" class="form-label"></label>
+                                    <input asp-for="CommandeClient.NumeroCommande" class="form-control" readonly />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CommandeClient.DateCommande" class="form-label"></label>
+                                    <input asp-for="CommandeClient.DateCommande" class="form-control" />
+                                    <span asp-validation-for="CommandeClient.DateCommande" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="CommandeClient.ClientId" class="form-label"></label>
+                                    <select asp-for="CommandeClient.ClientId" class="form-select" asp-items="Model.ClientsSelectList">
+                                        <option value="">-- Sélectionnez un client --</option>
+                                    </select>
+                                    <span asp-validation-for="CommandeClient.ClientId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="CommandeClient.Statut" class="form-label"></label>
+                                    <select asp-for="CommandeClient.Statut" class="form-select" asp-items="Html.GetEnumSelectList<StatutCommande>()">
+                                    </select>
+                                    <span asp-validation-for="CommandeClient.Statut" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="CommandeClient.DateLivraison" class="form-label"></label>
+                                    <input asp-for="CommandeClient.DateLivraison" class="form-control" />
+                                    <span asp-validation-for="CommandeClient.DateLivraison" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CommandeClient.Commentaire" class="form-label"></label>
+                            <textarea asp-for="CommandeClient.Commentaire" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="CommandeClient.Commentaire" class="text-danger"></span>
+                        </div>
+
+                        <!-- Section Articles -->
+                        <div class="card mt-4">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Articles de la commande</h5>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="openArticleModal()">
+                                    <i class="fas fa-plus me-1"></i>
+                                    Ajouter un article
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="articlesTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Article</th>
+                                                <th>Quantité</th>
+                                                <th>Prix Unitaire</th>
+                                                <th>Montant</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="articlesTableBody">
+                                            <!-- Les lignes seront ajoutées dynamiquement -->
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-info">
+                                                <th colspan="3">Total HT</th>
+                                                <th id="totalHT">0,00 €</th>
+                                                <th></th>
+                                            </tr>
+                                            <tr class="table-info">
+                                                <th colspan="3">TVA (20%)</th>
+                                                <th id="totalTVA">0,00 €</th>
+                                                <th></th>
+                                            </tr>
+                                            <tr class="table-success">
+                                                <th colspan="3">Total TTC</th>
+                                                <th id="totalTTC">0,00 €</th>
+                                                <th></th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-page="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Retour
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i>
+                                Enregistrer les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour ajouter un article (identique à Create) -->
+<div class="modal fade" id="articleModal" tabindex="-1" aria-labelledby="articleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="articleModalLabel">
+                    <i class="fas fa-box me-2"></i>
+                    Ajouter un article
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="articleForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="articleSelect" class="form-label">Article</label>
+                                <select id="articleSelect" class="form-select" onchange="updatePrixUnitaire()">
+                                    <option value="">-- Sélectionnez un article --</option>
+                                    @foreach (var article in Model.Articles)
+                                    {
+                                        <option value="@article.ID" data-prix="@article.PrixVenteTTC" data-nom="@article.Libelle">
+                                            @article.Libelle (@article.PrixVenteTTC.ToString("C"))
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="quantite" class="form-label">Quantité</label>
+                                <input type="number" id="quantite" class="form-control" min="1" value="1" onchange="calculateMontant()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="prixUnitaire" class="form-label">Prix Unitaire</label>
+                                <input type="number" id="prixUnitaire" class="form-control" step="0.01" onchange="calculateMontant()">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="montantLigne" class="form-label">Montant</label>
+                                <input type="number" id="montantLigne" class="form-control" step="0.01" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="addArticle()">
+                    <i class="fas fa-plus me-1"></i>
+                    Ajouter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let lignesCommande = @Html.Raw(Json.Serialize(Model.LignesCommande));
+        let ligneIndex = lignesCommande.length;
+
+        // Initialiser au chargement de la page
+        document.addEventListener('DOMContentLoaded', function () {
+            updateArticlesTable();
+            updateTotals();
+        });
+
+        function openArticleModal() {
+            $('#articleModal').modal('show');
+            resetArticleForm();
+        }
+
+        function resetArticleForm() {
+            document.getElementById('articleForm').reset();
+            document.getElementById('montantLigne').value = '';
+        }
+
+        function updatePrixUnitaire() {
+            const select = document.getElementById('articleSelect');
+            const prixInput = document.getElementById('prixUnitaire');
+
+            if (select.value) {
+                const selectedOption = select.options[select.selectedIndex];
+                prixInput.value = selectedOption.getAttribute('data-prix');
+                calculateMontant();
+            } else {
+                prixInput.value = '';
+                document.getElementById('montantLigne').value = '';
+            }
+        }
+
+        function calculateMontant() {
+            const quantite = parseFloat(document.getElementById('quantite').value) || 0;
+            const prixUnitaire = parseFloat(document.getElementById('prixUnitaire').value) || 0;
+            const montant = quantite * prixUnitaire;
+
+            document.getElementById('montantLigne').value = montant.toFixed(2);
+        }
+
+        function addArticle() {
+            const articleSelect = document.getElementById('articleSelect');
+            const quantite = document.getElementById('quantite').value;
+            const prixUnitaire = document.getElementById('prixUnitaire').value;
+            const montantLigne = document.getElementById('montantLigne').value;
+
+            if (!articleSelect.value || !quantite || !prixUnitaire) {
+                alert('Veuillez remplir tous les champs');
+                return;
+            }
+
+            const articleNom = articleSelect.options[articleSelect.selectedIndex].getAttribute('data-nom');
+
+            const ligne = {
+                index: ligneIndex++,
+                articleId: parseInt(articleSelect.value),
+                articleNom: articleNom,
+                quantite: parseInt(quantite),
+                prixUnitaire: parseFloat(prixUnitaire),
+                montantLigne: parseFloat(montantLigne)
+            };
+
+            lignesCommande.push(ligne);
+            updateArticlesTable();
+            updateTotals();
+
+            $('#articleModal').modal('hide');
+        }
+
+        function updateArticlesTable() {
+            const tbody = document.getElementById('articlesTableBody');
+            tbody.innerHTML = '';
+
+            lignesCommande.forEach((ligne, index) => {
+                const row = `
+                            <tr>
+                                <td>${ligne.articleNom}</td>
+                                <td>${ligne.quantite}</td>
+                                <td>${ligne.prixUnitaire.toFixed(2)} €</td>
+                                <td>${ligne.montantLigne.toFixed(2)} €</td>
+                                <td>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeLigne(${index})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                                <input type="hidden" name="LignesCommande[${index}].ArticleId" value="${ligne.articleId}" />
+                                <input type="hidden" name="LignesCommande[${index}].ArticleNom" value="${ligne.articleNom}" />
+                                <input type="hidden" name="LignesCommande[${index}].Quantite" value="${ligne.quantite}" />
+                                <input type="hidden" name="LignesCommande[${index}].PrixUnitaire" value="${ligne.prixUnitaire}" />
+                                <input type="hidden" name="LignesCommande[${index}].MontantLigne" value="${ligne.montantLigne}" />
+                            </tr>
+                        `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function removeLigne(index) {
+            lignesCommande.splice(index, 1);
+            updateArticlesTable();
+            updateTotals();
+        }
+
+        function updateTotals() {
+            const totalHT = lignesCommande.reduce((sum, ligne) => sum + ligne.montantLigne, 0);
+            const totalTVA = totalHT * 0.20;
+            const totalTTC = totalHT + totalTVA;
+
+            document.getElementById('totalHT').textContent = totalHT.toFixed(2) + ' €';
+            document.getElementById('totalTVA').textContent = totalTVA.toFixed(2) + ' €';
+            document.getElementById('totalTTC').textContent = totalTTC.toFixed(2) + ' €';
+        }
+    </script>
+}

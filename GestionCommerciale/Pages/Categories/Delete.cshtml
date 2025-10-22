@@ -1,0 +1,28 @@
+﻿@page "{id:int}"
+@model GestionCommerciale.Pages.Categories.DeleteModel
+@{
+    ViewData["Title"] = "Supprimer la Catégorie";
+}
+
+<h1>Supprimer l'article</h1>
+
+<h3>Êtes-vous sûr de vouloir supprimer cette catégorie ?</h3>
+<div>
+    
+    <hr />
+  
+    <div class="container fade-in">
+        <div class="details-container">
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Categorie.Libelle)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Categorie.Libelle)</div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post">
+        <input type="hidden" asp-for="Categorie.ID" />
+        <input type="submit" value="Supprimer" class="btn btn-danger" /> |
+        <a asp-page="./Index">Retour à la liste</a>
+    </form>
+</div>

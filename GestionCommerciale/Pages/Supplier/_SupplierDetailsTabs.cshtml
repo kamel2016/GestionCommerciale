@@ -1,0 +1,505 @@
+﻿// =====================================
+// _SupplierDetailsTabs.cshtml - Partial pour l'affichage des détails
+// =====================================
+
+@model GestionCommerciale.Pages.Suppliers.DetailsModel
+
+<!-- ONGLETS STYLE DOSSIER MODERNE -->
+<div class="tabs-main-container">
+    <!-- HEADER DES ONGLETS -->
+    <div class="tabs-header-container">
+        <button type="button" id="tab1" class="simple-tab active" onclick="openTab('general')">
+            <i class="fas fa-building"></i> <span class="tab-text">Général</span>
+        </button>
+        <button type="button" id="tab2" class="simple-tab" onclick="openTab('contact')">
+            <i class="fas fa-address-book"></i> <span class="tab-text">Contact</span>
+        </button>
+        <button type="button" id="tab3" class="simple-tab" onclick="openTab('address')">
+            <i class="fas fa-map-marker-alt"></i> <span class="tab-text">Adresse</span>
+        </button>
+        <button type="button" id="tab4" class="simple-tab" onclick="openTab('commercial')">
+            <i class="fas fa-handshake"></i> <span class="tab-text">Commercial</span>
+        </button>
+        <button type="button" id="tab5" class="simple-tab" onclick="openTab('fiscal')">
+            <i class="fas fa-university"></i> <span class="tab-text">Fiscal</span>
+        </button>
+        <button type="button" id="tab6" class="simple-tab" onclick="openTab('financial')">
+            <i class="fas fa-euro-sign"></i> <span class="tab-text">Financier</span>
+        </button>
+        <button type="button" id="tab7" class="simple-tab" onclick="openTab('notes')">
+            <i class="fas fa-sticky-note"></i> <span class="tab-text">Notes</span>
+        </button>
+        <button type="button" id="tab8" class="simple-tab" onclick="openTab('system')">
+            <i class="fas fa-cog"></i> <span class="tab-text">Système</span>
+        </button>
+    </div>
+
+    <!-- CONTENU DES ONGLETS -->
+    <div class="tabs-content-container">
+
+        <!-- ONGLET GÉNÉRAL -->
+        <div id="general" class="tab-content-simple active">
+            <div class="section-title-modern">
+                <i class="fas fa-info-circle"></i> Informations Générales
+            </div>
+            <div style="padding: 0 2rem 2rem 2rem;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Code Fournisseur</label>
+                            <div class="field-container">@Model.Supplier.CodeFournisseur</div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Raison Sociale</label>
+                            <div class="field-container">@Model.Supplier.RaisonSociale</div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Contact Principal</label>
+                            <div class="field-container">
+                                @if (!string.IsNullOrEmpty(Model.Supplier.ContactPrincipal))
+                                {
+                                    @Model.Supplier.ContactPrincipal
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">-</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Type de Fournisseur</label>
+                            <div class="field-container">
+                                @if (!string.IsNullOrEmpty(Model.Supplier.TypeFournisseur))
+                                {
+                                    <span class="modern-badge bg-info text-white">@Model.Supplier.TypeFournisseur</span>
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">-</span>
+                                }
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Catégorie</label>
+                            <div class="field-container">
+                                @if (!string.IsNullOrEmpty(Model.Supplier.TypeCategorie))
+                                {
+                                    <span class="modern-badge bg-success text-white">@Model.Supplier.TypeCategorie</span>
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">-</span>
+                                }
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Zone</label>
+                            <div class="field-container">
+                                @if (!string.IsNullOrEmpty(Model.Supplier.Zone))
+                                {
+                                    <span class="modern-badge bg-primary text-white">@Model.Supplier.Zone</span>
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">-</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONGLET CONTACT -->
+        <div id="contact" class="tab-content-simple">
+            <div class="section-title-modern">
+                <i class="fas fa-address-book"></i> Informations de Contact
+            </div>
+            <div style="padding: 0 2rem 2rem 2rem;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Téléphone</label>
+                            <div class="field-container">
+                                @if (!string.IsNullOrEmpty(Model.Supplier.Telephone))
+                                {
+                                    <a href="tel:@Model.Supplier.Telephone" style="text-decoration: none; color: inherit;">
+                                        <i class="fas fa-phone text-success"></i> @Model.Supplier.Telephone
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">-</span>
+                                }
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Fax</label>
+                            <div class="field-container">
+                                @if (!string.IsNullOrEmpty(Model.Supplier.Fax))
+                                {
+                                    <i class="fas fa-fax text-muted"></i> @Model.Supplier.Fax
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">-</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Email</label>
+                            <div class="field-container">
+                                @if (!string.IsNullOrEmpty(Model.Supplier.Email))
+                                {
+                                    <a href="mailto:@Model.Supplier.Email" style="text-decoration: none; color: inherit;">
+                                        <i class="fas fa-envelope text-primary"></i> @Model.Supplier.Email
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">-</span>
+                                }
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Site Web</label>
+                            <div class="field-container">
+                                @if (!string.IsNullOrEmpty(Model.Supplier.SiteWeb))
+                                {
+                                    <a href="@Model.Supplier.SiteWeb" target="_blank" style="text-decoration: none; color: inherit;">
+                                        <i class="fas fa-globe text-info"></i> @Model.Supplier.SiteWeb
+                                        <i class="fas fa-external-link-alt ms-1" style="font-size: 12px;"></i>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">-</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONGLET ADRESSE -->
+        <div id="address" class="tab-content-simple">
+            <div class="section-title-modern">
+                <i class="fas fa-map-marker-alt"></i> Adresse
+            </div>
+            <div style="padding: 0 2rem 2rem 2rem;">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Adresse</label>
+                            <div class="field-container" style="min-height: 80px; white-space: pre-wrap;">
+                                @if (!string.IsNullOrEmpty(Model.Supplier.Adresse))
+                                {
+                                    @Model.Supplier.Adresse
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">-</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-3">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <label class="field-label-modern">Code Postal</label>
+                                    <div class="field-container">@Model.Supplier.CodePostal</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <label class="field-label-modern">Ville</label>
+                                    <div class="field-container">
+                                        @if (!string.IsNullOrEmpty(Model.Supplier.Ville))
+                                        {
+                                            <i class="fas fa-map-marker-alt text-danger"></i> @Model.Supplier.Ville
+                                        }
+                                        else
+                                        {
+                                            <span style="color: #6c757d;">-</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <label class="field-label-modern">Pays</label>
+                                    <div class="field-container">@Model.Supplier.Pays</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONGLET COMMERCIAL -->
+        <div id="commercial" class="tab-content-simple">
+            <div class="section-title-modern">
+                <i class="fas fa-handshake"></i> Conditions Commerciales
+            </div>
+            <div style="padding: 0 2rem 2rem 2rem;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Condition de Paiement</label>
+                            <div class="field-container">
+                                @if (!string.IsNullOrEmpty(Model.Supplier.ConditionPaiement))
+                                {
+                                    <span class="modern-badge bg-warning text-dark">@Model.Supplier.ConditionPaiement</span>
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">-</span>
+                                }
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Délai de Livraison</label>
+                            <div class="field-container">
+                                @if (Model.Supplier.DelaiLivraison.HasValue)
+                                {
+                                    <span style="color: #007bff; font-weight: bold;">
+                                        <i class="fas fa-clock"></i> @Model.Supplier.DelaiLivraison jour(s)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">Non spécifié</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Remise Négociée</label>
+                            <div class="field-container">
+                                @if (Model.Supplier.RemiseNegociee.HasValue && Model.Supplier.RemiseNegociee > 0)
+                                {
+                                    <span style="color: #28a745; font-weight: bold; font-size: 16px;">
+                                        <i class="fas fa-percentage"></i> @Model.Supplier.RemiseNegociee.Value%
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">0%</span>
+                                }
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Plafond de Crédit</label>
+                            <div class="field-container">
+                                @if (Model.Supplier.PlafondCredit.HasValue && Model.Supplier.PlafondCredit > 0)
+                                {
+                                    <span style="color: #007bff; font-weight: bold; font-size: 18px;">
+                                        @Model.Supplier.PlafondCredit.Value.ToString("C")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">Non défini</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONGLET FISCAL -->
+        <div id="fiscal" class="tab-content-simple">
+            <div class="section-title-modern">
+                <i class="fas fa-university"></i> Informations Fiscales
+            </div>
+            <div style="padding: 0 2rem 2rem 2rem;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Matricule Fiscal</label>
+                            <div class="field-container">@Model.Supplier.MatriculeFiscal</div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Numéro de TVA</label>
+                            <div class="field-container">@Model.Supplier.NumeroTva</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">SIRET</label>
+                            <div class="field-container">@Model.Supplier.Siret</div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Code NAF</label>
+                            <div class="field-container">@Model.Supplier.CodeNaf</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONGLET FINANCIER -->
+        <div id="financial" class="tab-content-simple">
+            <div class="section-title-modern">
+                <i class="fas fa-euro-sign"></i> Informations Financières
+            </div>
+            <div style="padding: 0 2rem 2rem 2rem;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="subsection-title">
+                            <i class="fas fa-university"></i> Banque
+                        </h5>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Banque</label>
+                            <div class="field-container">@Model.Supplier.Banque</div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">IBAN</label>
+                            <div class="field-container">@Model.Supplier.Iban</div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">BIC/SWIFT</label>
+                            <div class="field-container">@Model.Supplier.Bic</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="subsection-title">
+                            <i class="fas fa-chart-line"></i> Soldes
+                        </h5>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Solde Actuel</label>
+                            <div class="field-container">
+                                @if (Model.Supplier.SoldeActuel.HasValue)
+                                {
+                                    <span style="color: @(Model.Supplier.SoldeActuel > 0 ? "#dc3545" : "#28a745"); font-weight: bold; font-size: 18px;">
+                                        @Model.Supplier.SoldeActuel.Value.ToString("C")
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">
+                                        @(Model.Supplier.SoldeActuel > 0 ? "Dû au fournisseur" : Model.Supplier.SoldeActuel < 0 ? "Crédit" : "Équilibré")
+                                    </small>
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">0,00 €</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONGLET NOTES -->
+        <div id="notes" class="tab-content-simple">
+            <div class="section-title-modern">
+                <i class="fas fa-sticky-note"></i> Commentaires et Notes
+            </div>
+            <div style="padding: 0 2rem 2rem 2rem;">
+                @if (!string.IsNullOrEmpty(Model.Supplier.Commentaires))
+                {
+                    <div class="field-container" style="min-height: 200px; white-space: pre-wrap; font-size: 15px; line-height: 1.6;">
+                        @Model.Supplier.Commentaires
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state-modern">
+                        <i class="fas fa-sticky-note"></i>
+                        <div style="font-weight: 500;">Aucun commentaire</div>
+                        <div style="font-size: 14px; margin-top: 8px;">Les commentaires concernant ce fournisseur apparaîtront ici</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- ONGLET SYSTÈME -->
+        <div id="system" class="tab-content-simple">
+            <div class="section-title-modern">
+                <i class="fas fa-cog"></i> Informations Système
+            </div>
+            <div style="padding: 0 2rem 2rem 2rem;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="subsection-title">
+                            <i class="fas fa-clock"></i> Historique
+                        </h5>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Date de création</label>
+                            <div class="field-container">
+                                <i class="fas fa-calendar-plus text-success"></i>
+                                @Model.Supplier.DateCreation.ToString("dd/MM/yyyy à HH:mm")
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label class="field-label-modern">Dernière modification</label>
+                            <div class="field-container">
+                                @if (Model.Supplier.DateModification.HasValue)
+                                {
+                                    <i class="fas fa-calendar-edit text-primary"></i>
+                                    @Model.Supplier.DateModification.Value.ToString("dd/MM/yyyy à HH:mm")
+                                }
+                                else
+                                {
+                                    <span style="color: #6c757d;">Jamais modifié</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="subsection-title">
+                            <i class="fas fa-info-circle"></i> Détails Système
+                        </h5>
+                        <div style="background: linear-gradient(145deg, #f8f9fa, #ffffff); padding: 24px; border-radius: 12px; border: 1px solid #e9ecef;">
+                            <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                                <label class="field-label-modern" style="margin-bottom: 0;">ID Fournisseur:</label>
+                                <span style="font-weight: 600; color: #007bff; font-size: 16px;">#@Model.Supplier.Id</span>
+                            </div>
+                            <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                                <label class="field-label-modern" style="margin-bottom: 0;">Statut:</label>
+                                @if (Model.Supplier.IsActive)
+                                {
+                                    <span class="modern-badge bg-success text-white">
+                                        <i class="fas fa-check-circle"></i> Actif
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="modern-badge bg-secondary text-white">
+                                        <i class="fas fa-pause-circle"></i> Inactif
+                                    </span>
+                                }
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label class="field-label-modern" style="margin-bottom: 0;">Dernière sync:</label>
+                                <span style="color: #28a745; font-weight: 500;">
+                                    <i class="fas fa-sync-alt"></i> @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Boutons d'action -->
+<div class="mt-4 text-end">
+    <a href="@Url.Page("./SupplierDetails", new { id = Model.Id, mode = "edit" })" class="btn btn-warning btn-lg me-2">
+        <i class="fas fa-edit me-1"></i>
+        Modifier
+    </a>
+    <a href="@Url.Page("./Index")" class="btn btn-outline-secondary btn-lg">
+        <i class="fas fa-arrow-left me-1"></i>
+        Retour à la liste
+    </a>
+</div>

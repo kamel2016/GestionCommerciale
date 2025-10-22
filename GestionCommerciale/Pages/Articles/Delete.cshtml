@@ -1,0 +1,53 @@
+﻿@page "{id:int}"
+@model GestionCommerciale.Pages.Articles.DeleteModel
+@{
+    ViewData["Title"] = "Supprimer l'article";
+}
+
+<h1>Supprimer l'article</h1>
+
+<h3>Êtes-vous sûr de vouloir supprimer cet article ?</h3>
+<div>
+    
+    <hr />
+  
+    <div class="container fade-in">
+        <div class="details-container">
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Article.Reference)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Article.Reference)</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Article.Libelle)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Article.Libelle)</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Article.CodeBarre)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Article.CodeBarre)</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Article.Quantite)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Article.Quantite)</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Article.PrixVenteHT)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Article.PrixVenteHT) €</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Article.PrixVenteTTC)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Article.PrixVenteTTC) €</div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post">
+        <input type="hidden" asp-for="Article.ID" />
+        <input type="submit" value="Supprimer" class="btn btn-danger" /> |
+        <a asp-page="./Index">Retour à la liste</a>
+    </form>
+</div>

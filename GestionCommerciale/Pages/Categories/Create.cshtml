@@ -1,0 +1,38 @@
+﻿@page
+@model GestionCommerciale.Pages.Categories.CreateModel
+@{
+    ViewData["Title"] = "Créer une nouvelle categorie";
+}
+
+<div class="container fade-in">
+    <h1>Créer une nouvelle categorie</h1>
+
+    <div class="form-container">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <div class="form-group">
+                <label asp-for="Categorie.Libelle" class="form-label"></label>
+                <input asp-for="Categorie.Libelle" class="form-control" />
+                <span asp-validation-for="Categorie.Libelle" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i>
+                    Créer
+                </button>
+                <a asp-page="Index" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

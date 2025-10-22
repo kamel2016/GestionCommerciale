@@ -1,0 +1,59 @@
+﻿@page
+@model GestionCommerciale.Pages.Clients.CreateModel
+@{
+    ViewData["Title"] = "Détails d'un Client";
+}
+
+<div class="container fade-in">
+    <h1>Détails d'un client'</h1>
+
+    @if (Model.Client != null)
+    {
+        <div class="details-container">
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Client.Nom)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Client.Nom)</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Client.Prenom)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Client.Prenom)</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Client.Email)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Client.Email)</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Client.Telephone)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Client.Telephone)</div>
+            </div>
+
+            <div class="details-row">
+                <div class="details-label">@Html.DisplayNameFor(model => model.Client.Adresse)</div>
+                <div class="details-value">@Html.DisplayFor(model => model.Client.Adresse) €</div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            @* <a asp-page="Edit" asp-route-id="@Model.Client.Id" class="btn btn-primary"> *@
+            <a asp-page="Edit" asp-route-id="1" class="btn btn-primary">
+                <i class="fas fa-edit"></i>
+                Modifier
+            </a>
+            <a asp-page="Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Retour à la liste
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <h3>Article introuvable</h3>
+            <p>L'article demandé n'existe pas.</p>
+            <a asp-page="Index" class="btn btn-secondary">Retour à la liste</a>
+        </div>
+    }
+</div>

@@ -1,0 +1,500 @@
+﻿@* @page
+@model GestionCommerciale.Pages.Articles.CreateModel
+@{
+    ViewData["Title"] = "Modifier un article";
+}
+
+<div class="container fade-in">
+    <h1>Modifier un article</h1>
+
+    <div class="form-container">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <div class="form-group">
+                <label asp-for="Article.Reference" class="form-label"></label>
+                <input asp-for="Article.Reference" class="form-control" />
+                <span asp-validation-for="Article.Reference" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Article.Libelle" class="form-label"></label>
+                <input asp-for="Article.Libelle" class="form-control" />
+                <span asp-validation-for="Article.Libelle" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Article.CodeBarre" class="form-label"></label>
+                <input asp-for="Article.CodeBarre" class="form-control" />
+                <span asp-validation-for="Article.CodeBarre" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Article.Quantite" class="form-label"></label>
+                <input asp-for="Article.Quantite" class="form-control" type="number" />
+                <span asp-validation-for="Article.Quantite" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Article.PrixVenteHT" class="form-label"></label>
+                <input asp-for="Article.PrixVenteHT" class="form-control" type="number" step="0.01" />
+                <span asp-validation-for="Article.PrixVenteHT" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Article.PrixVenteTTC" class="form-label"></label>
+                <input asp-for="Article.PrixVenteTTC" class="form-control" type="number" step="0.01" />
+                <span asp-validation-for="Article.PrixVenteTTC" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i>
+                    Modifier
+                </button>
+                <a asp-page="Index" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+} *@
+
+@page "/Articles/Edit/{id:int?}"
+@model GestionCommerciale.Pages.Articles.EditModel
+@{
+    ViewData["Title"] = Model.PageTitle;
+    Layout = "_Layout";
+}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="~/css/article-edit.css" rel="stylesheet" />
+
+<div class="article-container">
+    <!-- En-tête -->
+    <div class="article-header">
+        <div>
+            <h1><i class="fas fa-box"></i> @Model.PageTitle</h1>
+            <div class="header-info">
+                @if (Model.Article.Id > 0)
+                {
+                    <span>ID: @Model.Article.Id | Réf: @Model.Article.Reference | Code-barre: @Model.Article.Barcode</span>
+                }
+            </div>
+        </div>
+        <div class="btn-group">
+            @if (Model.Article.Id > 0)
+            {
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    <i class="fas fa-trash"></i> Supprimer
+                </button>
+            }
+            <a asp-page="./Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages d'alerte -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="close">&times;</button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="close">&times;</button>
+        </div>
+    }
+
+    <!-- Onglets -->
+    <div class="tabs-container">
+        <div class="tabs-nav">
+            <button type="button" class="tab-btn active" data-tab="general">
+                <i class="fas fa-info-circle"></i> Général
+            </button>
+            <button type="button" class="tab-btn" data-tab="description">
+                <i class="fas fa-align-left"></i> Description
+            </button>
+            <button type="button" class="tab-btn" data-tab="pricing">
+                <i class="fas fa-tag"></i> Tarification Fournisseurs
+            </button>
+            <button type="button" class="tab-btn" data-tab="stock">
+                <i class="fas fa-warehouse"></i> Stock
+            </button>
+            <button type="button" class="tab-btn" data-tab="system">
+                <i class="fas fa-cog"></i> Système
+            </button>
+        </div>
+
+        <!-- Formulaire -->
+        <form method="post" id="articleForm">
+            <input type="hidden" asp-for="Article.Id" />
+
+            <!-- Onglet Général -->
+            <div class="tab-content active" id="general">
+                <h3>Informations Générales</h3>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label asp-for="Article.Reference" class="required">Référence Article</label>
+                        <input asp-for="Article.Reference" class="form-control" placeholder="Ex: LAPTOP-DELL-XPS13" required />
+                        <span asp-validation-for="Article.Reference" class="field-error"></span>
+                        <small class="form-text">Référence unique de l'article</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Barcode" class="required">Code-barre</label>
+                        <input asp-for="Article.Barcode" class="form-control" placeholder="Ex: 8717285912345" required />
+                        <span asp-validation-for="Article.Barcode" class="field-error"></span>
+                        <small class="form-text">Code EAN/UPC unique</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Name" class="required">Désignation</label>
+                        <input asp-for="Article.Name" class="form-control" placeholder="Ex: Ordinateur Portable Dell XPS 13" required />
+                        <span asp-validation-for="Article.Name" class="field-error"></span>
+                        <small class="form-text">Nom commercial du produit</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Category">Catégorie</label>
+                        <select asp-for="Article.Category" asp-items="Model.Categories" class="form-control"></select>
+                        <span asp-validation-for="Article.Category" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Unit" class="required">Unité</label>
+                        <select asp-for="Article.Unit" asp-items="Model.Units" class="form-control" required></select>
+                        <span asp-validation-for="Article.Unit" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.VatRate" class="required">Taux TVA %</label>
+                        <input asp-for="Article.VatRate" type="number" step="0.1" class="form-control" placeholder="20" required />
+                        <span asp-validation-for="Article.VatRate" class="field-error"></span>
+                    </div>
+                </div>
+
+                <div class="form-check mt-3">
+                    <input asp-for="Article.IsActive" type="checkbox" class="form-check-input" id="isActiveCheck" checked />
+                    <label for="isActiveCheck" class="form-check-label">Article actif</label>
+                </div>
+            </div>
+
+            <!-- Onglet Description -->
+            <div class="tab-content" id="description">
+                <h3>Description et Détails</h3>
+
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label asp-for="Article.Description">Description Longue</label>
+                        <textarea asp-for="Article.Description" class="form-control" rows="8" placeholder="Description détaillée du produit..."></textarea>
+                        <span asp-validation-for="Article.Description" class="field-error"></span>
+                        <small class="form-text">Description pour le catalogue</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Brand">Marque</label>
+                        <input asp-for="Article.Brand" class="form-control" placeholder="Ex: Dell" />
+                        <span asp-validation-for="Article.Brand" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Model">Modèle</label>
+                        <input asp-for="Article.Model" class="form-control" placeholder="Ex: XPS 13" />
+                        <span asp-validation-for="Article.Model" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Color">Couleur</label>
+                        <input asp-for="Article.Color" class="form-control" placeholder="Ex: Argent" />
+                        <span asp-validation-for="Article.Color" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Size">Taille/Dimensions</label>
+                        <input asp-for="Article.Size" class="form-control" placeholder="Ex: 13 pouces" />
+                        <span asp-validation-for="Article.Size" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.Weight">Poids (kg)</label>
+                        <input asp-for="Article.Weight" type="number" step="0.01" class="form-control" placeholder="0.00" />
+                        <span asp-validation-for="Article.Weight" class="field-error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Tarification -->
+            <div class="tab-content" id="pricing">
+                <h3>Tarification par Fournisseur</h3>
+
+                <div class="pricing-controls">
+                    <button type="button" class="btn btn-success" id="addSupplierBtn" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
+                        <i class="fas fa-plus"></i> Ajouter un fournisseur
+                    </button>
+                </div>
+
+                <div class="suppliers-table-wrapper">
+                    <table class="suppliers-table">
+                        <thead>
+                            <tr>
+                                <th>Fournisseur</th>
+                                <th>Prix Gros HT</th>
+                                <th>Prix Détail HT</th>
+                                <th>Prix Promo HT</th>
+                                <th>Marge Détail</th>
+                                <th>Remise Max</th>
+                                <th>Dernier Achat</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var supplier in Model.SupplierPricings)
+                            {
+                                <tr>
+                                    <td data-label="Fournisseur">
+                                        <strong>@supplier.SupplierName</strong><br />
+                                        <small class="supplier-code">@supplier.SupplierCode</small>
+                                    </td>
+                                    <td data-label="Prix Gros HT" class="text-right">
+                                        <strong>@supplier.WholesalePrice.ToString("N2")</strong> €
+                                    </td>
+                                    <td data-label="Prix Détail HT" class="text-right">
+                                        @supplier.RetailPrice.ToString("N2") €
+                                    </td>
+                                    <td data-label="Prix Promo HT" class="text-right">
+                                        @if (supplier.PromotionalPrice > 0)
+                                        {
+                                            <span class="price-badge promo">@supplier.PromotionalPrice.ToString("N2") €</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td data-label="Marge Détail" class="text-right">
+                                        <span class="margin-badge">@supplier.RetailMargin.ToString("N1")%</span>
+                                    </td>
+                                    <td data-label="Remise Max" class="text-right">
+                                        @supplier.RetailMaxDiscount.ToString("N1")%
+                                    </td>
+                                    <td data-label="Dernier Achat">
+                                        @if (supplier.LastPurchaseDate != null)
+                                        {
+                                            <span class="date-badge">@supplier.LastPurchaseDate.ToString("dd/MM/yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Jamais</span>
+                                        }
+                                    </td>
+                                    <td data-label="Actions">
+                                        <a href="/Articles/Pricing/@Model.Article.Id/@supplier.SupplierId"
+                                           class="btn-link"
+                                           title="Voir les détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn-link btn-remove" data-supplier-id="@supplier.SupplierId" title="Retirer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    @if (!Model.SupplierPricings.Any())
+                    {
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>Aucun fournisseur défini pour cet article</p>
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
+                                <i class="fas fa-plus"></i> Ajouter un fournisseur
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Onglet Stock -->
+            <div class="tab-content" id="stock">
+                <h3>Gestion du Stock</h3>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label asp-for="Article.StockMinimum">Stock Minimum</label>
+                        <input asp-for="Article.StockMinimum" type="number" class="form-control" min="0" placeholder="0" />
+                        <span asp-validation-for="Article.StockMinimum" class="field-error"></span>
+                        <small class="form-text">Alerte si stock en dessous</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Article.StockMaximum">Stock Maximum</label>
+                        <input asp-for="Article.StockMaximum" type="number" class="form-control" min="0" placeholder="0" />
+                        <span asp-validation-for="Article.StockMaximum" class="field-error"></span>
+                        <small class="form-text">Limite de stockage recommandée</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Stock Actuel (Lecture seule)</label>
+                        <div class="info-value">
+                            @Model.Article.CurrentStock <span class="unit">@Model.Article.Unit</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dernière Mise à Jour</label>
+                        <div class="info-value">
+                            @if (Model.Article.LastStockUpdate!=null)
+                            {
+                                @Model.Article.LastStockUpdate.ToString("dd/MM/yyyy HH:mm")
+                            }
+                            else
+                            {
+                                <span class="text-muted">Jamais</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-panel mt-3">
+                    <h4>Information Stock</h4>
+                    <div class="info-item">
+                        <label>Stock disponible:</label>
+                        <span>@Model.Article.CurrentStock @Model.Article.Unit</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Stock réservé:</label>
+                        <span>@Model.Article.ReservedStock @Model.Article.Unit</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Stock en commande:</label>
+                        <span>@Model.Article.OnOrderStock @Model.Article.Unit</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Système -->
+            <div class="tab-content" id="system">
+                <h3>Informations Système</h3>
+
+                <div class="info-card">
+                    <div class="info-item">
+                        <label>ID Article</label>
+                        <span>@Model.Article.Id</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Date de création</label>
+                        <span>@Model.Article.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Dernière modification</label>
+                        <span>@if (Model.Article.UpdatedAt!=null)
+                            {
+                                @Model.Article.UpdatedAt.ToString("dd/MM/yyyy HH:mm")
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Statut</label>
+                        <span><span class="badge @(Model.Article.IsActive ? "badge-success" : "badge-danger")">@(Model.Article.IsActive ? "Actif" : "Inactif")</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> Sauvegarder l'article
+                </button>
+                <a asp-page="./Index" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal : Ajouter un fournisseur -->
+<div class="modal fade" id="addSupplierModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus"></i> Ajouter un fournisseur
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Sélectionner un fournisseur</label>
+                    <select id="supplierSelect" class="form-control">
+                        <option value="">-- Sélectionner un fournisseur --</option>
+                        @foreach (var supplier in Model.AvailableSuppliers)
+                        {
+                            <option value="@supplier.Id">@supplier.Name (@supplier.Code)</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" id="confirmAddSupplier">Ajouter</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal : Supprimer l'article -->
+@if (Model.Article.Id > 0)
+{
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle text-danger"></i> Confirmer la suppression
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir supprimer l'article <strong>@Model.Article.Name</strong> ?</p>
+                    <p class="text-danger"><small>Cette action est irréversible.</small></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <form method="post" asp-page-handler="Delete" style="display: inline;">
+                        <input type="hidden" asp-for="Article.Id" />
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/article-edit.js"></script>
+}
