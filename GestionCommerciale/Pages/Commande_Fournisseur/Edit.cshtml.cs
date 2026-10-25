@@ -1,166 +1,132 @@
+using GestionCommerciale.Data;
 using GestionCommerciale.Enums;
 using GestionCommerciale.Models;
+using GestionCommerciale.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-namespace GestionCommerciale.Pages.Commande_Client
+namespace GestionCommerciale.Pages.Commande_Fournisseur
 {
     public class EditModel : PageModel
     {
-        //private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        //public EditModel(ApplicationDbContext context)
-        //{
-        //    _context = context;
-        //}
+        public EditModel(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
         [BindProperty]
-        public CommandeClient CommandeClient { get; set; }
-        public List<Article> Articles { get; set; }
+        public CommandeFournisseur CommandeFournisseur { get; set; } = default!;
 
-        public List<LigneCommandeClient> LignesCommande { get; set; }
+        [BindProperty]
+        public List<LigneCommandeFournisseurViewModel> LignesCommande { get; set; } = new();
 
-        // Liste déroulante des clients
-        public List<SelectListItem> ClientsSelectList { get; set; }
+        public SelectList Fournisseurs { get; set; } = default!;
+        public List<Article> Articles { get; set; } = new();
 
-        public IActionResult OnGet(int id)
+        public async Task<IActionResult> OnGetAsync(int? id)
         {
-            IQueryable<Client> clients = new List<Client>
-            {
-                new Client
-                {
-                    Id = 1,
-                    Nom = "Dupont",
-                    Prenom = "Alice",
-                    Email = "alice.dupont@example.com",
-                    Telephone = "0601020304",
-                    Adresse = "123 Rue de Paris, 75001 Paris",
-                    DateCreation = DateTime.Now.AddDays(-30)
-                },
-                new Client
-                {
-                    Id = 2,
-                    Nom = "Martin",
-                    Prenom = "Jean",
-                    Email = "jean.martin@example.com",
-                    Telephone = "0605060708",
-                    Adresse = "45 Avenue des Champs-Élysées, 75008 Paris",
-                    DateCreation = DateTime.Now.AddDays(-25)
-                },
-                new Client
-                {
-                    Id = 3,
-                    Nom = "Leroy",
-                    Prenom = "Claire",
-                    Email = "claire.leroy@example.com",
-                    Telephone = "0611223344",
-                    Adresse = "88 Boulevard Haussmann, 75009 Paris",
-                    DateCreation = DateTime.Now.AddDays(-20)
-                },
-                new Client
-                {
-                    Id = 4,
-                    Nom = "Nguyen",
-                    Prenom = "Marc",
-                    Email = "marc.nguyen@example.com",
-                    Telephone = "0622334455",
-                    Adresse = "12 Rue du Faubourg Saint-Honoré, 75008 Paris",
-                    DateCreation = DateTime.Now.AddDays(-15)
-                },
-                new Client
-                {
-                    Id = 5,
-                    Nom = "Bernard",
-                    Prenom = "Lucie",
-                    Email = "lucie.bernard@example.com",
-                    Telephone = "0633445566",
-                    Adresse = "5 Place Bellecour, 69002 Lyon",
-                    DateCreation = DateTime.Now.AddDays(-10)
-                },
-                new Client
-                {
-                    Id = 6,
-                    Nom = "Petit",
-                    Prenom = "Antoine",
-                    Email = "antoine.petit@example.com",
-                    Telephone = "0644556677",
-                    Adresse = "17 Rue Sainte-Catherine, 33000 Bordeaux",
-                    DateCreation = DateTime.Now.AddDays(-5)
-                }
-            }.AsQueryable();
+            if (id == null)
+                return NotFound();
 
-            ClientsSelectList = clients.Select(c => new SelectListItem
+            var commande = await _context.CommandesFournisseur
+                .Include(c => c.LignesCommande)
+                .ThenInclude(l => l.Article)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (commande == null)
+                return NotFound();
+
+            CommandeFournisseur = commande;
+
+            LignesCommande = commande.LignesCommande.Select(l => new LigneCommandeFournisseurViewModel
             {
-                Value = c.Id.ToString(),
-                Text = c.NomComplet // ou c.Nom si tu n’as pas un champ NomComplet
+                ArticleId = l.ArticleId,
+                NomArticle = l.Article.Libelle,
+                Quantite = l.Quantite,
+                PrixUnitaire = l.PrixUnitaire,
+                MontantLigne = l.MontantLigne
             }).ToList();
 
-            CommandeClient = new CommandeClient
-            {
-                Id = 1,
-                NumeroCommande = "CMD20250101001",
-                DateCommande = DateTime.Now.AddDays(-10),
-                DateLivraison = DateTime.Now.AddDays(-5),
-                ClientId = 1,
-                Statut = StatutCommande.Livree,
-                MontantHT = 1200.00m,
-                MontantTVA = 240.00m,
-                MontantTTC = 1440.00m,
-                DateCreation = DateTime.Now.AddDays(-10),
-                Client = new Client { Id = 1, Nom = "Dupont", Prenom = "Jean", Email = "jean.dupont@example.com" }
-            };
-
-            LignesCommande = new List<LigneCommandeClient>();
-
-            if (CommandeClient == null)
-            {
-                return NotFound();
-            }
-
+            await LoadDataAsync();
             return Page();
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
             {
+                await LoadDataAsync();
                 return Page();
             }
 
-            // Vérifier si l'email existe déjà (sauf pour le client actuel)
-            //if (await _context.Clients.AnyAsync(c => c.Email == Client.Email && c.Id != Client.Id))
-            //{
-            //    ModelState.AddModelError("Client.Email", "Un client avec cet email existe déjà.");
-            //    return Page();
-            //}
+            if (!LignesCommande.Any())
+            {
+                ModelState.AddModelError("", "Veuillez ajouter au moins un article à la commande.");
+                await LoadDataAsync();
+                return Page();
+            }
 
-            CommandeClient.DateModification = DateTime.Now;
-            //_context.Attach(Client).State = EntityState.Modified;
+            var commandeDb = await _context.CommandesFournisseur
+                .Include(c => c.LignesCommande)
+                .FirstOrDefaultAsync(c => c.Id == CommandeFournisseur.Id);
+
+            if (commandeDb == null)
+                return NotFound();
+
+            // Mise à jour des champs d'en-tête
+            commandeDb.DateCommande = CommandeFournisseur.DateCommande;
+            commandeDb.DateLivraisonPrevue = CommandeFournisseur.DateLivraisonPrevue;
+            commandeDb.FournisseurId = CommandeFournisseur.FournisseurId;
+            commandeDb.Statut = CommandeFournisseur.Statut;
+            commandeDb.Commentaire = CommandeFournisseur.Commentaire;
+            commandeDb.DateModification = DateTime.Now;
+
+            // Remplacement des lignes
+            _context.LignesCommandeFournisseur.RemoveRange(commandeDb.LignesCommande);
+            commandeDb.LignesCommande = LignesCommande.Select(l => new LigneCommandeFournisseur
+            {
+                ArticleId = l.ArticleId,
+                Quantite = l.Quantite,
+                PrixUnitaire = l.PrixUnitaire,
+                MontantLigne = l.MontantLigne
+            }).ToList();
+
+            // Recalcul des montants
+            commandeDb.MontantHT = commandeDb.LignesCommande.Sum(l => l.MontantLigne);
+            commandeDb.MontantTVA = commandeDb.MontantHT * 0.20m;
+            commandeDb.MontantTTC = commandeDb.MontantHT + commandeDb.MontantTVA;
 
             try
             {
-                //await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CommandeClientExists(CommandeClient.Id))
-                {
+                if (!await CommandeExistsAsync(CommandeFournisseur.Id))
                     return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                throw;
             }
 
+            TempData["Success"] = "Commande fournisseur modifiée avec succès !";
             return RedirectToPage("./Index");
         }
 
-        private bool CommandeClientExists(int id)
+        private async Task LoadDataAsync()
         {
-            return false;// _context.Clients.Any(e => e.Id == id);
+            var fournisseurs = await _context.Fournisseurs.OrderBy(f => f.Nom).ToListAsync();
+            Fournisseurs = new SelectList(fournisseurs, "Id", "Nom", CommandeFournisseur.FournisseurId);
+
+            Articles = await _context.Articles
+                .Where(a => a.EstActif)
+                .OrderBy(a => a.Libelle)
+                .ToListAsync();
         }
+
+        private Task<bool> CommandeExistsAsync(int id)
+            => _context.CommandesFournisseur.AnyAsync(c => c.Id == id);
     }
 }

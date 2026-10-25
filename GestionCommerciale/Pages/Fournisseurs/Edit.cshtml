@@ -1,57 +1,271 @@
-﻿@page
-@model GestionCommerciale.Pages.Clients.CreateModel
+﻿@page "{id:int}"
+@model EditModel
 @{
-    ViewData["Title"] = "Modifier un nouveau Client";
+    ViewData["Title"] = "Modifier le fournisseur";
 }
 
-<div class="container fade-in">
-    <h1>Créer un nouveau client</h1>
+<div class="suppliers-container">
+    <!-- En-tête -->
+    <div class="suppliers-header">
+        <div>
+            <h1><i class="fas fa-edit"></i>Modifier le fournisseur</h1>
+            <div class="header-info">Modifiez les informations du fournisseur</div>
+        </div>
+    </div>
 
+    <!-- Messages d'alerte -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            <div>
+                <strong>Erreurs de validation</strong>
+                <ul class="mt-2">
+                    @foreach (var modelState in ViewData.ModelState.Values)
+                    {
+                        @foreach (var error in modelState.Errors)
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+
+    <!-- Formulaire -->
     <div class="form-container">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+        <form method="post" class="supplier-form">
+            <input type="hidden" asp-for="Fournisseur.Id" />
 
-            <div class="form-group">
-                <label asp-for="Client.Nom" class="form-label"></label>
-                <input asp-for="Client.Nom" class="form-control" />
-                <span asp-validation-for="Client.Nom" class="text-danger"></span>
+            <!-- SECTION 1: INFORMATIONS DE BASE -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-building"></i>
+                    <h2>Informations de base</h2>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Fournisseur.Nom">Raison Sociale *</label>
+                        <input type="text" asp-for="Fournisseur.Nom" class="form-control" 
+                               placeholder="Ex: SARL ABC Commerce" required />
+                        <span asp-validation-for="Fournisseur.Nom" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Fournisseur.MatriculeFiscale">Matricule Fiscal</label>
+                        <input type="text" asp-for="Fournisseur.MatriculeFiscale" class="form-control" 
+                               placeholder="Ex: 1234567/A/M/000" />
+                        <span asp-validation-for="Fournisseur.MatriculeFiscale" class="text-danger"></span>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label asp-for="Client.Prenom" class="form-label"></label>
-                <input asp-for="Client.Prenom" class="form-control" />
-                <span asp-validation-for="Client.Prenom" class="text-danger"></span>
+            <!-- SECTION 2: CONTACT -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-phone"></i>
+                    <h2>Informations de contact</h2>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Fournisseur.Email">Email</label>
+                        <input type="email" asp-for="Fournisseur.Email" class="form-control" 
+                               placeholder="contact@fournisseur.com" />
+                        <span asp-validation-for="Fournisseur.Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Fournisseur.Telephone">Téléphone</label>
+                        <input type="tel" asp-for="Fournisseur.Telephone" class="form-control" 
+                               placeholder="+216 XX XXX XXX" />
+                        <span asp-validation-for="Fournisseur.Telephone" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Fournisseur.Fax">Fax</label>
+                        <input type="tel" asp-for="Fournisseur.Fax" class="form-control" 
+                               placeholder="+216 XX XXX XXX" />
+                        <span asp-validation-for="Fournisseur.Fax" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Fournisseur.PersonneContact">Personne de Contact</label>
+                        <input type="text" asp-for="Fournisseur.PersonneContact" class="form-control" 
+                               placeholder="Ex: Jean Dupont" />
+                        <span asp-validation-for="Fournisseur.PersonneContact" class="text-danger"></span>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label asp-for="Client.Email" class="form-label"></label>
-                <input asp-for="Client.Email" class="form-control" type="email" />
-                <span asp-validation-for="Client.Email" class="text-danger"></span>
+            <!-- SECTION 3: ADRESSE & LOCALISATION -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <h2>Adresse & Localisation</h2>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label asp-for="Fournisseur.Adresse">Adresse</label>
+                        <input type="text" asp-for="Fournisseur.Adresse" class="form-control" 
+                               placeholder="Ex: 123 Rue de la Paix" />
+                        <span asp-validation-for="Fournisseur.Adresse" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Fournisseur.CodePostal">Code Postal</label>
+                        <input type="text" asp-for="Fournisseur.CodePostal" class="form-control" 
+                               placeholder="Ex: 1000" />
+                        <span asp-validation-for="Fournisseur.CodePostal" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Fournisseur.Ville">Ville</label>
+                        <input type="text" asp-for="Fournisseur.Ville" class="form-control" 
+                               placeholder="Ex: Tunis" />
+                        <span asp-validation-for="Fournisseur.Ville" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Fournisseur.Gouvernorat">Gouvernorat</label>
+                        <select asp-for="Fournisseur.Gouvernorat" class="form-control">
+                            <option value="">-- Sélectionnez un gouvernorat --</option>
+                            @foreach (var gov in Model.Gouvernorats)
+                            {
+                                <option value="@gov" selected="@(Model.Fournisseur.Gouvernorat == gov)">@gov</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Fournisseur.Gouvernorat" class="text-danger"></span>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label asp-for="Client.Telephone" class="form-label"></label>
-                <input asp-for="Client.Telephone" class="form-control" type="tel" />
-                <span asp-validation-for="Client.Telephone" class="text-danger"></span>
+            <!-- SECTION 4: CONDITIONS COMMERCIALES -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-handshake"></i>
+                    <h2>Conditions commerciales</h2>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Fournisseur.DelaiLivraison">Délai de Livraison (jours)</label>
+                        <input type="number" asp-for="Fournisseur.DelaiLivraison" class="form-control" 
+                               placeholder="Ex: 7" min="0" />
+                        <small class="form-text">Nombre de jours pour la livraison</small>
+                        <span asp-validation-for="Fournisseur.DelaiLivraison" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Fournisseur.DelaiPaiement">Délai de Paiement (jours)</label>
+                        <input type="number" asp-for="Fournisseur.DelaiPaiement" class="form-control" 
+                               placeholder="Ex: 30" min="0" />
+                        <small class="form-text">Nombre de jours accordés pour le paiement</small>
+                        <span asp-validation-for="Fournisseur.DelaiPaiement" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Fournisseur.RemiseAccordee">Remise accordée (%)</label>
+                        <div class="input-group">
+                            <input type="number" asp-for="Fournisseur.RemiseAccordee" class="form-control" 
+                                   placeholder="Ex: 5" min="0" max="100" step="0.01" />
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <span asp-validation-for="Fournisseur.RemiseAccordee" class="text-danger"></span>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label asp-for="Client.Adresse" class="form-label"></label>
-                <input asp-for="Client.Adresse" class="form-control" />
-                <span asp-validation-for="Client.Adresse" class="text-danger"></span>
+            <!-- SECTION 5: STATUT -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-toggle-on"></i>
+                    <h2>Statut</h2>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="checkbox-label">
+                        <input type="checkbox" asp-for="Fournisseur.EstActif" class="checkbox-input" />
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">Fournisseur actif</span>
+                    </label>
+                    <small class="form-text">Décochez pour désactiver ce fournisseur</small>
+                </div>
             </div>
 
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-success">
+            <!-- BOUTONS D'ACTION -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i>
-                    Créer
+                    Enregistrer les modifications
                 </button>
-                <a asp-page="Index" class="btn btn-secondary">
+                <a href="@Url.Page("Index")" class="btn btn-secondary">
                     <i class="fas fa-times"></i>
                     Annuler
                 </a>
             </div>
         </form>
+
+        <!-- INFORMATIONS SUPPLÉMENTAIRES -->
+        <div class="info-cards">
+            <div class="info-card">
+                <div class="info-header">
+                    <i class="fas fa-shopping-cart"></i>
+                    <h3>Articles</h3>
+                </div>
+                <div class="info-body">
+                    <p class="info-value">@Model.ArticlesCount</p>
+                    <p class="info-label">articles fournis par ce fournisseur</p>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-header">
+                    <i class="fas fa-file-invoice"></i>
+                    <h3>Commandes</h3>
+                </div>
+                <div class="info-body">
+                    <p class="info-value">@Model.CommandesCount</p>
+                    <p class="info-label">commandes passées</p>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-header">
+                    <i class="fas fa-history"></i>
+                    <h3>Date de création</h3>
+                </div>
+                <div class="info-body">
+                    <p class="info-value">@Model.Fournisseur.DateCreation.ToString("dd/MM/yyyy")</p>
+                    <p class="info-label">fournisseur ajouté</p>
+                </div>
+            </div>
+
+            @if (Model.Fournisseur.DateModification.HasValue)
+            {
+                <div class="info-card">
+                    <div class="info-header">
+                        <i class="fas fa-edit"></i>
+                        <h3>Dernière modification</h3>
+                    </div>
+                    <div class="info-body">
+                        <p class="info-value">@Model.Fournisseur.DateModification.Value.ToString("dd/MM/yyyy")</p>
+                        <p class="info-label">dernière mise à jour</p>
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 </div>
 
@@ -59,4 +273,5 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script src="~/js/supplier-form.js" asp-append-version="true"></script>
 }

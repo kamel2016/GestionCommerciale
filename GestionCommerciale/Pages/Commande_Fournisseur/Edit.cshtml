@@ -1,9 +1,9 @@
-﻿@* Pages/CommandesClient/Edit.cshtml *@
-@page
+﻿@page "{id:int}"
 @using GestionCommerciale.Enums
-@model GestionCommerciale.Pages.Commande_Client.EditModel
+@model GestionCommerciale.Pages.Commande_Fournisseur.EditModel
 @{
-    ViewData["Title"] = "Modifier Commande";
+    ViewData["Title"] = "Modifier la commande fournisseur";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
 }
 
 <div class="container-fluid">
@@ -13,119 +13,100 @@
                 <div class="card-header bg-warning text-dark">
                     <h4 class="mb-0">
                         <i class="fas fa-edit me-2"></i>
-                        Modifier la Commande @Model.CommandeClient.NumeroCommande
+                        Modifier la commande @Model.CommandeFournisseur.NumeroCommande
                     </h4>
                 </div>
                 <div class="card-body">
                     <form method="post" id="commandeForm">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        <input type="hidden" asp-for="CommandeClient.Id" />
-                        <input type="hidden" asp-for="CommandeClient.NumeroCommande" />
-                        <input type="hidden" asp-for="CommandeClient.DateCreation" />
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                        <input type="hidden" asp-for="CommandeFournisseur.Id" />
+                        <input type="hidden" asp-for="CommandeFournisseur.NumeroCommande" />
+                        <input type="hidden" asp-for="CommandeFournisseur.DateCreation" />
 
-                        <div class="row">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label asp-for="CommandeFournisseur.NumeroCommande" class="form-label"></label>
+                                <input class="form-control" value="@Model.CommandeFournisseur.NumeroCommande" readonly />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="CommandeFournisseur.DateCommande" class="form-label"></label>
+                                <input asp-for="CommandeFournisseur.DateCommande" class="form-control" type="date" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="CommandeFournisseur.DateLivraisonPrevue" class="form-label"></label>
+                                <input asp-for="CommandeFournisseur.DateLivraisonPrevue" class="form-control" type="date" />
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="CommandeClient.NumeroCommande" class="form-label"></label>
-                                    <input asp-for="CommandeClient.NumeroCommande" class="form-control" readonly />
-                                </div>
+                                <label asp-for="CommandeFournisseur.FournisseurId" class="form-label"></label>
+                                <select asp-for="CommandeFournisseur.FournisseurId" asp-items="Model.Fournisseurs" class="form-select">
+                                    <option value="">-- Sélectionner un fournisseur --</option>
+                                </select>
+                                <span asp-validation-for="CommandeFournisseur.FournisseurId" class="text-danger"></span>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="CommandeClient.DateCommande" class="form-label"></label>
-                                    <input asp-for="CommandeClient.DateCommande" class="form-control" />
-                                    <span asp-validation-for="CommandeClient.DateCommande" class="text-danger"></span>
-                                </div>
+                                <label asp-for="CommandeFournisseur.Statut" class="form-label"></label>
+                                <select asp-for="CommandeFournisseur.Statut" class="form-select"
+                                        asp-items="Html.GetEnumSelectList<StatutCommande>()"></select>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label asp-for="CommandeClient.ClientId" class="form-label"></label>
-                                    <select asp-for="CommandeClient.ClientId" class="form-select" asp-items="Model.ClientsSelectList">
-                                        <option value="">-- Sélectionnez un client --</option>
-                                    </select>
-                                    <span asp-validation-for="CommandeClient.ClientId" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label asp-for="CommandeClient.Statut" class="form-label"></label>
-                                    <select asp-for="CommandeClient.Statut" class="form-select" asp-items="Html.GetEnumSelectList<StatutCommande>()">
-                                    </select>
-                                    <span asp-validation-for="CommandeClient.Statut" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label asp-for="CommandeClient.DateLivraison" class="form-label"></label>
-                                    <input asp-for="CommandeClient.DateLivraison" class="form-control" />
-                                    <span asp-validation-for="CommandeClient.DateLivraison" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="CommandeClient.Commentaire" class="form-label"></label>
-                            <textarea asp-for="CommandeClient.Commentaire" class="form-control" rows="3"></textarea>
-                            <span asp-validation-for="CommandeClient.Commentaire" class="text-danger"></span>
-                        </div>
-
-                        <!-- Section Articles -->
-                        <div class="card mt-4">
+                        <!-- Articles -->
+                        <div class="card mb-4">
                             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">Articles de la commande</h5>
                                 <button type="button" class="btn btn-primary btn-sm" onclick="openArticleModal()">
-                                    <i class="fas fa-plus me-1"></i>
-                                    Ajouter un article
+                                    <i class="fas fa-plus me-1"></i> Ajouter un article
                                 </button>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-bordered" id="articlesTable">
+                                    <table class="table table-bordered">
                                         <thead class="table-light">
                                             <tr>
                                                 <th>Article</th>
                                                 <th>Quantité</th>
-                                                <th>Prix Unitaire</th>
-                                                <th>Montant</th>
-                                                <th>Actions</th>
+                                                <th>Prix unitaire HT</th>
+                                                <th>Montant HT</th>
+                                                <th class="text-center">Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="articlesTableBody">
-                                            <!-- Les lignes seront ajoutées dynamiquement -->
-                                        </tbody>
-                                        <tfoot>
-                                            <tr class="table-info">
-                                                <th colspan="3">Total HT</th>
-                                                <th id="totalHT">0,00 €</th>
-                                                <th></th>
-                                            </tr>
-                                            <tr class="table-info">
-                                                <th colspan="3">TVA (20%)</th>
-                                                <th id="totalTVA">0,00 €</th>
-                                                <th></th>
-                                            </tr>
-                                            <tr class="table-success">
-                                                <th colspan="3">Total TTC</th>
-                                                <th id="totalTTC">0,00 €</th>
-                                                <th></th>
-                                            </tr>
-                                        </tfoot>
+                                        <tbody id="articles-tbody"></tbody>
                                     </table>
+                                </div>
+                                <div id="no-articles" class="text-center text-muted py-4" style="display:none;">
+                                    <i class="fas fa-box-open fa-3x mb-3"></i>
+                                    <p>Aucun article dans cette commande.</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between mt-4">
-                            <a asp-page="Index" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-1"></i>
-                                Retour
+                        <div class="row mb-4">
+                            <div class="col-md-6 offset-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2"><strong>Montant HT :</strong><span id="montant-ht">0,00 €</span></div>
+                                        <div class="d-flex justify-content-between mb-2"><strong>TVA (20 %) :</strong><span id="montant-tva">0,00 €</span></div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between"><strong>Montant TTC :</strong><span id="montant-ttc" class="fw-bold text-primary">0,00 €</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="CommandeFournisseur.Commentaire" class="form-label"></label>
+                            <textarea asp-for="CommandeFournisseur.Commentaire" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-page="./Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Retour
                             </a>
                             <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save me-1"></i>
-                                Enregistrer les modifications
+                                <i class="fas fa-save me-1"></i> Enregistrer les modifications
                             </button>
                         </div>
                     </form>
@@ -135,53 +116,44 @@
     </div>
 </div>
 
-<!-- Modal pour ajouter un article (identique à Create) -->
-<div class="modal fade" id="articleModal" tabindex="-1" aria-labelledby="articleModalLabel" aria-hidden="true">
+<!-- Modal ajout article -->
+<div class="modal fade" id="articleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="articleModalLabel">
-                    <i class="fas fa-box me-2"></i>
-                    Ajouter un article
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title"><i class="fas fa-box me-2"></i>Ajouter un article</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="articleForm">
+                <form id="article-form">
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="articleSelect" class="form-label">Article</label>
-                                <select id="articleSelect" class="form-select" onchange="updatePrixUnitaire()">
-                                    <option value="">-- Sélectionnez un article --</option>
-                                    @foreach (var article in Model.Articles)
-                                    {
-                                        <option value="@article.ID" data-prix="@article.PrixVenteTTC" data-nom="@article.Libelle">
-                                            @article.Libelle (@article.PrixVenteTTC.ToString("C"))
-                                        </option>
-                                    }
-                                </select>
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="article-select" class="form-label">Article</label>
+                            <select id="article-select" class="form-select">
+                                <option value="">-- Sélectionner un article --</option>
+                                @foreach (var a in Model.Articles)
+                                {
+                                    <option value="@a.ID"
+                                            data-nom="@a.Libelle"
+                                            data-prix="@a.PrixAchatHT.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                                        @a.Libelle (@a.PrixAchatHT.ToString("C"))
+                                    </option>
+                                }
+                            </select>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="quantite" class="form-label">Quantité</label>
-                                <input type="number" id="quantite" class="form-control" min="1" value="1" onchange="calculateMontant()">
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="quantite" class="form-label">Quantité</label>
+                            <input type="number" id="quantite" class="form-control" min="1" value="1">
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="prixUnitaire" class="form-label">Prix Unitaire</label>
-                                <input type="number" id="prixUnitaire" class="form-control" step="0.01" onchange="calculateMontant()">
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="prix-unitaire" class="form-label">Prix unitaire HT</label>
+                            <input type="number" id="prix-unitaire" class="form-control" step="0.01" min="0">
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="montantLigne" class="form-label">Montant</label>
-                                <input type="number" id="montantLigne" class="form-control" step="0.01" readonly>
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Montant ligne HT</label>
+                            <input type="text" id="montant-ligne-preview" class="form-control" readonly value="0,00 €">
                         </div>
                     </div>
                 </form>
@@ -189,8 +161,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                 <button type="button" class="btn btn-primary" onclick="addArticle()">
-                    <i class="fas fa-plus me-1"></i>
-                    Ajouter
+                    <i class="fas fa-plus me-1"></i> Ajouter
                 </button>
             </div>
         </div>
@@ -199,117 +170,125 @@
 
 @section Scripts {
     <script>
-        let lignesCommande = @Html.Raw(Json.Serialize(Model.LignesCommande));
-        let ligneIndex = lignesCommande.length;
+        // Lignes existantes chargées depuis le serveur
+        let commandeArticles = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.LignesCommande.Select(l => new {
+                articleId = l.ArticleId,
+                nom = l.NomArticle,
+                quantite = l.Quantite,
+                prixUnitaire = l.PrixUnitaire,
+                montantLigne = l.MontantLigne
+            })));
 
-        // Initialiser au chargement de la page
-        document.addEventListener('DOMContentLoaded', function () {
-            updateArticlesTable();
-            updateTotals();
-        });
+        document.addEventListener('DOMContentLoaded', render);
 
         function openArticleModal() {
-            $('#articleModal').modal('show');
-            resetArticleForm();
+            document.getElementById('article-form').reset();
+            document.getElementById('montant-ligne-preview').value = '0,00 €';
+            new bootstrap.Modal(document.getElementById('articleModal')).show();
         }
 
-        function resetArticleForm() {
-            document.getElementById('articleForm').reset();
-            document.getElementById('montantLigne').value = '';
-        }
+        document.getElementById('article-select').addEventListener('change', function () {
+            const opt = this.options[this.selectedIndex];
+            document.getElementById('prix-unitaire').value = opt.value ? parseFloat(opt.dataset.prix).toFixed(2) : '';
+            updateMontantPreview();
+        });
 
-        function updatePrixUnitaire() {
-            const select = document.getElementById('articleSelect');
-            const prixInput = document.getElementById('prixUnitaire');
+        document.getElementById('quantite').addEventListener('input', updateMontantPreview);
+        document.getElementById('prix-unitaire').addEventListener('input', updateMontantPreview);
 
-            if (select.value) {
-                const selectedOption = select.options[select.selectedIndex];
-                prixInput.value = selectedOption.getAttribute('data-prix');
-                calculateMontant();
-            } else {
-                prixInput.value = '';
-                document.getElementById('montantLigne').value = '';
-            }
-        }
-
-        function calculateMontant() {
-            const quantite = parseFloat(document.getElementById('quantite').value) || 0;
-            const prixUnitaire = parseFloat(document.getElementById('prixUnitaire').value) || 0;
-            const montant = quantite * prixUnitaire;
-
-            document.getElementById('montantLigne').value = montant.toFixed(2);
+        function updateMontantPreview() {
+            const q = parseInt(document.getElementById('quantite').value) || 0;
+            const p = parseFloat(document.getElementById('prix-unitaire').value) || 0;
+            document.getElementById('montant-ligne-preview').value = (q * p).toFixed(2) + ' €';
         }
 
         function addArticle() {
-            const articleSelect = document.getElementById('articleSelect');
-            const quantite = document.getElementById('quantite').value;
-            const prixUnitaire = document.getElementById('prixUnitaire').value;
-            const montantLigne = document.getElementById('montantLigne').value;
+            const select = document.getElementById('article-select');
+            const quantite = parseInt(document.getElementById('quantite').value);
+            const prix = parseFloat(document.getElementById('prix-unitaire').value);
 
-            if (!articleSelect.value || !quantite || !prixUnitaire) {
-                alert('Veuillez remplir tous les champs');
+            if (!select.value || !quantite || quantite < 1 || isNaN(prix)) {
+                alert('Veuillez renseigner l\'article, la quantité et le prix.');
                 return;
             }
 
-            const articleNom = articleSelect.options[articleSelect.selectedIndex].getAttribute('data-nom');
+            const articleId = parseInt(select.value);
+            const existing = commandeArticles.find(a => a.articleId === articleId);
 
-            const ligne = {
-                index: ligneIndex++,
-                articleId: parseInt(articleSelect.value),
-                articleNom: articleNom,
-                quantite: parseInt(quantite),
-                prixUnitaire: parseFloat(prixUnitaire),
-                montantLigne: parseFloat(montantLigne)
-            };
+            if (existing) {
+                existing.quantite += quantite;
+                existing.montantLigne = existing.quantite * existing.prixUnitaire;
+            } else {
+                commandeArticles.push({
+                    articleId: articleId,
+                    nom: select.options[select.selectedIndex].dataset.nom,
+                    quantite: quantite,
+                    prixUnitaire: prix,
+                    montantLigne: quantite * prix
+                });
+            }
 
-            lignesCommande.push(ligne);
-            updateArticlesTable();
-            updateTotals();
-
-            $('#articleModal').modal('hide');
+            render();
+            bootstrap.Modal.getInstance(document.getElementById('articleModal')).hide();
         }
 
-        function updateArticlesTable() {
-            const tbody = document.getElementById('articlesTableBody');
-            tbody.innerHTML = '';
-
-            lignesCommande.forEach((ligne, index) => {
-                const row = `
-                            <tr>
-                                <td>${ligne.articleNom}</td>
-                                <td>${ligne.quantite}</td>
-                                <td>${ligne.prixUnitaire.toFixed(2)} €</td>
-                                <td>${ligne.montantLigne.toFixed(2)} €</td>
-                                <td>
-                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeLigne(${index})">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                                <input type="hidden" name="LignesCommande[${index}].ArticleId" value="${ligne.articleId}" />
-                                <input type="hidden" name="LignesCommande[${index}].ArticleNom" value="${ligne.articleNom}" />
-                                <input type="hidden" name="LignesCommande[${index}].Quantite" value="${ligne.quantite}" />
-                                <input type="hidden" name="LignesCommande[${index}].PrixUnitaire" value="${ligne.prixUnitaire}" />
-                                <input type="hidden" name="LignesCommande[${index}].MontantLigne" value="${ligne.montantLigne}" />
-                            </tr>
-                        `;
-                tbody.innerHTML += row;
-            });
+        function removeArticle(index) {
+            commandeArticles.splice(index, 1);
+            render();
         }
 
-        function removeLigne(index) {
-            lignesCommande.splice(index, 1);
-            updateArticlesTable();
-            updateTotals();
+        function render() {
+            const tbody = document.getElementById('articles-tbody');
+            const noArticles = document.getElementById('no-articles');
+
+            document.querySelectorAll('input[name^="LignesCommande"]').forEach(i => i.remove());
+
+            if (commandeArticles.length === 0) {
+                tbody.innerHTML = '';
+                noArticles.style.display = 'block';
+            } else {
+                noArticles.style.display = 'none';
+                tbody.innerHTML = commandeArticles.map((a, i) => `
+                    <tr>
+                        <td>${a.nom}</td>
+                        <td>${a.quantite}</td>
+                        <td>${a.prixUnitaire.toFixed(2)} €</td>
+                        <td>${a.montantLigne.toFixed(2)} €</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeArticle(${i})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>`).join('');
+
+                const form = document.getElementById('commandeForm');
+                commandeArticles.forEach((a, i) => {
+                    addHidden(form, `LignesCommande[${i}].ArticleId`, a.articleId);
+                    addHidden(form, `LignesCommande[${i}].Quantite`, a.quantite);
+                    addHidden(form, `LignesCommande[${i}].PrixUnitaire`, a.prixUnitaire);
+                    addHidden(form, `LignesCommande[${i}].MontantLigne`, a.montantLigne);
+                });
+            }
+
+            updateTotaux();
         }
 
-        function updateTotals() {
-            const totalHT = lignesCommande.reduce((sum, ligne) => sum + ligne.montantLigne, 0);
-            const totalTVA = totalHT * 0.20;
-            const totalTTC = totalHT + totalTVA;
+        function addHidden(form, name, value) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+        }
 
-            document.getElementById('totalHT').textContent = totalHT.toFixed(2) + ' €';
-            document.getElementById('totalTVA').textContent = totalTVA.toFixed(2) + ' €';
-            document.getElementById('totalTTC').textContent = totalTTC.toFixed(2) + ' €';
+        function updateTotaux() {
+            const ht = commandeArticles.reduce((s, a) => s + a.montantLigne, 0);
+            const tva = ht * 0.20;
+            document.getElementById('montant-ht').textContent = ht.toFixed(2) + ' €';
+            document.getElementById('montant-tva').textContent = tva.toFixed(2) + ' €';
+            document.getElementById('montant-ttc').textContent = (ht + tva).toFixed(2) + ' €';
         }
     </script>
+    <partial name="_ValidationScriptsPartial" />
 }

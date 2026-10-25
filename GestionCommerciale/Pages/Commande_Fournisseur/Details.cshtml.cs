@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
-namespace GestionCommerciale.Pages.Commande_Client
+namespace GestionCommerciale.Pages.Commande_Fournisseur
 {
     public class DetailsModel : PageModel
     {
@@ -15,29 +15,23 @@ namespace GestionCommerciale.Pages.Commande_Client
             _context = context;
         }
 
-        public CommandeClient CommandeClient { get; set; } = default!;
+        public CommandeFournisseur CommandeFournisseur { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {
-            if (id == null || _context.CommandesClient == null)
-            {
+            if (id == null)
                 return NotFound();
-            }
 
-            var commandeclient = await _context.CommandesClient
-                .Include(c => c.Client)
+            var commande = await _context.CommandesFournisseur
+                .Include(c => c.Fournisseur)
                 .Include(c => c.LignesCommande)
-                .ThenInclude(l => l.Article)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                    .ThenInclude(l => l.Article)
+                .FirstOrDefaultAsync(c => c.Id == id);
 
-            if (commandeclient == null)
-            {
+            if (commande == null)
                 return NotFound();
-            }
-            else
-            {
-                CommandeClient = commandeclient;
-            }
+
+            CommandeFournisseur = commande;
             return Page();
         }
     }

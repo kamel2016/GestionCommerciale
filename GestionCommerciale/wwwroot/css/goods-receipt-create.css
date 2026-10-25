@@ -1,0 +1,379 @@
+﻿/* =========================================================
+   Bon de réception – Création
+   Complète goods-receipt-index.css (même palette et tokens)
+   ========================================================= */
+
+/* --- Variables (au cas où le fichier index n'est pas chargé) --- */
+.gr-page {
+    --gr-primary: #0f766e;
+    --gr-primary-dark: #0b5c56;
+    --gr-primary-soft: #ccfbf1;
+    --gr-text: #1e293b;
+    --gr-text-muted: #64748b;
+    --gr-border: #e2e8f0;
+    --gr-bg: #f8fafc;
+    --gr-card: #ffffff;
+    --gr-danger: #dc2626;
+    --gr-danger-soft: #fee2e2;
+    --gr-radius: 12px;
+    --gr-shadow: 0 1px 3px rgba(15, 23, 42, .06), 0 1px 2px rgba(15, 23, 42, .04);
+    --gr-shadow-lg: 0 10px 30px rgba(15, 23, 42, .08);
+    color: var(--gr-text);
+    padding: 1.5rem;
+    background: var(--gr-bg);
+    min-height: 100vh;
+    font-size: .925rem;
+}
+
+    /* --- Carte & sections --- */
+    .gr-page .gr-card {
+        background: var(--gr-card);
+        border: 1px solid var(--gr-border);
+        border-radius: var(--gr-radius);
+        box-shadow: var(--gr-shadow);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+.gr-section__title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    color: var(--gr-text);
+}
+
+    .gr-section__title i {
+        color: var(--gr-primary);
+    }
+
+.gr-section__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+}
+
+    .gr-section__head .gr-section__title {
+        margin: 0;
+    }
+
+/* --- Libellés & champs --- */
+.gr-label {
+    display: block;
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--gr-text-muted);
+    margin-bottom: .4rem;
+}
+
+.gr-input,
+.gr-select {
+    height: 42px;
+    padding: .5rem .85rem;
+    border: 1px solid var(--gr-border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--gr-text);
+    font-size: .925rem;
+    transition: border-color .15s, box-shadow .15s;
+    width: 100%;
+}
+
+textarea.gr-input {
+    height: auto;
+    min-height: 72px;
+    resize: vertical;
+}
+
+.gr-input:focus,
+.gr-select:focus {
+    outline: none;
+    border-color: var(--gr-primary);
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, .15);
+}
+
+.gr-input--sm {
+    height: 34px;
+    padding: .3rem .6rem;
+    font-size: .875rem;
+}
+
+.gr-input.is-invalid,
+.gr-select.is-invalid {
+    border-color: var(--gr-danger);
+}
+
+.gr-error {
+    display: block;
+    color: var(--gr-danger);
+    font-size: .8rem;
+    margin-top: .3rem;
+}
+
+/* --- Tableau des lignes --- */
+.gr-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: .9rem;
+}
+
+    .gr-table thead th {
+        background: #f1f5f9;
+        color: var(--gr-text-muted);
+        font-size: .75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        padding: .75rem 1rem;
+        border-bottom: 1px solid var(--gr-border);
+        white-space: nowrap;
+    }
+
+        .gr-table thead th:first-child {
+            border-top-left-radius: 8px;
+        }
+
+        .gr-table thead th:last-child {
+            border-top-right-radius: 8px;
+        }
+
+    .gr-table tbody td {
+        padding: .75rem 1rem;
+        border-bottom: 1px solid var(--gr-border);
+        vertical-align: middle;
+    }
+
+    .gr-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .gr-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+.gr-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .8rem;
+    background: var(--gr-primary-soft);
+    color: var(--gr-primary-dark);
+    padding: .2rem .5rem;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+/* Ligne vide */
+.gr-empty-row td {
+    text-align: center;
+    padding: 2.5rem 1rem !important;
+    color: var(--gr-text-muted);
+    font-style: italic;
+}
+
+.gr-empty-row i {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: .5rem;
+    opacity: .35;
+}
+
+/* --- Boutons icône --- */
+.gr-icon-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--gr-text-muted);
+    cursor: pointer;
+    transition: all .15s;
+}
+
+    .gr-icon-btn:hover {
+        background: #f1f5f9;
+        color: var(--gr-text);
+    }
+
+.gr-icon-btn--danger:hover {
+    background: var(--gr-danger-soft);
+    color: var(--gr-danger);
+}
+
+/* --- Boutons (complément à ceux de l'index) --- */
+.gr-page .btn-gr-primary {
+    background: var(--gr-primary);
+    border: 1px solid var(--gr-primary);
+    color: #fff;
+    font-weight: 500;
+    padding: .55rem 1.1rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    transition: background .15s, transform .05s;
+}
+
+    .gr-page .btn-gr-primary:hover {
+        background: var(--gr-primary-dark);
+        border-color: var(--gr-primary-dark);
+        color: #fff;
+    }
+
+    .gr-page .btn-gr-primary:active {
+        transform: translateY(1px);
+    }
+
+.gr-page .btn-gr-ghost {
+    background: #fff;
+    border: 1px solid var(--gr-border);
+    color: var(--gr-text);
+    font-weight: 500;
+    padding: .55rem 1.1rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+}
+
+    .gr-page .btn-gr-ghost:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: var(--gr-text);
+    }
+
+.gr-page .btn-sm {
+    padding: .4rem .8rem;
+    font-size: .85rem;
+}
+
+/* --- Récapitulatif (aside) --- */
+.gr-totaux {
+    position: sticky;
+    top: 1.5rem;
+}
+
+    .gr-totaux dl {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: .75rem 1rem;
+        margin: 0 0 1.5rem;
+    }
+
+    .gr-totaux dt {
+        font-weight: 500;
+        color: var(--gr-text-muted);
+        margin: 0;
+    }
+
+    .gr-totaux dd {
+        text-align: right;
+        margin: 0;
+        font-variant-numeric: tabular-nums;
+        font-weight: 500;
+    }
+
+.gr-totaux__ttc {
+    border-top: 1px dashed var(--gr-border);
+    padding-top: .75rem;
+    margin-top: .25rem;
+    font-size: 1.1rem;
+    color: var(--gr-text) !important;
+    font-weight: 700 !important;
+}
+
+.gr-totaux__actions {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+}
+
+    .gr-totaux__actions .btn {
+        justify-content: center;
+    }
+
+/* --- Alertes --- */
+.gr-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    padding: .85rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 1.25rem;
+    font-size: .9rem;
+    border: 1px solid transparent;
+}
+
+    .gr-alert ul {
+        margin: 0;
+        padding-left: 1rem;
+    }
+
+.gr-alert--danger {
+    background: var(--gr-danger-soft);
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+/* --- Modale --- */
+.gr-modal {
+    border: none;
+    border-radius: 14px;
+    box-shadow: var(--gr-shadow-lg);
+}
+
+    .gr-modal .modal-header {
+        border-bottom: 1px solid var(--gr-border);
+        padding: 1.1rem 1.5rem;
+    }
+
+    .gr-modal .modal-title {
+        font-weight: 600;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+        .gr-modal .modal-title i {
+            color: var(--gr-primary);
+        }
+
+    .gr-modal .modal-body {
+        padding: 1.5rem;
+    }
+
+    .gr-modal .modal-footer {
+        border-top: 1px solid var(--gr-border);
+        padding: 1rem 1.5rem;
+    }
+
+/* --- Responsive --- */
+@media (max-width: 991.98px) {
+    .gr-totaux {
+        position: static;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .gr-page {
+        padding: 1rem;
+    }
+
+        .gr-page .gr-card {
+            padding: 1rem;
+        }
+
+    .gr-section__head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

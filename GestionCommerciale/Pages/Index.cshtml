@@ -1,10 +1,66 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Accueil";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/home-index.css" asp-append-version="true" />
+}
+
+<div class="home-container">
+
+    <!-- Bandeau d'accueil -->
+    <section class="home-hero">
+        <div>
+            <h1>Gestion Commerciale</h1>
+            <p>Pilotez vos fournisseurs, achats et stocks depuis un seul endroit.</p>
+        </div>
+        <i class="fas fa-chart-line hero-icon"></i>
+    </section>
+
+    <!-- Indicateurs -->
+    <section class="home-stats">
+        <div class="stat-card">
+            <i class="fas fa-truck"></i>
+            <div>
+                <span class="stat-value">@Model.TotalSuppliers</span>
+                <span class="stat-label">Fournisseurs</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-file-invoice"></i>
+            <div>
+                <span class="stat-value">@Model.OrdersInProgress</span>
+                <span class="stat-label">Commandes en cours</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-boxes-stacked"></i>
+            <div>
+                <span class="stat-value">@Model.GoodsReceiptsToday</span>
+                <span class="stat-label">Réceptions aujourd'hui</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modules -->
+    <section class="home-modules">
+        <a asp-page="/Fournisseurs/Index" class="module-card">
+            <i class="fas fa-truck"></i>
+            <h3>Fournisseurs</h3>
+            <p>Gérer les fiches fournisseurs et leurs contacts.</p>
+        </a>
+        <a asp-page="/Commande_Client/Index" class="module-card">
+            <i class="fas fa-file-invoice"></i>
+            <h3>Commandes</h3>
+            <p>Créer et suivre les commandes d'achat.</p>
+        </a>
+        <a asp-page="/GoodsReceipt/Index" class="module-card">
+            <i class="fas fa-boxes-stacked"></i>
+            <h3>Réceptions</h3>
+            <p>Enregistrer les marchandises reçues.</p>
+        </a>
+    </section>
+
 </div>

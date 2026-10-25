@@ -1,418 +1,307 @@
 ﻿// article-edit.js - Gestion de l'édition d'article
 
-document.addEventListener('DOMContentLoaded', function () {
-    // Initialiser les onglets
-    initializeTabs();
+(function () {
+    'use strict';
 
-    // Initialiser les événements
-    initializeEvents();
+    let formChanged = false;
 
-    // Initialiser les alertes
-    initializeAlerts();
-
-    // Restaurer l'onglet sauvegardé
-    restoreSavedTab();
-});
-
-/**
- * Initialiser la navigation par onglets
- */
-function initializeTabs() {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function (e) {
-            e.preventDefault();
-            const tabId = this.getAttribute('data-tab');
-
-            // Désactiver tous les onglets
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-
-            // Activer l'onglet sélectionné
-            this.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
-
-            // Sauvegarder l'onglet actif
-            sessionStorage.setItem('activeArticleTab', tabId);
-        });
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeTabs();
+        initializeSupplierActions();
+        initializeFormValidation();
+        initializePriceCalculation();
+        initializeAlerts();
+        initializeUnsavedWarning();
+        restoreSavedTab();
+        openTabWithError();
+        checkStockWarnings();
     });
-}
 
-/**
- * Initialiser les événements
- */
-function initializeEvents() {
-    // Ajouter fournisseur
-    const confirmAddSupplierBtn = document.getElementById('confirmAddSupplier');
-    if (confirmAddSupplierBtn) {
-        confirmAddSupplierBtn.addEventListener('click', function () {
-            const supplierSelect = document.getElementById('supplierSelect');
-            if (!supplierSelect || !supplierSelect.value) {
-                alert('Veuillez sélectionner un fournisseur');
-                return;
-            }
+    // ============================================
+    // ONGLETS
+    // ============================================
+    function activateTab(tabId) {
+        const button = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
+        const content = document.getElementById(tabId);
+        if (!button || !content) return;
 
-            const form = document.getElementById('articleForm');
-            const formData = new FormData(form);
-            formData.append('handler', 'AddSupplier');
-            formData.append('supplierId', supplierSelect.value);
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-            // Soumettre le formulaire
-            form.submit();
+        button.classList.add('active');
+        content.classList.add('active');
+        sessionStorage.setItem('activeArticleTab', tabId);
+    }
+
+    function initializeTabs() {
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                activateTab(this.getAttribute('data-tab'));
+            });
         });
     }
 
-    // Retirer fournisseur
-    const removeButtons = document.querySelectorAll('.btn-remove');
-    removeButtons.forEach(btn => {
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
-            const supplierId = this.getAttribute('data-supplier-id');
+    function restoreSavedTab() {
+        const saved = sessionStorage.getItem('activeArticleTab');
+        if (saved) activateTab(saved);
+    }
 
-            if (confirm('Êtes-vous sûr de vouloir retirer ce fournisseur ?')) {
-                // Créer et soumettre un formulaire caché
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.innerHTML = `
-                    <input type="hidden" name="handler" value="RemoveSupplier" />
-                    <input type="hidden" name="supplierId" value="${supplierId}" />
-                `;
-                document.body.appendChild(form);
-                form.submit();
-            }
+    // Ouvre l'onglet contenant une erreur de validation serveur
+    function openTabWithError() {
+        const firstError = document.querySelector('.tab-content .input-validation-error');
+        if (firstError) {
+            const parent = firstError.closest('.tab-content');
+            if (parent) activateTab(parent.id);
+        }
+    }
+
+    // ============================================
+    // FOURNISSEURS (formulaires cachés avec jeton)
+    // ============================================
+    function getAntiForgeryToken() {
+        const input = document.querySelector('input[name="__RequestVerificationToken"]');
+        return input ? input.value : '';
+    }
+
+    function postHandler(handler, fields) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = window.location.pathname + '?handler=' + encodeURIComponent(handler);
+
+        const all = Object.assign({ __RequestVerificationToken: getAntiForgeryToken() }, fields);
+        Object.keys(all).forEach(name => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = all[name];
+            form.appendChild(input);
         });
-    });
 
-    // Validation du formulaire
-    const articleForm = document.getElementById('articleForm');
-    if (articleForm) {
-        articleForm.addEventListener('submit', function (e) {
+        document.body.appendChild(form);
+        formChanged = false;
+        form.submit();
+    }
+
+    function initializeSupplierActions() {
+        // Retrait d'un fournisseur
+        document.querySelectorAll('.btn-remove').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const tarifId = this.getAttribute('data-tarif-id') || this.getAttribute('data-supplier-id');
+                if (!tarifId) return;
+
+                if (confirm('Êtes-vous sûr de vouloir retirer ce fournisseur ?')) {
+                    postHandler('RemoveSupplier', { tarifId: tarifId });
+                }
+            });
+        });
+    }
+
+    // ============================================
+    // VALIDATION (alignée sur les [Required] de l'entité)
+    // ============================================
+    function initializeFormValidation() {
+        const form = document.getElementById('articleForm');
+        if (!form) return;
+
+        form.addEventListener('submit', function (e) {
             if (!validateArticleForm()) {
                 e.preventDefault();
-                return false;
             }
         });
     }
-}
 
-/**
- * Initialiser la fermeture des alertes
- */
-function initializeAlerts() {
-    document.querySelectorAll('.alert .close').forEach(closeBtn => {
-        closeBtn.addEventListener('click', function () {
-            this.parentElement.style.display = 'none';
-        });
-    });
+    function validateArticleForm() {
+        const reference = document.querySelector('[name="Article.Reference"]');
+        const libelle = document.querySelector('[name="Article.Libelle"]');
+        const tva = document.querySelector('[name="Article.TauxTVA"]');
+        const stockMin = document.querySelector('[name="Article.StockMin"]');
+        const stockMax = document.querySelector('[name="Article.StockMax"]');
 
-    // Auto-dismiss des alertes après 5 secondes
-    document.querySelectorAll('.alert').forEach(alert => {
-        setTimeout(() => {
-            alert.style.opacity = '0';
-            setTimeout(() => {
-                alert.style.display = 'none';
-            }, 300);
-        }, 5000);
-    });
-}
-
-/**
- * Restaurer l'onglet sauvegardé
- */
-function restoreSavedTab() {
-    const savedTab = sessionStorage.getItem('activeArticleTab');
-    if (savedTab) {
-        const tabButton = document.querySelector(`[data-tab="${savedTab}"]`);
-        if (tabButton) {
-            tabButton.click();
+        if (!reference || !reference.value.trim()) {
+            return fail('La référence est obligatoire', reference);
         }
+
+        if (!libelle || !libelle.value.trim()) {
+            return fail('Le libellé est obligatoire', libelle);
+        }
+
+        // Le code-barre est optionnel : aucune validation bloquante
+
+        if (tva && tva.value !== '') {
+            const v = parseFloat(tva.value);
+            if (isNaN(v) || v < 0 || v > 100) {
+                return fail('Le taux TVA doit être compris entre 0 et 100 %', tva);
+            }
+        }
+
+        if (stockMin && stockMax && stockMin.value !== '' && stockMax.value !== '') {
+            if (parseInt(stockMax.value, 10) < parseInt(stockMin.value, 10)) {
+                return fail('Le stock maximum doit être supérieur ou égal au stock minimum', stockMax);
+            }
+        }
+
+        return true;
     }
-}
 
-/**
- * Valider le formulaire d'article
- */
-function validateArticleForm() {
-    const reference = document.querySelector('[name="Article.Reference"]');
-    const barcode = document.querySelector('[name="Article.Barcode"]');
-    const name = document.querySelector('[name="Article.Name"]');
-    const unit = document.querySelector('[name="Article.Unit"]');
-    const vatRate = document.querySelector('[name="Article.VatRate"]');
-
-    // Validation de la référence
-    if (!reference || !reference.value.trim()) {
-        showError('La référence est obligatoire');
-        reference?.focus();
+    function fail(message, field) {
+        if (field) {
+            const tab = field.closest('.tab-content');
+            if (tab) activateTab(tab.id);
+            field.focus();
+        }
+        showAlert('danger', message);
         return false;
     }
 
-    if (reference.value.trim().length < 3) {
-        showError('La référence doit contenir au moins 3 caractères');
-        reference.focus();
-        return false;
+    // ============================================
+    // CALCUL AUTOMATIQUE DU PRIX TTC
+    // ============================================
+    function initializePriceCalculation() {
+        const ht = document.querySelector('[name="Article.PrixVenteHT"]');
+        const ttc = document.querySelector('[name="Article.PrixVenteTTC"]');
+        const tva = document.querySelector('[name="Article.TauxTVA"]');
+        if (!ht || !ttc || !tva) return;
+
+        function recalcTTC() {
+            const h = parseFloat(ht.value);
+            const t = parseFloat(tva.value);
+            if (isNaN(h) || isNaN(t)) return;
+            ttc.value = (h * (1 + t / 100)).toFixed(3);
+        }
+
+        function recalcHT() {
+            const c = parseFloat(ttc.value);
+            const t = parseFloat(tva.value);
+            if (isNaN(c) || isNaN(t)) return;
+            ht.value = (c / (1 + t / 100)).toFixed(3);
+        }
+
+        ht.addEventListener('input', recalcTTC);
+        tva.addEventListener('input', recalcTTC);
+        ttc.addEventListener('input', recalcHT);
     }
 
-    // Validation du code-barre
-    if (!barcode || !barcode.value.trim()) {
-        showError('Le code-barre est obligatoire');
-        barcode?.focus();
-        return false;
-    }
+    // ============================================
+    // ALERTES
+    // ============================================
+    function showAlert(type, message) {
+        const icons = {
+            danger: 'fa-exclamation-circle',
+            success: 'fa-check-circle',
+            warning: 'fa-exclamation-triangle'
+        };
 
-    // Validation du nom
-    if (!name || !name.value.trim()) {
-        showError('La désignation est obligatoire');
-        name?.focus();
-        return false;
-    }
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-' + type;
 
-    // Validation de l'unité
-    if (!unit || !unit.value) {
-        showError('Veuillez sélectionner une unité');
-        unit?.focus();
-        return false;
-    }
+        const icon = document.createElement('i');
+        icon.className = 'fas ' + (icons[type] || icons.danger);
+        alert.appendChild(icon);
+        alert.appendChild(document.createTextNode(' ' + message + ' '));
 
-    // Validation du taux TVA
-    if (!vatRate || parseFloat(vatRate.value) < 0 || parseFloat(vatRate.value) > 100) {
-        showError('Le taux TVA doit être entre 0 et 100%');
-        vatRate?.focus();
-        return false;
-    }
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'close';
+        close.innerHTML = '&times;';
+        alert.appendChild(close);
 
-    return true;
-}
-
-/**
- * Afficher un message d'erreur
- */
-function showError(message) {
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-danger';
-    alert.innerHTML = `
-        <i class="fas fa-exclamation-circle"></i>
-        ${message}
-        <button type="button" class="close">&times;</button>
-    `;
-
-    const container = document.querySelector('.article-container');
-    if (container) {
-        // Retirer les anciennes alertes d'erreur
-        const oldErrors = container.querySelectorAll('.alert-danger');
-        oldErrors.forEach(err => err.remove());
-
+        const container = document.querySelector('.article-container') || document.body;
+        if (type === 'danger') {
+            container.querySelectorAll('.alert-danger').forEach(a => a.remove());
+        }
         container.insertBefore(alert, container.firstChild);
 
-        // Ajouter l'événement de fermeture
-        alert.querySelector('.close').addEventListener('click', function () {
-            alert.style.display = 'none';
-        });
-
-        // Faire défiler vers l'alerte
+        bindAlert(alert, type === 'danger' ? 0 : 5000);
         alert.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-}
 
-/**
- * Afficher un message de succès
- */
-function showSuccess(message) {
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-success';
-    alert.innerHTML = `
-        <i class="fas fa-check-circle"></i>
-        ${message}
-        <button type="button" class="close">&times;</button>
-    `;
-
-    const container = document.querySelector('.article-container');
-    if (container) {
-        container.insertBefore(alert, container.firstChild);
-
-        alert.querySelector('.close').addEventListener('click', function () {
-            alert.style.display = 'none';
-        });
-
-        setTimeout(() => {
-            alert.style.display = 'none';
-        }, 5000);
+    function bindAlert(alert, autoDismissMs) {
+        const hide = () => {
+            alert.style.transition = 'opacity .3s';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 300);
+        };
+        const close = alert.querySelector('.close');
+        if (close) close.addEventListener('click', hide);
+        if (autoDismissMs > 0) setTimeout(hide, autoDismissMs);
     }
-}
 
-/**
- * Activer/Désactiver les champs basés sur le statut
- */
-function toggleArticleFields(isActive) {
-    const fields = document.querySelectorAll('.form-control, .form-check-input');
-    fields.forEach(field => {
-        if (field.id !== 'isActiveCheck') {
-            field.disabled = !isActive;
-            field.style.opacity = isActive ? '1' : '0.6';
+    function initializeAlerts() {
+        document.querySelectorAll('.alert').forEach(a => bindAlert(a, 5000));
+    }
+
+    // ============================================
+    // AVERTISSEMENT DE STOCK
+    // ============================================
+    function checkStockWarnings() {
+        const qte = document.querySelector('[name="Article.Quantite"]');
+        const min = document.querySelector('[name="Article.StockMin"]');
+        const unite = document.querySelector('[name="Article.Unite"]');
+
+        // Quantite peut être affichée en lecture seule (hors formulaire) : on lit aussi data-quantite
+        const qteEl = qte || document.querySelector('[data-quantite]');
+        if (!qteEl || !min) return;
+
+        const q = parseFloat(qte ? qte.value : qteEl.getAttribute('data-quantite'));
+        const m = parseFloat(min.value);
+        if (isNaN(q) || isNaN(m)) return;
+
+        if (m > 0 && q <= m) {
+            const u = unite && unite.value ? unite.value : '';
+            showAlert('warning', 'Stock faible : ' + q + ' ' + u + ' (minimum : ' + m + ')');
         }
-    });
-}
-
-/**
- * Calculer le stock disponible
- */
-function calculateAvailableStock() {
-    const currentStock = parseFloat(document.querySelector('[name="Article.CurrentStock"]')?.value || 0);
-    const reservedStock = parseFloat(document.querySelector('[name="Article.ReservedStock"]')?.value || 0);
-    const onOrderStock = parseFloat(document.querySelector('[name="Article.OnOrderStock"]')?.value || 0);
-
-    return {
-        current: currentStock,
-        available: currentStock - reservedStock,
-        reserved: reservedStock,
-        onOrder: onOrderStock
-    };
-}
-
-/**
- * Formater un nombre en devise
- */
-function formatCurrency(amount) {
-    return new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'EUR'
-    }).format(amount);
-}
-
-/**
- * Copier un texte dans le presse-papiers
- */
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showSuccess('Texte copié !');
-    }).catch(() => {
-        showError('Erreur lors de la copie');
-    });
-}
-
-/**
- * Exporter les données d'article
- */
-function exportArticleData() {
-    const reference = document.querySelector('[name="Article.Reference"]')?.value || '';
-    const barcode = document.querySelector('[name="Article.Barcode"]')?.value || '';
-    const name = document.querySelector('[name="Article.Name"]')?.value || '';
-
-    const data = {
-        reference,
-        barcode,
-        name,
-        exportedAt: new Date().toISOString()
-    };
-
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `article_${reference}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-/**
- * Imprimer la fiche article
- */
-function printArticle() {
-    window.print();
-}
-
-/**
- * Gérer le changement de catégorie
- */
-function onCategoryChange(categorySelect) {
-    console.log('Catégorie sélectionnée:', categorySelect.value);
-    // À adapter selon les besoins
-}
-
-/**
- * Avertissement de stock minimum
- */
-function checkStockWarnings() {
-    const currentStock = parseFloat(document.querySelector('[name="Article.CurrentStock"]')?.value || 0);
-    const stockMinimum = parseFloat(document.querySelector('[name="Article.StockMinimum"]')?.value || 0);
-
-    if (currentStock <= stockMinimum && stockMinimum > 0) {
-        showWarning(`⚠️ Stock faible: ${currentStock} ${document.querySelector('[name="Article.Unit"]')?.value || 'pcs'}`);
     }
-}
 
-/**
- * Afficher un avertissement
- */
-function showWarning(message) {
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-warning';
-    alert.innerHTML = `
-        <i class="fas fa-exclamation-triangle"></i>
-        ${message}
-        <button type="button" class="close">&times;</button>
-    `;
-
-    const container = document.querySelector('.article-container');
-    if (container) {
-        container.insertBefore(alert, container.firstChild);
-
-        alert.querySelector('.close').addEventListener('click', function () {
-            alert.style.display = 'none';
-        });
-    }
-}
-
-/**
- * Événements de clavier
- */
-document.addEventListener('keydown', function (e) {
-    // Ctrl+S pour sauvegarder
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
+    // ============================================
+    // PROTECTION CONTRE LA PERTE DE DONNÉES
+    // ============================================
+    function initializeUnsavedWarning() {
         const form = document.getElementById('articleForm');
-        if (form && validateArticleForm()) {
-            form.submit();
-        }
-    }
+        if (!form) return;
 
-    // Ctrl+P pour imprimer
-    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-        e.preventDefault();
-        printArticle();
-    }
-});
+        form.addEventListener('change', () => { formChanged = true; });
+        form.addEventListener('submit', () => { formChanged = false; });
 
-/**
- * Prévention de perte de données
- */
-let formChanged = false;
-const originalFormState = {};
-
-document.addEventListener('DOMContentLoaded', function () {
-    // Sauvegarder l'état initial du formulaire
-    document.querySelectorAll('input, select, textarea').forEach(field => {
-        originalFormState[field.name] = field.value;
-
-        field.addEventListener('change', () => {
-            formChanged = true;
+        window.addEventListener('beforeunload', function (e) {
+            if (formChanged) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
         });
-    });
-});
-
-window.addEventListener('beforeunload', function (e) {
-    if (formChanged) {
-        e.preventDefault();
-        e.returnValue = 'Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter ?';
     }
-});
 
-// Réinitialiser le flag après soumission
-const form = document.getElementById('articleForm');
-if (form) {
-    form.addEventListener('submit', function () {
-        formChanged = false;
+    // ============================================
+    // RACCOURCIS CLAVIER
+    // ============================================
+    document.addEventListener('keydown', function (e) {
+        // Ctrl+S : enregistrer
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+            e.preventDefault();
+            const form = document.getElementById('articleForm');
+            if (form && validateArticleForm()) {
+                formChanged = false;
+                form.submit();
+            }
+        }
     });
-}
+
+    // ============================================
+    // UTILITAIRES
+    // ============================================
+    window.articleEdit = {
+        formatCurrency: function (amount) {
+            return new Intl.NumberFormat('fr-TN', {
+                style: 'currency',
+                currency: 'TND',
+                minimumFractionDigits: 3
+            }).format(amount);
+        },
+        copyToClipboard: function (text) {
+            navigator.clipboard.writeText(text)
+                .then(() => showAlert('success', 'Texte copié !'))
+                .catch(() => showAlert('danger', 'Erreur lors de la copie'));
+        }
+    };
+})();

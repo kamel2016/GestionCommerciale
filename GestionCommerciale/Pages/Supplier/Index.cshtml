@@ -1,966 +1,238 @@
-﻿@page "/suppliers"
+﻿@page
 @model GestionCommerciale.Pages.Suppliers.IndexModel
 @{
-    ViewData["Title"] = "Gestion des Fournisseurs";
+    ViewData["Title"] = "Fournisseurs";
 }
 
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row align-items-center mb-4">
-        <div class="col-md-6">
-            <h2 class="text-dark mb-1">
-                <i class="fas fa-truck text-primary me-2"></i>
-                Gestion des Fournisseurs
-            </h2>
-            <p class="text-muted mb-0">@Model.TotalSuppliers fournisseur(s) trouvé(s)</p>
-        </div>
-        <div class="col-md-6 text-end">
-            <a href="@Url.Page("./Create", new { mode = "create" })" class="btn btn-success btn-lg">
-                <i class="fas fa-plus me-1"></i>
-                Nouveau Fournisseur
-            </a>
-        </div>
+<div class="container-fluid py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0"><i class="fas fa-truck me-2"></i>Gestion des Fournisseurs</h1>
+        <a asp-page="./Create" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Nouveau fournisseur
+        </a>
     </div>
 
-    <!-- Messages de notification -->
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>
+        <div class="alert alert-success alert-dismissible fade show">
             @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>   
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>
+        <div class="alert alert-danger alert-dismissible fade show">
             @TempData["ErrorMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
 
     <!-- Statistiques -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="d-flex align-items-center justify-content-center mb-2">
-                        <div class="bg-primary text-white rounded-circle p-3 me-3">
-                            <i class="fas fa-truck fa-lg"></i>
-                        </div>
-                        <div>
-                            <h3 class="mb-0 text-primary">@Model.Statistics.TotalSuppliers</h3>
-                            <small class="text-muted">Total Fournisseurs</small>
-                        </div>
-                    </div>
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="card text-center">
+                <div class="card-body py-2">
+                    <div class="text-muted small">Total</div>
+                    <div class="fs-4 fw-bold">@Model.Stats.Total</div>
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="d-flex align-items-center justify-content-center mb-2">
-                        <div class="bg-success text-white rounded-circle p-3 me-3">
-                            <i class="fas fa-check-circle fa-lg"></i>
-                        </div>
-                        <div>
-                            <h3 class="mb-0 text-success">@Model.Statistics.ActiveSuppliers</h3>
-                            <small class="text-muted">Actifs</small>
-                        </div>
-                    </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center">
+                <div class="card-body py-2">
+                    <div class="text-muted small">Actifs</div>
+                    <div class="fs-4 fw-bold text-success">@Model.Stats.Actifs</div>
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="d-flex align-items-center justify-content-center mb-2">
-                        <div class="bg-info text-white rounded-circle p-3 me-3">
-                            <i class="fas fa-euro-sign fa-lg"></i>
-                        </div>
-                        <div>
-                            <h3 class="mb-0 text-info">@Model.Statistics.TotalBalance.ToString("C")</h3>
-                            <small class="text-muted">Solde Total</small>
-                        </div>
-                    </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center">
+                <div class="card-body py-2">
+                    <div class="text-muted small">Inactifs</div>
+                    <div class="fs-4 fw-bold text-secondary">@Model.Stats.Inactifs</div>
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="d-flex align-items-center justify-content-center mb-2">
-                        <div class="bg-warning text-white rounded-circle p-3 me-3">
-                            <i class="fas fa-calendar-plus fa-lg"></i>
-                        </div>
-                        <div>
-                            <h3 class="mb-0 text-warning">@Model.Statistics.NewThisMonth</h3>
-                            <small class="text-muted">Nouveaux ce mois</small>
-                        </div>
-                    </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center">
+                <div class="card-body py-2">
+                    <div class="text-muted small">Nouveaux ce mois</div>
+                    <div class="fs-4 fw-bold text-primary">@Model.Stats.NouveauxCeMois</div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Filtres -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-light py-3">
-            <h5 class="mb-0">
-                <i class="fas fa-filter text-primary me-2"></i>
-                Filtres de recherche
-            </h5>
-        </div>
-        <div class="card-body">
-            <form method="get" id="filterForm">
-                <div class="row g-3">
-                    <div class="col-lg-3 col-md-6">
-                        <label class="form-label fw-medium">Recherche générale</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0">
-                                <i class="fas fa-search text-muted"></i>
-                            </span>
-                            <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control border-start-0" placeholder="Code, nom, contact, email..." />
-                        </div>
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label fw-medium">Statut</label>
-                        <select name="StatusFilter" asp-items="Model.StatusOptions" class="form-select">
-                        </select>
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label fw-medium">Type</label>
-                        <select name="TypeFilter" asp-items="Model.TypeOptions" class="form-select">
-                        </select>
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label fw-medium">Zone</label>
-                        <select name="ZoneFilter" asp-items="Model.ZoneOptions" class="form-select">
-                        </select>
-                    </div>
-                    <div class="col-lg-3 col-md-6">
-                        <label class="form-label fw-medium">Catégorie</label>
-                        <select name="CategoryFilter" asp-items="Model.CategoryOptions" class="form-select">
-                        </select>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-primary me-2">
-                            <i class="fas fa-search me-1"></i>
-                            Rechercher
-                        </button>
-                        <a href="@Url.Page("./Index")" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-1"></i>
-                            Effacer
-                        </a>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Actions en lot et pagination -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="d-flex align-items-center">
-            <div class="me-3">
-                <select class="form-select" id="bulkActions" disabled>
-                    <option value="">Actions en lot...</option>
-                    <option value="activate">Activer sélectionnés</option>
-                    <option value="deactivate">Désactiver sélectionnés</option>
-                    <option value="export">Exporter sélectionnés</option>
-                    <option value="delete">Supprimer sélectionnés</option>
+    <form method="get" class="card card-body mb-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small mb-1">Recherche</label>
+                <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control"
+                       placeholder="Nom, matricule, contact, email, ville..." />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Statut</label>
+                <select name="StatusFilter" class="form-select">
+                    <option value="all" selected="@(Model.StatusFilter == "all")">Tous</option>
+                    <option value="active" selected="@(Model.StatusFilter == "active")">Actifs</option>
+                    <option value="inactive" selected="@(Model.StatusFilter == "inactive")">Inactifs</option>
                 </select>
             </div>
-            <span class="text-muted small" id="selectedCount">0 fournisseur(s) sélectionné(s)</span>
-        </div>
-        <div class="d-flex align-items-center">
-            <span class="text-muted me-3 small">Éléments par page:</span>
-            <form method="get" class="d-inline">
-                <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
-                <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
-                <input type="hidden" name="TypeFilter" value="@Model.TypeFilter" />
-                <input type="hidden" name="ZoneFilter" value="@Model.ZoneFilter" />
-                <input type="hidden" name="CategoryFilter" value="@Model.CategoryFilter" />
-                <input type="hidden" name="SortBy" value="@Model.SortBy" />
-                <input type="hidden" name="SortOrder" value="@Model.SortOrder" />
-                <input type="hidden" name="PageNumber" value="1" />
-                <select name="ItemsPerPage" asp-items="Model.PageSizeOptions" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Gouvernorat</label>
+                <select name="GouvernoratFilter" class="form-select">
+                    <option value="">Tous</option>
+                    @foreach (var o in Model.GouvernoratOptions)
+                    {
+                        <option value="@o.Value" selected="@o.Selected">@o.Text</option>
+                    }
                 </select>
-            </form>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small mb-1">Par page</label>
+                <select name="pageSize" class="form-select">
+                    @foreach (var o in Model.PageSizeOptions)
+                    {
+                        <option value="@o.Value" selected="@o.Selected">@o.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-fill"><i class="fas fa-search"></i></button>
+                <a asp-page="./Index" class="btn btn-outline-secondary flex-fill"><i class="fas fa-undo"></i></a>
+            </div>
         </div>
-    </div>
+        <input type="hidden" name="SortBy" value="@Model.SortBy" />
+        <input type="hidden" name="SortOrder" value="@Model.SortOrder" />
+    </form>
 
-    <!-- Tableau des fournisseurs -->
-    <div class="card shadow-sm border-0">
+    <!-- Tableau -->
+    <div class="card">
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 50px;">
-                            <input type="checkbox" class="form-check-input" id="selectAll" />
-                        </th>
-                        <th>
-                            <a href="@Model.GetSortUrl("code")" class="text-decoration-none text-dark">
-                                Code Fournisseur <i class="@Model.GetSortIcon("code")"></i>
-                            </a>
-                        </th>
-                        <th>
-                            <a href="@Model.GetSortUrl("name")" class="text-decoration-none text-dark">
-                                Raison Sociale <i class="@Model.GetSortIcon("name")"></i>
-                            </a>
-                        </th>
-                        <th>
-                            <a href="@Model.GetSortUrl("contact")" class="text-decoration-none text-dark">
-                                Contact <i class="@Model.GetSortIcon("contact")"></i>
-                            </a>
-                        </th>
-                        <th>
-                            <a href="@Model.GetSortUrl("city")" class="text-decoration-none text-dark">
-                                Ville <i class="@Model.GetSortIcon("city")"></i>
-                            </a>
-                        </th>
-                        <th>
-                            <a href="@Model.GetSortUrl("type")" class="text-decoration-none text-dark">
-                                Type <i class="@Model.GetSortIcon("type")"></i>
-                            </a>
-                        </th>
-                        <th>
-                            <a href="@Model.GetSortUrl("zone")" class="text-decoration-none text-dark">
-                                Zone <i class="@Model.GetSortIcon("zone")"></i>
-                            </a>
-                        </th>
-                        <th>
-                            <a href="@Model.GetSortUrl("balance")" class="text-decoration-none text-dark">
-                                Solde <i class="@Model.GetSortIcon("balance")"></i>
-                            </a>
-                        </th>
-                        <th>Statut</th>
-                        <th style="width: 200px;" class="text-center">Actions</th>
+                        <th><a href="@Model.GetSortUrl("id")" class="text-decoration-none text-dark">N° <i class="@Model.GetSortIcon("id")"></i></a></th>
+                        <th><a href="@Model.GetSortUrl("name")" class="text-decoration-none text-dark">Raison sociale <i class="@Model.GetSortIcon("name")"></i></a></th>
+                        <th><a href="@Model.GetSortUrl("contact")" class="text-decoration-none text-dark">Contact <i class="@Model.GetSortIcon("contact")"></i></a></th>
+                        <th><a href="@Model.GetSortUrl("city")" class="text-decoration-none text-dark">Ville <i class="@Model.GetSortIcon("city")"></i></a></th>
+                        <th><a href="@Model.GetSortUrl("gouvernorat")" class="text-decoration-none text-dark">Gouvernorat <i class="@Model.GetSortIcon("gouvernorat")"></i></a></th>
+                        <th class="text-end"><a href="@Model.GetSortUrl("delai")" class="text-decoration-none text-dark">Livraison (j) <i class="@Model.GetSortIcon("delai")"></i></a></th>
+                        <th class="text-end"><a href="@Model.GetSortUrl("paiement")" class="text-decoration-none text-dark">Paiement (j) <i class="@Model.GetSortIcon("paiement")"></i></a></th>
+                        <th class="text-end"><a href="@Model.GetSortUrl("remise")" class="text-decoration-none text-dark">Remise <i class="@Model.GetSortIcon("remise")"></i></a></th>
+                        <th class="text-center">Articles</th>
+                        <th class="text-center">Commandes</th>
+                        <th class="text-center">Statut</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (Model.Suppliers.Any())
+                    @if (!Model.Fournisseurs.Any())
                     {
-                        @foreach (var supplier in Model.Suppliers)
-                        {
-                            <tr>
-                                <td>
-                                    <input type="checkbox" class="form-check-input supplier-checkbox" value="@supplier.Id" />
-                                </td>
-                                <td>
-                                    <strong class="text-primary">@supplier.CodeFournisseur</strong>
-                                </td>
-                                <td>
-                                    <div>
-                                        <strong>@supplier.RaisonSociale</strong>
-                                        @if (!string.IsNullOrEmpty(supplier.Email))
-                                        {
-                                            <br><small class="text-muted">
-                                                <i class="fas fa-envelope"></i> @supplier.Email
-                                            </small>
-                                        }
-                                    </div>
-                                </td>
-                                <td>
-                                    @if (!string.IsNullOrEmpty(supplier.ContactPrincipal))
-                                    {
-                                        <div>@supplier.ContactPrincipal</div>
-                                        @if (!string.IsNullOrEmpty(supplier.Telephone))
-                                        {
-                                            <small class="text-muted">
-                                                <i class="fas fa-phone"></i> @supplier.Telephone
-                                            </small>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (!string.IsNullOrEmpty(supplier.Ville))
-                                    {
-                                        <i class="fas fa-map-marker-alt text-danger"></i> @supplier.Ville
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (!string.IsNullOrEmpty(supplier.TypeFournisseur))
-                                    {
-                                        <span class="badge bg-info text-dark">@supplier.TypeFournisseur</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (!string.IsNullOrEmpty(supplier.Zone))
-                                    {
-                                        <span class="badge bg-primary">@supplier.Zone</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (supplier.SoldeActuel.HasValue)
-                                    {
-                                        <span class="fw-bold @(supplier.SoldeActuel > 0 ? "text-danger" : supplier.SoldeActuel < 0 ? "text-success" : "text-muted")">
-                                            @supplier.SoldeActuel.Value.ToString("C")
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">0,00 €</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (supplier.IsActive)
-                                    {
-                                        <span class="badge bg-success">
-                                            <i class="fas fa-check-circle"></i> Actif
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">
-                                            <i class="fas fa-pause-circle"></i> Inactif
-                                        </span>
-                                    }
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="@Url.Page("./Details", new { id = supplier.Id, mode = "view" })" 
-                                           class="btn btn-outline-primary btn-sm" title="Voir">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="@Url.Page("./Details", new { id = supplier.Id, mode = "edit" })" 
-                                           class="btn btn-outline-warning btn-sm" title="Modifier">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="@Url.Page("./Details", new { mode = "create", duplicateId = supplier.Id })" 
-                                           class="btn btn-outline-info btn-sm" title="Dupliquer">
-                                            <i class="fas fa-copy"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" 
-                                                onclick="deleteSupplier(@supplier.Id, '@supplier.RaisonSociale')" title="Supprimer">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
+                        <tr><td colspan="12" class="text-center text-muted py-4">Aucun fournisseur trouvé.</td></tr>
                     }
-                    else
+                    @foreach (var f in Model.Fournisseurs)
                     {
                         <tr>
-                            <td colspan="10" class="text-center py-5">
-                                <div class="empty-state">
-                                    <i class="fas fa-truck fa-3x text-muted mb-3"></i>
-                                    <h5 class="text-muted">Aucun fournisseur trouvé</h5>
-                                    <p class="text-muted mb-3">
-                                        @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || Model.StatusFilter != "all" || 
-                                            !string.IsNullOrWhiteSpace(Model.TypeFilter) || !string.IsNullOrWhiteSpace(Model.ZoneFilter) || 
-                                            !string.IsNullOrWhiteSpace(Model.CategoryFilter))
-                                        {
-                                            <text>Aucun fournisseur ne correspond aux critères de recherche.</text>
-                                        }
-                                        else
-                                        {
-                                            <text>Commencez par créer votre premier fournisseur.</text>
-                                        }
-                                    </p>
-                                    <a href="@Url.Page("./Details", new { mode = "create" })" class="btn btn-success">
-                                        <i class="fas fa-plus me-1"></i>
-                                        Créer un fournisseur
-                                    </a>
-                                </div>
+                            <td>#@f.Id</td>
+                            <td>
+                                <div class="fw-semibold">@f.Nom</div>
+                                @if (!string.IsNullOrEmpty(f.MatriculeFiscale))
+                                {
+                                    <div class="small text-muted">MF : @f.MatriculeFiscale</div>
+                                }
+                            </td>
+                            <td>
+                                <div>@f.PersonneContact</div>
+                                <div class="small text-muted">@f.Email</div>
+                                <div class="small text-muted">@f.Telephone</div>
+                            </td>
+                            <td>@f.Ville</td>
+                            <td>@f.Gouvernorat</td>
+                            <td class="text-end">@f.DelaiLivraison</td>
+                            <td class="text-end">@f.DelaiPaiement</td>
+                            <td class="text-end">@f.RemiseAccordee.ToString("0.##") %</td>
+                            <td class="text-center"><span class="badge bg-info text-dark">@f.ArticlesCount</span></td>
+                            <td class="text-center"><span class="badge bg-secondary">@f.CommandesCount</span></td>
+                            <td class="text-center">
+                                @if (f.EstActif)
+                                {
+                                    <span class="badge bg-success">Actif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactif</span>
+                                }
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a asp-page="./Details" asp-route-id="@f.Id" class="btn btn-sm btn-outline-info" title="Détails"><i class="fas fa-eye"></i></a>
+                                <a asp-page="./Edit" asp-route-id="@f.Id" class="btn btn-sm btn-outline-primary" title="Modifier"><i class="fas fa-edit"></i></a>
+
+                                <form method="post" asp-page-handler="ToggleStatus" asp-route-id="@f.Id" class="d-inline"
+                                      asp-route-SearchTerm="@Model.SearchTerm" asp-route-StatusFilter="@Model.StatusFilter"
+                                      asp-route-GouvernoratFilter="@Model.GouvernoratFilter" asp-route-SortBy="@Model.SortBy"
+                                      asp-route-SortOrder="@Model.SortOrder" asp-route-page="@Model.CurrentPage"
+                                      asp-route-pageSize="@Model.PageSize">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning"
+                                            title="@(f.EstActif ? "Désactiver" : "Activer")">
+                                        <i class="fas @(f.EstActif ? "fa-toggle-on" : "fa-toggle-off")"></i>
+                                    </button>
+                                </form>
+
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@f.Id" class="d-inline"
+                                      asp-route-SearchTerm="@Model.SearchTerm" asp-route-StatusFilter="@Model.StatusFilter"
+                                      asp-route-GouvernoratFilter="@Model.GouvernoratFilter" asp-route-SortBy="@Model.SortBy"
+                                      asp-route-SortOrder="@Model.SortOrder" asp-route-page="@Model.CurrentPage"
+                                      asp-route-pageSize="@Model.PageSize"
+                                      onsubmit="return confirm('Supprimer le fournisseur « @f.Nom » ?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <!-- Pagination -->
-    @if (Model.TotalPages > 1)
-    {
-        <nav aria-label="Pagination des fournisseurs" class="mt-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted small">
-                    Affichage de @((Model.CurrentPage - 1) * Model.PageSize + 1) à @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalSuppliers)) sur @Model.TotalSuppliers fournisseur(s)
-                </div>
-                <ul class="pagination mb-0">
-                    <!-- Première page -->
-                    @if (Model.CurrentPage > 1)
-                    {
-                        <li class="page-item">
-                            <a class="page-link" href="@Url.Page("./Index", new { 
-                                SearchTerm = Model.SearchTerm, StatusFilter = Model.StatusFilter, TypeFilter = Model.TypeFilter,
-                                ZoneFilter = Model.ZoneFilter, CategoryFilter = Model.CategoryFilter,
-                                SortBy = Model.SortBy, SortOrder = Model.SortOrder, PageNumber = 1, ItemsPerPage = Model.ItemsPerPage })">
-                                <i class="fas fa-angle-double-left"></i>
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="@Url.Page("./Index", new { 
-                                SearchTerm = Model.SearchTerm, StatusFilter = Model.StatusFilter, TypeFilter = Model.TypeFilter,
-                                ZoneFilter = Model.ZoneFilter, CategoryFilter = Model.CategoryFilter,
-                                SortBy = Model.SortBy, SortOrder = Model.SortOrder, PageNumber = Model.CurrentPage - 1, ItemsPerPage = Model.ItemsPerPage })">
-                                <i class="fas fa-angle-left"></i>
-                            </a>
-                        </li>
-                    }
-
-                    <!-- Pages numérotées -->
-                    @{
-                        int startPage = Math.Max(1, Model.CurrentPage - 2);
-                        int endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
-                    }
-
-                    @for (int i = startPage; i <= endPage; i++)
-                    {
-                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                            <a class="page-link" href="@Url.Page("./Index", new { 
-                                SearchTerm = Model.SearchTerm, StatusFilter = Model.StatusFilter, TypeFilter = Model.TypeFilter,
-                                ZoneFilter = Model.ZoneFilter, CategoryFilter = Model.CategoryFilter,
-                                SortBy = Model.SortBy, SortOrder = Model.SortOrder, PageNumber = i, ItemsPerPage = Model.ItemsPerPage })">
-                                @i
-                            </a>
-                        </li>
-                    }
-
-                    <!-- Dernière page -->
-                    @if (Model.CurrentPage < Model.TotalPages)
-                    {
-                        <li class="page-item">
-                            <a class="page-link" href="@Url.Page("./Index", new { 
-                                SearchTerm = Model.SearchTerm, StatusFilter = Model.StatusFilter, TypeFilter = Model.TypeFilter,
-                                ZoneFilter = Model.ZoneFilter, CategoryFilter = Model.CategoryFilter,
-                                SortBy = Model.SortBy, SortOrder = Model.SortOrder, PageNumber = Model.CurrentPage + 1, ItemsPerPage = Model.ItemsPerPage })">
-                                <i class="fas fa-angle-right"></i>
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="@Url.Page("./Index", new { 
-                                SearchTerm = Model.SearchTerm, StatusFilter = Model.StatusFilter, TypeFilter = Model.TypeFilter,
-                                ZoneFilter = Model.ZoneFilter, CategoryFilter = Model.CategoryFilter,
-                                SortBy = Model.SortBy, SortOrder = Model.SortOrder, PageNumber = Model.TotalPages, ItemsPerPage = Model.ItemsPerPage })">
-                                <i class="fas fa-angle-double-right"></i>
-                            </a>
-                        </li>
-                    }
-                </ul>
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <div class="small text-muted">
+                @if (Model.TotalCount > 0)
+                {
+                    var from = (Model.CurrentPage - 1) * Model.PageSize + 1;
+                    var to = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCount);
+                    <span>@from – @to sur @Model.TotalCount fournisseur(s)</span>
+                }
+                else
+                {
+                    <span>0 fournisseur</span>
+                }
             </div>
-        </nav>
-    }
-</div>
 
-<!-- Modal de confirmation de suppression -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>
-                    Confirmer la suppression
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-3">
-                    Êtes-vous sûr de vouloir supprimer le fournisseur 
-                    <strong id="supplierToDeleteName"></strong> ?
-                </p>
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Attention :</strong> Cette action est irréversible.
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i> Annuler
-                </button>
-                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
-                    <i class="fas fa-trash me-1"></i> Supprimer
-                </button>
-            </div>
+            @if (Model.TotalPages > 1)
+            {
+                var start = Math.Max(1, Model.CurrentPage - 2);
+                var end = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="@Model.GetPageUrl(Model.CurrentPage - 1)">&laquo;</a>
+                        </li>
+                        @for (var p = start; p <= end; p++)
+                        {
+                            <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link" href="@Model.GetPageUrl(p)">@p</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link" href="@Model.GetPageUrl(Model.CurrentPage + 1)">&raquo;</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        // Variables globales
-        let supplierIdToDelete = null;
-
-        // Gestion de la sélection multiple
-        document.addEventListener('DOMContentLoaded', function() {
-            const selectAllCheckbox = document.getElementById('selectAll');
-            const supplierCheckboxes = document.querySelectorAll('.supplier-checkbox');
-            const bulkActionsSelect = document.getElementById('bulkActions');
-            const selectedCountSpan = document.getElementById('selectedCount');
-
-            // Sélectionner/désélectionner tout
-            if (selectAllCheckbox) {
-                selectAllCheckbox.addEventListener('change', function() {
-                    supplierCheckboxes.forEach(checkbox => {
-                        checkbox.checked = this.checked;
-                    });
-                    updateSelectedCount();
-                });
-            }
-
-            // Mise à jour du compteur lors de la sélection individuelle
-            supplierCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    updateSelectedCount();
-                    
-                    // Mettre à jour le checkbox "Tout sélectionner"
-                    if (selectAllCheckbox) {
-                        const checkedCount = document.querySelectorAll('.supplier-checkbox:checked').length;
-                        selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < supplierCheckboxes.length;
-                        selectAllCheckbox.checked = checkedCount === supplierCheckboxes.length;
-                    }
-                });
-            });
-
-            function updateSelectedCount() {
-                const checkedCount = document.querySelectorAll('.supplier-checkbox:checked').length;
-                if (selectedCountSpan) {
-                    selectedCountSpan.textContent = `${checkedCount} fournisseur(s) sélectionné(s)`;
-                }
-                if (bulkActionsSelect) {
-                    bulkActionsSelect.disabled = checkedCount === 0;
-                }
-            }
-
-            // Gestion des actions en lot
-            if (bulkActionsSelect) {
-                bulkActionsSelect.addEventListener('change', function() {
-                    const action = this.value;
-                    const selectedIds = Array.from(document.querySelectorAll('.supplier-checkbox:checked')).map(cb => cb.value);
-                    
-                    if (action && selectedIds.length > 0) {
-                        handleBulkAction(action, selectedIds);
-                        this.value = ''; // Reset la sélection
-                    }
-                });
-            }
-
-            // Auto-submit des filtres avec délai
-            let searchTimeout;
-            const searchInput = document.querySelector('input[name="SearchTerm"]');
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => {
-                        document.getElementById('filterForm').submit();
-                    }, 800);
-                });
-            }
-        });
-
-        // Fonction pour gérer les actions en lot
-        function handleBulkAction(action, selectedIds) {
-            switch (action) {
-                case 'activate':
-                    if (confirm(`Activer ${selectedIds.length} fournisseur(s) sélectionné(s) ?`)) {
-                        console.log('Activation en lot:', selectedIds);
-                        // TODO: Implémenter l'activation en lot
-                        alert('Fonctionnalité d\'activation en lot à implémenter');
-                    }
-                    break;
-                case 'deactivate':
-                    if (confirm(`Désactiver ${selectedIds.length} fournisseur(s) sélectionné(s) ?`)) {
-                        console.log('Désactivation en lot:', selectedIds);
-                        // TODO: Implémenter la désactivation en lot
-                        alert('Fonctionnalité de désactivation en lot à implémenter');
-                    }
-                    break;
-                case 'export':
-                    console.log('Export en lot:', selectedIds);
-                    // TODO: Implémenter l'export
-                    alert('Fonctionnalité d\'export à implémenter');
-                    break;
-                case 'delete':
-                    if (confirm(`Supprimer définitivement ${selectedIds.length} fournisseur(s) sélectionné(s) ? Cette action est irréversible.`)) {
-                        console.log('Suppression en lot:', selectedIds);
-                        // TODO: Implémenter la suppression en lot
-                        alert('Fonctionnalité de suppression en lot à implémenter');
-                    }
-                    break;
-            }
-        }
-
-        // Fonction pour supprimer un fournisseur
-        function deleteSupplier(id, name) {
-            supplierIdToDelete = id;
-            const nameElement = document.getElementById('supplierToDeleteName');
-            if (nameElement) {
-                nameElement.textContent = name;
-            }
-            
-            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            modal.show();
-        }
-
-        // Confirmer la suppression
-        function confirmDelete() {
-            if (supplierIdToDelete) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '@Url.Page("./Index", "Delete")';
-                
-                // Ajouter le token anti-forgery
-                const token = document.querySelector('input[name="__RequestVerificationToken"]');
-                if (token) {
-                    const tokenInput = document.createElement('input');
-                    tokenInput.type = 'hidden';
-                    tokenInput.name = '__RequestVerificationToken';
-                    tokenInput.value = token.value;
-                    form.appendChild(tokenInput);
-                }
-                
-                // Ajouter l'ID du fournisseur
-                const idInput = document.createElement('input');
-                idInput.type = 'hidden';
-                idInput.name = 'id';
-                idInput.value = supplierIdToDelete;
-                form.appendChild(idInput);
-                
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-
-        // Persistence des filtres dans localStorage
-        function saveFiltersToStorage() {
-            const filters = {
-                searchTerm: '@Model.SearchTerm',
-                statusFilter: '@Model.StatusFilter',
-                typeFilter: '@Model.TypeFilter',
-                zoneFilter: '@Model.ZoneFilter',
-                categoryFilter: '@Model.CategoryFilter',
-                sortBy: '@Model.SortBy',
-                sortOrder: '@Model.SortOrder',
-                pageSize: '@Model.ItemsPerPage'
-            };
-            localStorage.setItem('supplierFilters', JSON.stringify(filters));
-        }
-
-        // Restaurer les filtres depuis localStorage
-        function loadFiltersFromStorage() {
-            const savedFilters = localStorage.getItem('supplierFilters');
-            if (savedFilters) {
-                try {
-                    const filters = JSON.parse(savedFilters);
-                    
-                    // Restaurer les valeurs si elles ne sont pas déjà définies
-                    if (!new URLSearchParams(window.location.search).has('SearchTerm') && filters.searchTerm) {
-                        const searchInput = document.querySelector('input[name="SearchTerm"]');
-                        if (searchInput && !searchInput.value) {
-                            searchInput.value = filters.searchTerm;
-                        }
-                    }
-                    
-                    console.log('Filtres restaurés:', filters);
-                } catch (e) {
-                    console.error('Erreur lors de la restauration des filtres:', e);
-                    localStorage.removeItem('supplierFilters');
-                }
-            }
-        }
-
-        // Sauvegarder les filtres actuels
-        saveFiltersToStorage();
-
-        // Animation pour les cartes de statistiques
-        function animateStats() {
-            const statCards = document.querySelectorAll('.card');
-            statCards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                
-                setTimeout(() => {
-                    card.style.transition = 'all 0.5s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
-        }
-
-        // Lancer l'animation au chargement
-        document.addEventListener('DOMContentLoaded', animateStats);
-
-        // Fonction pour exporter les données (placeholder)
-        function exportSuppliers(format = 'excel') {
-            const selectedIds = Array.from(document.querySelectorAll('.supplier-checkbox:checked')).map(cb => cb.value);
-            
-            if (selectedIds.length === 0) {
-                alert('Veuillez sélectionner au moins un fournisseur à exporter.');
-                return;
-            }
-
-            console.log(`Export ${format} demandé pour:`, selectedIds);
-            
-            // TODO: Implémenter l'export réel
-            alert(`Fonctionnalité d'export ${format} à implémenter.\nFournisseurs sélectionnés: ${selectedIds.join(', ')}`);
-        }
-
-        // Gestion des tooltips Bootstrap (si disponible)
-        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        }
-
-        // Raccourcis clavier
-        document.addEventListener('keydown', function(e) {
-            // Ctrl+N ou Cmd+N pour nouveau fournisseur
-            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                e.preventDefault();
-                window.location.href = '@Url.Page("./SupplierDetails", new { mode = "create" })';
-            }
-            
-            // Échap pour effacer les filtres
-            if (e.key === 'Escape') {
-                const searchInput = document.querySelector('input[name="SearchTerm"]');
-                if (searchInput && searchInput.value) {
-                    searchInput.value = '';
-                    searchInput.focus();
-                }
-            }
-            
-            // Ctrl+F pour focus sur la recherche
-            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-                const searchInput = document.querySelector('input[name="SearchTerm"]');
-                if (searchInput) {
-                    e.preventDefault();
-                    searchInput.focus();
-                    searchInput.select();
-                }
-            }
-        });
-
-        // Messages d'information sur l'utilisation
-        console.log('🚀 Gestion des Fournisseurs chargée');
-        console.log('💡 Raccourcis disponibles:');
-        console.log('   • Ctrl+N : Nouveau fournisseur');
-        console.log('   • Ctrl+F : Rechercher');
-        console.log('   • Échap : Effacer la recherche');
-    </script>
-
-    <style>
-        /* Styles pour la page des fournisseurs */
-        .empty-state {
-            padding: 3rem 1rem;
-        }
-        
-        .table th {
-            border-top: none;
-            font-weight: 600;
-            color: #495057;
-            background-color: #f8f9fa;
-            white-space: nowrap;
-        }
-        
-        .table td {
-            vertical-align: middle;
-        }
-        
-        .badge {
-            font-size: 0.75rem;
-            padding: 0.35em 0.65em;
-            font-weight: 500;
-        }
-        
-        .btn-group .btn {
-            border-radius: 0.25rem;
-            margin-right: 2px;
-        }
-        
-        .btn-group .btn:last-child {
-            margin-right: 0;
-        }
-        
-        .pagination .page-link {
-            border-color: #dee2e6;
-            color: #6c757d;
-            padding: 0.5rem 0.75rem;
-        }
-        
-        .pagination .page-item.active .page-link {
-            background-color: #007bff;
-            border-color: #007bff;
-            color: white;
-        }
-        
-        .pagination .page-link:hover {
-            background-color: #e9ecef;
-            border-color: #adb5bd;
-            color: #495057;
-        }
-        
-        .card {
-            transition: all 0.15s ease-in-out;
-        }
-        
-        .card:hover {
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-            transform: translateY(-2px);
-        }
-        
-        /* Animations pour les statistiques */
-        .card-body h3 {
-            transition: all 0.3s ease;
-        }
-        
-        .card:hover .card-body h3 {
-            transform: scale(1.05);
-        }
-        
-        /* Amélioration des badges */
-        .badge.bg-info {
-            background-color: #17a2b8 !important;
-            color: white !important;
-        }
-        
-        .badge.bg-primary {
-            background-color: #007bff !important;
-        }
-        
-        .badge.bg-success {
-            background-color: #28a745 !important;
-        }
-        
-        .badge.bg-secondary {
-            background-color: #6c757d !important;
-        }
-        
-        /* Styles pour les actions en lot */
-        #bulkActions:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        #selectedCount {
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-        
-        /* Amélioration de la barre de recherche */
-        .input-group-text {
-            border-right: none;
-        }
-        
-        .form-control.border-start-0 {
-            border-left: none;
-        }
-        
-        .form-control.border-start-0:focus {
-            border-left: 1px solid #80bdff;
-        }
-        
-        /* États de hover pour les lignes du tableau */
-        .table-hover tbody tr:hover {
-            background-color: rgba(0, 123, 255, 0.1);
-        }
-        
-        /* Indicateurs de tri */
-        .table th a {
-            transition: color 0.2s ease;
-        }
-        
-        .table th a:hover {
-            color: #007bff !important;
-        }
-        
-        .fa-sort, .fa-sort-up, .fa-sort-down {
-            font-size: 0.8rem;
-            margin-left: 0.25rem;
-        }
-        
-        /* Responsive design amélioré */
-        media (max-width: 768px) {
-            .btn-group {
-                display: flex;
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .btn-group .btn {
-                margin-bottom: 2px;
-                margin-right: 0;
-                border-radius: 0.25rem !important;
-            }
-            
-            .d-flex.justify-content-between {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .table-responsive {
-                font-size: 0.875rem;
-            }
-            
-            .card-body h3 {
-                font-size: 1.5rem;
-            }
-        }
-        
-        /* Animation de chargement */
-        keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        
-        .loading {
-            animation: pulse 1.5s infinite;
-        }
-        
-        /* Amélioration des modales */
-        .modal-content {
-            border: none;
-            border-radius: 0.5rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        }
-        
-        .modal-header {
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .modal-footer {
-            border-top: 1px solid #e9ecef;
-        }
-        
-        /* Focus states améliorés */
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-        }
-        
-        /* Styles pour les états vides */
-        .empty-state i {
-            opacity: 0.5;
-            transition: all 0.3s ease;
-        }
-        
-        .empty-state:hover i {
-            opacity: 0.8;
-            transform: scale(1.1);
-        }
-    </style>
-}

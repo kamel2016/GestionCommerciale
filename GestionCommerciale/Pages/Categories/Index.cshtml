@@ -1,74 +1,116 @@
 ﻿@page
 @model GestionCommerciale.Pages.Categories.IndexModel
-@{
-    ViewBag.Title = "Liste des catégories";
-    Layout = "~/Pages/Shared/_Layout.cshtml";
-}
 
-<div class="container fade-in">
-    <h1>Liste des categories</h1>
+<link href="~/css/category-index.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-    <!-- Bouton Nouvel Article -->
-    <div class="mb-4">
-        <a asp-page="Create" class="btn btn-primary">
-            <i class="fas fa-plus"></i>
-            Nouvelle Catégorie
+<div class="category-page">
+
+    <div class="page-header">
+        <h1>Catégories</h1>
+        <a asp-page="./Create" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nouvelle catégorie
         </a>
     </div>
 
-    <!-- Barre de recherche -->
-    <div class="search-container">
-        <form method="get" class="search-form">
-            <div class="search-input">
-                <input type="text" name="Filtre" value="@Model.Filtre" class="form-control" placeholder="Rechercher par référence, libellé ou code barre..." />
-            </div>
-            <button type="submit" class="btn btn-secondary">
-                <i class="fas fa-search"></i>
-                Rechercher
-            </button>
-        </form>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <!-- Statistiques -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-value">@Model.TotalCount</span>
+            <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-card success">
+            <span class="stat-value">@Model.TotalActive</span>
+            <span class="stat-label">Actives</span>
+        </div>
+        <div class="stat-card muted">
+            <span class="stat-value">@Model.TotalInactive</span>
+            <span class="stat-label">Inactives</span>
+        </div>
     </div>
 
-    <!-- Tableau des articles -->
-    <div class="table-container">
-        <table class="table">
+    <!-- Filtres -->
+    <form method="get" class="filters">
+        <input type="search" name="SearchTerm" value="@Model.SearchTerm"
+               placeholder="Rechercher (nom, code, description)..." />
+        <select name="StatusFilter">
+            <option value="">Tous les statuts</option>
+            <option value="active" selected="@(Model.StatusFilter == "active")">Actives</option>
+            <option value="inactive" selected="@(Model.StatusFilter == "inactive")">Inactives</option>
+        </select>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Filtrer</button>
+        <a asp-page="./Index" class="btn btn-light">Réinitialiser</a>
+    </form>
+
+    <!-- Tableau -->
+    <div class="table-wrapper">
+        <table class="data-table">
             <thead>
                 <tr>
-                    <th>@Html.DisplayNameFor(model => model.Categories.First().Libelle)</th>
-                    <th>Actions</th>
+                    <th>Code</th>
+                    <th>Nom</th>
+                    <th>Parent</th>
+                    <th class="center">Articles</th>
+                    <th class="center">Sous-cat.</th>
+                    <th class="center">Ordre</th>
+                    <th>Statut</th>
+                    <th style="text-align:right">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @if (Model.Categories != null && Model.Categories.Any())
+                @foreach (var c in Model.Categories)
                 {
-                    foreach (var item in Model.Categories)
-                    {
-                                <tr>
-                                    <td>@Html.DisplayFor(modelItem => item.Libelle)</td>
-                                    <td>
-                                        <div class="table-actions">
-                                            <a asp-page="Edit" asp-route-id="@item.ID" class="action-edit">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a asp-page="Details" asp-route-id="@item.ID" class="action-details">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a asp-page="Delete" asp-route-id="@item.ID" class="action-delete">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                    }
+                    <tr>
+                        <td>
+                            <span class="cat-code">
+                                <span class="cat-icon" style="background:@c.Color">
+                                    <i class="@c.Icon"></i>
+                                </span>
+                                @c.Code
+                            </span>
+                        </td>
+                        <td>
+                            <span class="cat-name">@c.Name</span>
+                            @if (!string.IsNullOrWhiteSpace(c.Description))
+                            {
+                                <span class="cat-desc" title="@c.Description">@c.Description</span>
+                            }
+                        </td>
+                        <td>@(c.ParentCategory?.Name ?? "—")</td>
+                        <td class="center"><span class="count-pill @(c.ArticlesCount == 0 ? "zero" : "")">@c.ArticlesCount</span></td>
+                        <td class="center"><span class="count-pill @(c.SubCategoriesCount == 0 ? "zero" : "")">@c.SubCategoriesCount</span></td>
+                        <td class="center">@c.DisplayOrder</td>
+                        <td>
+                            <span class="badge @(c.IsActive ? "badge-active" : "badge-inactive")">
+                                @(c.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <a asp-page="./Edit" asp-route-id="@c.Id" class="btn-icon edit" title="Modifier">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <button type="button" class="btn-icon delete btn-delete"
+                                        data-id="@c.Id" data-name="@c.Name" title="Supprimer"
+                                        disabled="@(c.ArticlesCount > 0 || c.SubCategoriesCount > 0)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
                 }
-                else
+                @if (!Model.Categories.Any())
                 {
-                        <tr>
-                            <td colspan="7" class="empty-state">
-                                <h3>Aucun article trouvé</h3>
-                                <p>Essayez de modifier vos critères de recherche</p>
-                            </td>
-                        </tr>
+                    <tr><td colspan="8" class="empty">Aucune catégorie trouvée.</td></tr>
                 }
             </tbody>
         </table>

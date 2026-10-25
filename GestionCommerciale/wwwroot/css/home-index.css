@@ -1,0 +1,112 @@
+﻿.home-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.home-hero {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: #fff;
+    border-radius: 16px;
+    padding: 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+}
+
+    .home-hero h1 {
+        margin: 0 0 .5rem;
+        font-size: 2rem;
+    }
+
+    .home-hero p {
+        margin: 0;
+        opacity: .9;
+    }
+
+.hero-icon {
+    font-size: 4rem;
+    opacity: .25;
+}
+
+.home-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+}
+
+    .stat-card i {
+        font-size: 1.6rem;
+        color: #2563eb;
+        background: #eff6ff;
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+.stat-value {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: .9rem;
+}
+
+.home-modules {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+}
+
+.module-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #e2e8f0;
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+}
+
+    .module-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, .08);
+        border-color: #2563eb;
+    }
+
+    .module-card i {
+        font-size: 1.8rem;
+        color: #2563eb;
+        margin-bottom: .75rem;
+    }
+
+    .module-card h3 {
+        margin: 0 0 .4rem;
+        font-size: 1.15rem;
+        color: #0f172a;
+    }
+
+    .module-card p {
+        margin: 0;
+        color: #64748b;
+        font-size: .9rem;
+    }

@@ -1,0 +1,476 @@
+﻿/* =========================================================
+   Page Catégories - Index
+   Toutes les règles sont préfixées par .category-page
+   pour éviter les conflits avec articles.css et Bootstrap
+   ========================================================= */
+
+.category-page {
+    --c-primary: #4f46e5;
+    --c-primary-dark: #4338ca;
+    --c-success: #16a34a;
+    --c-danger: #dc2626;
+    --c-muted: #6b7280;
+    --c-border: #e5e7eb;
+    --c-bg: #f8fafc;
+    --c-card: #ffffff;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+}
+
+    /* ---------- En-tête ---------- */
+    .category-page .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+        .category-page .page-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 0;
+            color: #111827;
+        }
+
+    /* ---------- Boutons ---------- */
+    .category-page .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: .9rem;
+        font-weight: 600;
+        line-height: 1.2;
+        cursor: pointer;
+        text-decoration: none;
+        transform: none;
+        transition: all .15s ease;
+    }
+
+    .category-page .btn-primary {
+        background: var(--c-primary);
+        color: #fff;
+    }
+
+        .category-page .btn-primary:hover {
+            background: var(--c-primary-dark);
+            color: #fff;
+            transform: none;
+            box-shadow: none;
+        }
+
+    .category-page .btn-light {
+        background: #fff;
+        color: #374151;
+        border-color: var(--c-border);
+    }
+
+        .category-page .btn-light:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+    .category-page .btn-danger {
+        background: var(--c-danger);
+        color: #fff;
+    }
+
+        .category-page .btn-danger:hover {
+            background: #b91c1c;
+            color: #fff;
+            transform: none;
+        }
+
+    /* ---------- Alertes ---------- */
+    .category-page .alert {
+        padding: 12px 16px;
+        border: none;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: .9rem;
+    }
+
+    .category-page .alert-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .category-page .alert-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* ---------- Cartes de statistiques ---------- */
+    .category-page .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .category-page .stat-card {
+        background: var(--c-card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 18px 20px;
+        border-left: 4px solid var(--c-primary);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+        .category-page .stat-card.success {
+            border-left-color: var(--c-success);
+        }
+
+        .category-page .stat-card.muted {
+            border-left-color: #9ca3af;
+        }
+
+        .category-page .stat-card .stat-value {
+            font-size: 1.9rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #111827;
+        }
+
+        .category-page .stat-card .stat-label {
+            font-size: .75rem;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--c-muted);
+        }
+
+    /* ---------- Barre de filtres ---------- */
+    .category-page .filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        background: var(--c-card);
+        padding: 16px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 20px;
+    }
+
+        .category-page .filters input[type="text"],
+        .category-page .filters input[type="search"],
+        .category-page .filters select {
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            background: #fff;
+            font-size: .9rem;
+            color: #374151;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .category-page .filters input[type="text"],
+        .category-page .filters input[type="search"] {
+            flex: 1 1 240px;
+            min-width: 200px;
+        }
+
+        .category-page .filters input:focus,
+        .category-page .filters select:focus {
+            border-color: var(--c-primary);
+            box-shadow: 0 0 0 3px rgba(79,70,229,.15);
+        }
+
+        .category-page .filters .btn {
+            height: 40px;
+            padding: 0 18px;
+        }
+
+    /* ---------- Tableau ---------- */
+    .category-page .table-wrapper {
+        background: var(--c-card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow-x: auto;
+    }
+
+    .category-page .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .92rem;
+        margin: 0;
+    }
+
+        .category-page .data-table thead th {
+            background: #f9fafb;
+            color: var(--c-muted);
+            font-size: .72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            text-align: left;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--c-border);
+            white-space: nowrap;
+        }
+
+        .category-page .data-table tbody td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+            color: #374151;
+            background: transparent;
+        }
+
+        .category-page .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .category-page .data-table tbody tr:hover td {
+            background: #f9fafb;
+        }
+
+        .category-page .data-table .center {
+            text-align: center;
+        }
+
+        .category-page .data-table .empty {
+            text-align: center;
+            padding: 40px 16px;
+            color: var(--c-muted);
+        }
+
+    /* ---------- Colonne Code ---------- */
+    .category-page .code-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .category-page .code-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        color: #fff;
+        font-size: .85rem;
+        flex-shrink: 0;
+    }
+
+    /* ---------- Colonne Nom ---------- */
+    .category-page .name-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+        .category-page .name-cell .name {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .category-page .name-cell .desc {
+            font-size: .8rem;
+            color: var(--c-muted);
+            max-width: 280px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+    /* ---------- Pastilles (compteurs, statut) ---------- */
+    .category-page .count-pill {
+        display: inline-block;
+        min-width: 28px;
+        padding: 2px 10px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: var(--c-primary);
+        font-weight: 600;
+        font-size: .82rem;
+        text-align: center;
+    }
+
+        .category-page .count-pill.zero {
+            background: #f3f4f6;
+            color: #9ca3af;
+        }
+
+    .category-page .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: .78rem;
+        font-weight: 600;
+        border: none;
+    }
+
+        .category-page .badge::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+    .category-page .badge-active {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .category-page .badge-inactive {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    /* ---------- Boutons d'action ---------- */
+    .category-page .actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .category-page .btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: 1px solid var(--c-border);
+        border-radius: 8px;
+        background: #fff;
+        color: #4b5563;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all .15s ease;
+    }
+
+        .category-page .btn-icon.btn-edit:hover {
+            background: var(--c-primary);
+            border-color: var(--c-primary);
+            color: #fff;
+        }
+
+        .category-page .btn-icon.btn-delete:hover {
+            background: var(--c-danger);
+            border-color: var(--c-danger);
+            color: #fff;
+        }
+
+        .category-page .btn-icon:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+            background: #f9fafb;
+            border-color: var(--c-border);
+            color: #9ca3af;
+        }
+
+    /* ---------- Pagination ---------- */
+    .category-page .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 20px;
+        padding: 0;
+        list-style: none;
+    }
+
+    .category-page .page-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+        padding: 0 10px;
+        border: 1px solid var(--c-border);
+        border-radius: 8px;
+        background: #fff;
+        color: #374151;
+        text-decoration: none;
+        font-size: .88rem;
+    }
+
+        .category-page .page-link:hover {
+            background: #f3f4f6;
+        }
+
+        .category-page .page-link.active {
+            background: var(--c-primary);
+            border-color: var(--c-primary);
+            color: #fff;
+        }
+
+    /* ---------- Modale de suppression ---------- */
+    .category-page .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(17,24,39,.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1055;
+    }
+
+        .category-page .modal[style*="display:none"],
+        .category-page .modal[style*="display: none"] {
+            display: none !important;
+        }
+
+    .category-page .modal-content {
+        background: #fff;
+        padding: 24px;
+        border-radius: var(--radius);
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 20px 40px rgba(0,0,0,.2);
+    }
+
+        .category-page .modal-content h3 {
+            margin: 0 0 8px;
+            font-size: 1.15rem;
+        }
+
+        .category-page .modal-content p {
+            color: var(--c-muted);
+            margin-bottom: 20px;
+        }
+
+    .category-page .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .category-page .filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+        .category-page .filters input,
+        .category-page .filters select,
+        .category-page .filters .btn {
+            width: 100%;
+            flex: none;
+        }
+
+    .category-page .name-cell .desc {
+        max-width: 160px;
+    }
+}

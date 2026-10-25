@@ -1,8 +1,10 @@
-﻿@page
+﻿@page "{id:int}"
 @using GestionCommerciale.Enums
-@model GestionCommerciale.Pages.Commande_Client.DetailsModel
+@model GestionCommerciale.Pages.Commande_Fournisseur.DetailsModel
 @{
-    ViewData["Title"] = "Détail Commande";
+    ViewData["Title"] = "Détail commande fournisseur";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+    var c = Model.CommandeFournisseur;
 }
 
 <div class="container-fluid">
@@ -12,34 +14,39 @@
                 <div class="card-header bg-info text-white">
                     <h4 class="mb-0">
                         <i class="fas fa-eye me-2"></i>
-                        Détail de la Commande @Model.CommandeClient.NumeroCommande
+                        Commande @c.NumeroCommande
                     </h4>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="card mb-3">
-                                <div class="card-header bg-light">
-                                    <h6 class="mb-0">Informations Générales</h6>
-                                </div>
+                                <div class="card-header bg-light"><h6 class="mb-0">Informations générales</h6></div>
                                 <div class="card-body">
-                                    <dl class="row">
-                                        <dt class="col-sm-4">@Html.DisplayNameFor(model => model.CommandeClient.NumeroCommande)</dt>
-                                        <dd class="col-sm-8">@Html.DisplayFor(model => model.CommandeClient.NumeroCommande)</dd>
-                                        
-                                        <dt class="col-sm-4">@Html.DisplayNameFor(model => model.CommandeClient.DateCommande)</dt>
-                                        <dd class="col-sm-8">@Html.DisplayFor(model => model.CommandeClient.DateCommande)</dd>
-                                        
-                                        <dt class="col-sm-4">@Html.DisplayNameFor(model => model.CommandeClient.DateLivraison)</dt>
-                                        <dd class="col-sm-8">@Html.DisplayFor(model => model.CommandeClient.DateLivraison)</dd>
-                                        
-                                        <dt class="col-sm-4">@Html.DisplayNameFor(model => model.CommandeClient.Statut)</dt>
-                                        <dd class="col-sm-8">
-                                            <span class="badge bg-@(Model.CommandeClient.Statut == StatutCommande.EnAttente ? "warning" : 
-                                                                   Model.CommandeClient.Statut == StatutCommande.Confirmee ? "success" : 
-                                                                   Model.CommandeClient.Statut == StatutCommande.Livree ? "primary" : "danger")">
-                                                @Html.DisplayFor(model => model.CommandeClient.Statut)
-                                            </span>
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-5">Numéro</dt>
+                                        <dd class="col-sm-7">@c.NumeroCommande</dd>
+                                        <dt class="col-sm-5">Date commande</dt>
+                                        <dd class="col-sm-7">@c.DateCommande.ToString("dd/MM/yyyy")</dd>
+                                        <dt class="col-sm-5">Livraison prévue</dt>
+                                        <dd class="col-sm-7">@(c.DateLivraisonPrevue?.ToString("dd/MM/yyyy") ?? "-")</dd>
+                                        <dt class="col-sm-5">Statut</dt>
+                                        <dd class="col-sm-7">
+                                            @switch (c.Statut)
+                                            {
+                                                case StatutCommande.EnAttente:
+                                                    <span class="badge bg-warning">En attente</span>
+                                                    break;
+                                                case StatutCommande.EnPreparation:
+                                                    <span class="badge bg-primary">En cours</span>
+                                                    break;
+                                                case StatutCommande.Livree:
+                                                    <span class="badge bg-success">Livrée</span>
+                                                    break;
+                                                case StatutCommande.Annulee:
+                                                    <span class="badge bg-danger">Annulée</span>
+                                                    break;
+                                            }
                                         </dd>
                                     </dl>
                                 </div>
@@ -47,42 +54,31 @@
                         </div>
                         <div class="col-md-6">
                             <div class="card mb-3">
-                                <div class="card-header bg-light">
-                                    <h6 class="mb-0">Informations Client</h6>
-                                </div>
+                                <div class="card-header bg-light"><h6 class="mb-0">Fournisseur</h6></div>
                                 <div class="card-body">
-                                    <dl class="row">
-                                        <dt class="col-sm-4">Client</dt>
-                                        <dd class="col-sm-8">@Html.DisplayFor(model => model.CommandeClient.Client.Nom)</dd>
-                                        
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-4">Nom</dt>
+                                        <dd class="col-sm-8">@c.Fournisseur.Nom</dd>
                                         <dt class="col-sm-4">Email</dt>
-                                        <dd class="col-sm-8">@Html.DisplayFor(model => model.CommandeClient.Client.Email)</dd>
-                                        
+                                        <dd class="col-sm-8">@c.Fournisseur.Email</dd>
                                         <dt class="col-sm-4">Téléphone</dt>
-                                        <dd class="col-sm-8">@Html.DisplayFor(model => model.CommandeClient.Client.Telephone)</dd>
+                                        <dd class="col-sm-8">@c.Fournisseur.Telephone</dd>
                                     </dl>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    @if (!string.IsNullOrEmpty(Model.CommandeClient.Commentaire))
+                    @if (!string.IsNullOrEmpty(c.Commentaire))
                     {
                         <div class="card mb-3">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0">Commentaire</h6>
-                            </div>
-                            <div class="card-body">
-                                <p class="mb-0">@Html.DisplayFor(model => model.CommandeClient.Commentaire)</p>
-                            </div>
+                            <div class="card-header bg-light"><h6 class="mb-0">Commentaire</h6></div>
+                            <div class="card-body"><p class="mb-0">@c.Commentaire</p></div>
                         </div>
                     }
 
-                    <!-- Articles de la commande -->
                     <div class="card">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0">Articles de la commande</h6>
-                        </div>
+                        <div class="card-header bg-light"><h6 class="mb-0">Articles</h6></div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table table-hover mb-0">
@@ -90,33 +86,33 @@
                                         <tr>
                                             <th>Article</th>
                                             <th>Quantité</th>
-                                            <th>Prix Unitaire</th>
-                                            <th>Montant</th>
+                                            <th>Prix unitaire HT</th>
+                                            <th>Montant HT</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var ligne in Model.CommandeClient.LignesCommande)
+                                        @foreach (var l in c.LignesCommande)
                                         {
                                             <tr>
-                                                <td>@Html.DisplayFor(modelItem => ligne.Article.Libelle)</td>
-                                                <td>@Html.DisplayFor(modelItem => ligne.Quantite)</td>
-                                                <td>@Html.DisplayFor(modelItem => ligne.PrixUnitaire)</td>
-                                                <td>@Html.DisplayFor(modelItem => ligne.MontantLigne)</td>
+                                                <td>@l.Article.Libelle</td>
+                                                <td>@l.Quantite</td>
+                                                <td>@l.PrixUnitaire.ToString("C")</td>
+                                                <td>@l.MontantLigne.ToString("C")</td>
                                             </tr>
                                         }
                                     </tbody>
                                     <tfoot>
                                         <tr class="table-info">
                                             <th colspan="3">Total HT</th>
-                                            <th>@Html.DisplayFor(model => model.CommandeClient.MontantHT)</th>
+                                            <th>@c.MontantHT.ToString("C")</th>
                                         </tr>
                                         <tr class="table-info">
-                                            <th colspan="3">TVA</th>
-                                            <th>@Html.DisplayFor(model => model.CommandeClient.MontantTVA)</th>
+                                            <th colspan="3">TVA (20 %)</th>
+                                            <th>@c.MontantTVA.ToString("C")</th>
                                         </tr>
                                         <tr class="table-success">
                                             <th colspan="3">Total TTC</th>
-                                            <th>@Html.DisplayFor(model => model.CommandeClient.MontantTTC)</th>
+                                            <th>@c.MontantTTC.ToString("C")</th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -126,17 +122,14 @@
 
                     <div class="d-flex justify-content-between mt-4">
                         <a asp-page="./Index" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-1"></i>
-                            Retour à la liste
+                            <i class="fas fa-arrow-left me-1"></i> Retour à la liste
                         </a>
                         <div>
-                            <a asp-page="./Edit" asp-route-id="@Model.CommandeClient.Id" class="btn btn-primary me-2">
-                                <i class="fas fa-edit me-1"></i>
-                                Modifier
+                            <a asp-page="./Edit" asp-route-id="@c.Id" class="btn btn-primary me-2">
+                                <i class="fas fa-edit me-1"></i> Modifier
                             </a>
                             <button type="button" class="btn btn-success" onclick="window.print()">
-                                <i class="fas fa-print me-1"></i>
-                                Imprimer
+                                <i class="fas fa-print me-1"></i> Imprimer
                             </button>
                         </div>
                     </div>

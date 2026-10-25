@@ -1,3 +1,6 @@
+// Pages/Suppliers/Edit.cshtml.cs
+
+using GestionCommerciale.Data;
 using GestionCommerciale.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -7,87 +10,161 @@ namespace GestionCommerciale.Pages.Fournisseurs
 {
     public class EditModel : PageModel
     {
-        //private readonly ApplicationDbContext _context;
-
-        //public EditModel(ApplicationDbContext context)
-        //{
-        //    _context = context;
-        //}
-
-        public EditModel()
-        {
-        }
+        private readonly ApplicationDbContext _context;
+        private readonly ILogger<EditModel> _logger;
 
         [BindProperty]
-        public Client Client { get; set; } = default!;
+        public Fournisseur Fournisseur { get; set; } = null!;
 
-        public async Task<IActionResult> OnGetAsync(int? id)
+        public int ArticlesCount { get; set; }
+        public int CommandesCount { get; set; }
+
+        public List<string> Gouvernorats { get; set; } = new();
+
+        public EditModel(ApplicationDbContext context, ILogger<EditModel> logger)
         {
-            if (id == null)
+            _context = context;
+            _logger = logger;
+        }
+
+        public async Task<IActionResult> OnGetAsync(int id)
+        {
+            try
             {
-                return NotFound();
+                // Charger le fournisseur
+                Fournisseur = await _context.Fournisseurs.FirstOrDefaultAsync(f => f.Id == id);
+
+                if (Fournisseur == null)
+                {
+                    TempData["Error"] = "Fournisseur non trouvé.";
+                    return RedirectToPage("Index");
+                }
+
+                // Compter les articles
+                ArticlesCount = await _context.Articles
+                    .Where(a => a.FournisseurId == id)
+                    .CountAsync();
+
+                // Compter les commandes
+                CommandesCount = await _context.CommandesFournisseur
+                    .Where(c => c.FournisseurId == id)
+                    .CountAsync();
+
+                // Charger les gouvernorats
+                LoadGouvernorats();
+
+                return Page();
             }
-
-            //Client = await _context.Clients.FirstOrDefaultAsync(m => m.Id == id);
-
-            Client = new Client
+            catch (Exception ex)
             {
-                Id = 6,
-                Nom = "Petit",
-                Prenom = "Antoine",
-                Email = "antoine.petit@example.com",
-                Telephone = "0644556677",
-                Adresse = "17 Rue Sainte-Catherine, 33000 Bordeaux",
-                DateCreation = DateTime.Now.AddDays(-5)
-            };
-
-            if (Client == null)
-            {
-                return NotFound();
+                _logger.LogError(ex, "Erreur lors du chargement du fournisseur {Id}", id);
+                TempData["Error"] = "Une erreur s'est produite.";
+                return RedirectToPage("Index");
             }
-
-            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
-
-            // Vérifier si l'email existe déjà (sauf pour le client actuel)
-            //if (await _context.Clients.AnyAsync(c => c.Email == Client.Email && c.Id != Client.Id))
-            //{
-            //    ModelState.AddModelError("Client.Email", "Un client avec cet email existe déjà.");
-            //    return Page();
-            //}
-
-            Client.DateModification = DateTime.Now;
-            //_context.Attach(Client).State = EntityState.Modified;
-
             try
             {
-                //await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ClientExists(Client.Id))
+                if (!ModelState.IsValid)
                 {
-                    return NotFound();
+                    LoadGouvernorats();
+                    return Page();
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return RedirectToPage("./Index");
+                // Vérifier que le fournisseur existe
+                var existingFournisseur = await _context.Fournisseurs
+                    .FirstOrDefaultAsync(f => f.Id == Fournisseur.Id);
+
+                if (existingFournisseur == null)
+                {
+                    TempData["Error"] = "Fournisseur non trouvé.";
+                    return RedirectToPage("Index");
+                }
+
+                // Vérifier l'unicité de l'email (sauf lui-même)
+                if (!string.IsNullOrEmpty(Fournisseur.Email))
+                {
+                    var emailExists = await _context.Fournisseurs
+                        .AnyAsync(f => f.Email == Fournisseur.Email
+                            && f.Id != Fournisseur.Id);
+
+                    if (emailExists)
+                    {
+                        ModelState.AddModelError("Fournisseur.Email", "Cet email est déjà utilisé.");
+                        LoadGouvernorats();
+                        return Page();
+                    }
+                }
+
+                // Mettre à jour les propriétés
+                existingFournisseur.Nom = Fournisseur.Nom;
+                existingFournisseur.MatriculeFiscale = Fournisseur.MatriculeFiscale;
+                existingFournisseur.Email = Fournisseur.Email;
+                existingFournisseur.Telephone = Fournisseur.Telephone;
+                existingFournisseur.Fax = Fournisseur.Fax;
+                existingFournisseur.PersonneContact = Fournisseur.PersonneContact;
+                existingFournisseur.Adresse = Fournisseur.Adresse;
+                existingFournisseur.CodePostal = Fournisseur.CodePostal;
+                existingFournisseur.Ville = Fournisseur.Ville;
+                existingFournisseur.Gouvernorat = Fournisseur.Gouvernorat;
+                existingFournisseur.DelaiLivraison = Fournisseur.DelaiLivraison;
+                existingFournisseur.DelaiPaiement = Fournisseur.DelaiPaiement;
+                existingFournisseur.RemiseAccordee = Fournisseur.RemiseAccordee;
+                existingFournisseur.EstActif = Fournisseur.EstActif;
+                existingFournisseur.DateModification = DateTime.Now;
+
+                _context.Fournisseurs.Update(existingFournisseur);
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Fournisseur modifié avec succès.";
+                return RedirectToPage("Index");
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Erreur base de données lors de la modification");
+                ModelState.AddModelError("", "Une erreur base de données s'est produite.");
+                LoadGouvernorats();
+                return Page();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la modification du fournisseur");
+                ModelState.AddModelError("", "Une erreur s'est produite.");
+                LoadGouvernorats();
+                return Page();
+            }
         }
 
-        private bool ClientExists(int id)
+        private void LoadGouvernorats()
         {
-            return false;// _context.Clients.Any(e => e.Id == id);
+            Gouvernorats = new List<string>
+            {
+                "Tunis",
+                "Ariana",
+                "Ben Arous",
+                "Manouba",
+                "Nabeul",
+                "Zaghouan",
+                "Bizerte",
+                "Sousse",
+                "Monastir",
+                "Mahdia",
+                "Sfax",
+                "Gabes",
+                "Medenine",
+                "Tataouine",
+                "Gafsa",
+                "Tozeur",
+                "Kebili",
+                "Kasserine",
+                "Sidi Bouzid",
+                "Kairouan",
+                "Jendouba",
+                "Le Kef",
+                "Siliana"
+            };
         }
     }
 }

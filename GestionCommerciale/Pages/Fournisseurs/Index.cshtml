@@ -1,4 +1,231 @@
 ﻿@page
-@model GestionCommerciale.Pages.Clients.IndexModel
+@model GestionCommerciale.Pages.Suppliers.IndexModel
 @{
+    ViewData["Title"] = "Fournisseurs";
 }
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/fournisseur-index.css" asp-append-version="true" />
+}
+
+<div class="suppliers-container">
+
+    <!-- En-tête -->
+    <div class="suppliers-header">
+        <div>
+            <h1><i class="fas fa-truck"></i> Gestion des Fournisseurs</h1>
+            <div class="header-info">@Model.TotalCount fournisseur(s) au total</div>
+        </div>
+        <div class="btn-group">
+            <a asp-page="./Create" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nouveau fournisseur
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="close" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="close" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+    }
+
+    <!-- Recherche + filtres -->
+    <div class="search-panel">
+        <form method="get" class="search-form">
+            <div class="search-row">
+                <div class="search-input-group">
+                    <input type="text" name="SearchTerm" value="@Model.SearchTerm"
+                           class="search-input"
+                           placeholder="Rechercher par nom, matricule fiscal, email, téléphone ou ville..." />
+                    <button type="submit" class="btn-search"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label>Statut</label>
+                    <select name="StatusFilter" class="filter-select" onchange="this.form.submit()">
+                        <option value="all" selected="@(Model.StatusFilter == "all")">-- Tous les statuts --</option>
+                        <option value="active" selected="@(Model.StatusFilter == "active")">Actifs</option>
+                        <option value="inactive" selected="@(Model.StatusFilter == "inactive")">Inactifs</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Gouvernorat</label>
+                    <select name="GouvernoratFilter" class="filter-select" onchange="this.form.submit()">
+                        @foreach (var opt in Model.GouvernoratOptions)
+                        {
+                            <option value="@opt.Value" selected="@opt.Selected">@opt.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Affichage par page</label>
+                    <select name="PageSize" class="filter-select" onchange="this.form.submit()">
+                        @foreach (var size in new[] { 10, 25, 50, 100 })
+                        {
+                            <option value="@size" selected="@(Model.PageSize == size)">@size</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <a asp-page="./Index" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-undo"></i> Réinitialiser
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tableau -->
+    @if (!Model.Fournisseurs.Any())
+    {
+        <div class="empty-state">
+            <i class="fas fa-truck"></i>
+            <h3>Aucun fournisseur trouvé</h3>
+            <p>Modifiez vos critères de recherche ou créez un nouveau fournisseur.</p>
+            <a asp-page="./Create" class="btn btn-success"><i class="fas fa-plus"></i> Nouveau fournisseur</a>
+        </div>
+    }
+    else
+    {
+        <div class="suppliers-table-wrapper">
+            <table class="suppliers-table">
+                <thead>
+                    <tr>
+                        <th><a href="@Model.GetSortUrl("name")">Raison sociale <i class="fas fa-sort"></i></a></th>
+                        <th>Contact</th>
+                        <th><a href="@Model.GetSortUrl("city")">Ville <i class="fas fa-sort"></i></a></th>
+                        <th>Gouvernorat</th>
+                        <th>Conditions</th>
+                        <th class="text-center">Articles</th>
+                        <th class="text-center">Commandes</th>
+                        <th>Statut</th>
+                        <th><a href="@Model.GetSortUrl("created")">Créé <i class="fas fa-sort"></i></a></th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var f in Model.Fournisseurs)
+                    {
+                        <tr class="@(f.EstActif ? "" : "inactive-row")">
+                            <td data-label="Raison sociale">
+                                <span class="supplier-name">@f.Nom</span>
+                                <span class="supplier-id">#@f.Id@(string.IsNullOrEmpty(f.MatriculeFiscale) ? "" : " · " + f.MatriculeFiscale)</span>
+                            </td>
+                            <td data-label="Contact">
+                                @if (!string.IsNullOrEmpty(f.PersonneContact))
+                                {
+                                    <span class="supplier-name">@f.PersonneContact</span>
+                                }
+                                @if (!string.IsNullOrEmpty(f.Email))
+                                {
+                                    <span class="supplier-email"><a href="mailto:@f.Email">@f.Email</a></span>
+                                }
+                                @if (!string.IsNullOrEmpty(f.Telephone))
+                                {
+                                    <span class="supplier-phone">@f.Telephone</span>
+                                }
+                                @if (string.IsNullOrEmpty(f.PersonneContact) && string.IsNullOrEmpty(f.Email) && string.IsNullOrEmpty(f.Telephone))
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td data-label="Ville">@(string.IsNullOrEmpty(f.Ville) ? "-" : f.Ville)</td>
+                            <td data-label="Gouvernorat">
+                                @if (!string.IsNullOrEmpty(f.Gouvernorat))
+                                {
+                                    <span class="badge badge-gouvernorat">@f.Gouvernorat</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td data-label="Conditions">
+                                <span class="delay-badge" title="Délai de livraison">@f.DelaiLivraison <span class="unit">j livr.</span></span>
+                                <span class="delay-badge" title="Délai de paiement">@f.DelaiPaiement <span class="unit">j paie.</span></span>
+                                @if (f.RemiseAccordee > 0)
+                                {
+                                    <span class="discount-badge">-@f.RemiseAccordee.ToString("0.##")%</span>
+                                }
+                            </td>
+                            <td data-label="Articles" class="text-center">
+                                <span class="articles-badge @(f.ArticlesCount == 0 ? "zero" : "")">@f.ArticlesCount</span>
+                            </td>
+                            <td data-label="Commandes" class="text-center">
+                                <span class="orders-badge @(f.CommandesCount == 0 ? "zero" : "")">@f.CommandesCount</span>
+                            </td>
+                            <td data-label="Statut">
+                                @if (f.EstActif)
+                                {
+                                    <span class="badge badge-success">Actif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-danger">Inactif</span>
+                                }
+                            </td>
+                            <td data-label="Créé">
+                                <span class="date-badge">@f.DateCreation.ToString("dd/MM/yyyy")</span>
+                            </td>
+                            <td data-label="Actions">
+                                <div class="actions-cell">
+                                    <a asp-page="./Edit" asp-route-id="@f.Id" class="btn-link" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="post" asp-page-handler="ToggleStatus" asp-route-id="@f.Id" style="display:inline">
+                                        <button type="submit" class="btn-link btn-toggle"
+                                                title="@(f.EstActif ? "Désactiver" : "Activer")">
+                                            <i class="fas @(f.EstActif ? "fa-toggle-on" : "fa-toggle-off")"></i>
+                                        </button>
+                                    </form>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@f.Id" style="display:inline"
+                                          onsubmit="return confirm('Supprimer le fournisseur « @f.Nom » ?');">
+                                        <button type="submit" class="btn-link btn-delete" title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container">
+            @if (Model.TotalPages > 1)
+            {
+                var start = Math.Max(1, Model.CurrentPage - 2);
+                var end = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+                <div class="pagination">
+                    <a class="page-link @(Model.CurrentPage == 1 ? "disabled" : "")" href="@Model.GetPageUrl(Model.CurrentPage - 1)">&laquo;</a>
+                    @for (var p = start; p <= end; p++)
+                    {
+                        <a class="page-link @(p == Model.CurrentPage ? "active" : "")" href="@Model.GetPageUrl(p)">@p</a>
+                    }
+                    <a class="page-link @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")" href="@Model.GetPageUrl(Model.CurrentPage + 1)">&raquo;</a>
+                </div>
+            }
+            <div class="pagination-info">
+                Page @Model.CurrentPage sur @Model.TotalPages · @Model.TotalCount fournisseur(s)
+            </div>
+        </div>
+    }
+</div>

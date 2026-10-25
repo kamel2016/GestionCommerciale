@@ -1,267 +1,139 @@
+using GestionCommerciale.Data;
+using GestionCommerciale.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using GestionCommerciale.ViewModel;
+using Microsoft.EntityFrameworkCore;
 
-namespace GestionCommerciale.Pages.Clients
+namespace GestionCommerciale.Pages.Clients;
+
+public class IndexModel : PageModel
 {
-    public class IndexModel : PageModel
+    private readonly ApplicationDbContext _context;
+    private readonly ILogger<IndexModel> _logger;
+
+    public IndexModel(ApplicationDbContext context, ILogger<IndexModel> logger)
     {
-        [BindProperty]
-        public ClientListPageViewModel PageModel { get; set; } = new();
+        _context = context;
+        _logger = logger;
+    }
 
-        [BindProperty(SupportsGet = true)]
-        public string? SearchTerm { get; set; }
+    [BindProperty(SupportsGet = true)] public string? SearchTerm { get; set; }
+    [BindProperty(SupportsGet = true)] public string? FilterStatus { get; set; }
+    [BindProperty(SupportsGet = true)] public string? FilterType { get; set; }
+    [BindProperty(SupportsGet = true)] public string? FilterVille { get; set; }
+    [BindProperty(SupportsGet = true)] public string SortBy { get; set; } = "name";
+    [BindProperty(SupportsGet = true)] public int PageSize { get; set; } = 25;
+    [BindProperty(SupportsGet = true)] public int CurrentPage { get; set; } = 1;
 
-        [BindProperty(SupportsGet = true)]
-        public string? Ville { get; set; }
+    public List<Client> Clients { get; private set; } = new();
+    public List<string> Villes { get; private set; } = new();
+    public int TotalClients { get; private set; }
+    public int ActiveClients { get; private set; }
+    public int InactiveClients { get; private set; }
+    public int IndividualClients { get; private set; }
+    public int CompanyClients { get; private set; }
+    public int TotalPages { get; private set; }
 
-        [BindProperty(SupportsGet = true)]
-        public string? Zone { get; set; }
+    public async Task OnGetAsync(CancellationToken cancellationToken)
+    {
+        PageSize = Math.Clamp(PageSize, 5, 100);
+        CurrentPage = Math.Max(CurrentPage, 1);
 
-        [BindProperty(SupportsGet = true)]
-        public string? TypeCategorie { get; set; }
+        var baseQuery = BuildFilteredQuery();
+        TotalClients = await baseQuery.CountAsync(cancellationToken);
+        ActiveClients = await baseQuery.CountAsync(c => c.EstActif, cancellationToken);
+        InactiveClients = TotalClients - ActiveClients;
+        IndividualClients = await baseQuery.CountAsync(c => c.TypeClient == TypeClient.Particulier, cancellationToken);
+        CompanyClients = TotalClients - IndividualClients;
 
-        [BindProperty(SupportsGet = true)]
-        public DateTime? DateCreationDebut { get; set; }
+        Villes = await _context.Clients.AsNoTracking()
+            .Where(c => c.Ville != null && c.Ville != "")
+            .Select(c => c.Ville!)
+            .Distinct().OrderBy(v => v).ToListAsync(cancellationToken);
 
-        [BindProperty(SupportsGet = true)]
-        public DateTime? DateCreationFin { get; set; }
+        TotalPages = (int)Math.Ceiling(TotalClients / (double)PageSize);
+        CurrentPage = Math.Min(CurrentPage, Math.Max(TotalPages, 1));
 
-        [BindProperty(SupportsGet = true)]
-        public bool ClientsActifsUniquement { get; set; } = true;
+        Clients = await ApplySort(baseQuery)
+            .Skip((CurrentPage - 1) * PageSize).Take(PageSize)
+            .ToListAsync(cancellationToken);
+    }
 
-        [BindProperty(SupportsGet = true)]
-        public int CurrentPage { get; set; } = 1;
-
-        [BindProperty(SupportsGet = true)]
-        public int PageSize { get; set; } = 10;
-
-        [BindProperty(SupportsGet = true)]
-        public string SortBy { get; set; } = "NomComplet";
-
-        [BindProperty(SupportsGet = true)]
-        public string SortDirection { get; set; } = "asc";
-
-        public async Task<IActionResult> OnGetAsync()
+    private IQueryable<Client> BuildFilteredQuery()
+    {
+        var query = _context.Clients.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
         {
-            // Initialiser les filtres avec les paramètres de l'URL
-            PageModel.Filters = new ClientSearchFiltersViewModel
-            {
-                SearchTerm = SearchTerm,
-                Ville = Ville,
-                Zone = Zone,
-                TypeCategorie = TypeCategorie,
-                DateCreationDebut = DateCreationDebut,
-                DateCreationFin = DateCreationFin,
-                ClientsActifsUniquement = ClientsActifsUniquement
-            };
-
-            // Initialiser la pagination
-            PageModel.Pagination = new PaginationViewModel
-            {
-                CurrentPage = CurrentPage,
-                PageSize = PageSize,
-                SortBy = SortBy,
-                SortDirection = SortDirection
-            };
-
-            // Charger les données
-            await LoadClientsAsync();
-            await LoadFilterOptionsAsync();
-
-            return Page();
+            var term = SearchTerm.Trim();
+            var pattern = $"%{term}%";
+            query = query.Where(c =>
+                EF.Functions.Like(c.Nom, pattern) ||
+                (c.Prenom != null && EF.Functions.Like(c.Prenom, pattern)) ||
+                (c.Email != null && EF.Functions.Like(c.Email, pattern)) ||
+                (c.Telephone != null && EF.Functions.Like(c.Telephone, pattern)) ||
+                (c.Mobile != null && EF.Functions.Like(c.Mobile, pattern)) ||
+                (c.MatriculeFiscale != null && EF.Functions.Like(c.MatriculeFiscale, pattern)) ||
+                (c.Ville != null && EF.Functions.Like(c.Ville, pattern)) ||
+                (c.Gouvernorat != null && EF.Functions.Like(c.Gouvernorat, pattern)));
         }
+        if (FilterStatus == "active") query = query.Where(c => c.EstActif);
+        else if (FilterStatus == "inactive") query = query.Where(c => !c.EstActif);
+        if (FilterType == "particulier") query = query.Where(c => c.TypeClient == TypeClient.Particulier);
+        else if (FilterType == "societe") query = query.Where(c => c.TypeClient == TypeClient.Societe);
+        if (!string.IsNullOrWhiteSpace(FilterVille)) query = query.Where(c => c.Ville == FilterVille);
+        return query;
+    }
 
-        public async Task<IActionResult> OnPostSearchAsync()
+    private IQueryable<Client> ApplySort(IQueryable<Client> query) => SortBy switch
+    {
+        "name_desc" => query.OrderByDescending(c => c.Nom).ThenByDescending(c => c.Prenom),
+        "type" => query.OrderBy(c => c.TypeClient).ThenBy(c => c.Nom),
+        "ville" => query.OrderBy(c => c.Ville).ThenBy(c => c.Nom),
+        "date" => query.OrderBy(c => c.DateCreation),
+        "date_desc" => query.OrderByDescending(c => c.DateCreation),
+        _ => query.OrderBy(c => c.Nom).ThenBy(c => c.Prenom)
+    };
+
+    public string GetClientName(Client client) => client.NomComplet;
+    public string GetTypeText(TypeClient type) => type == TypeClient.Societe ? "Société" : "Particulier";
+    public string GetStatusBadgeClass(bool active) => active ? "client-badge-active" : "client-badge-inactive";
+    public string GetStatusIcon(bool active) => active ? "fas fa-check-circle" : "fas fa-pause-circle";
+    public string GetStatusText(bool active) => active ? "Actif" : "Inactif";
+
+    public async Task<IActionResult> OnPostToggleStatusAsync(int id, CancellationToken cancellationToken)
+    {
+        var client = await _context.Clients.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        if (client == null) TempData["ErrorMessage"] = "Client introuvable.";
+        else
         {
-            // Rediriger avec les paramètres de recherche dans l'URL
-            var routeValues = new Dictionary<string, object?>
-            {
-                { nameof(SearchTerm), PageModel.Filters.SearchTerm },
-                { nameof(Ville), PageModel.Filters.Ville },
-                { nameof(Zone), PageModel.Filters.Zone },
-                { nameof(TypeCategorie), PageModel.Filters.TypeCategorie },
-                { nameof(DateCreationDebut), PageModel.Filters.DateCreationDebut?.ToString("yyyy-MM-dd") },
-                { nameof(DateCreationFin), PageModel.Filters.DateCreationFin?.ToString("yyyy-MM-dd") },
-                { nameof(ClientsActifsUniquement), PageModel.Filters.ClientsActifsUniquement },
-                { nameof(CurrentPage), 1 }, // Reset à la première page
-                { nameof(PageSize), PageModel.Pagination.PageSize },
-                { nameof(SortBy), PageModel.Pagination.SortBy },
-                { nameof(SortDirection), PageModel.Pagination.SortDirection }
-            };
-
-            return RedirectToPage("./Index", routeValues);
+            client.EstActif = !client.EstActif;
+            client.DateModification = DateTime.Now;
+            await _context.SaveChangesAsync(cancellationToken);
+            TempData["SuccessMessage"] = $"Client {client.NomComplet} {(client.EstActif ? "activé" : "désactivé")} avec succès.";
         }
+        return RedirectToPage("./Index", BuildRouteValues());
+    }
 
-        public async Task<IActionResult> OnPostDeleteAsync(int id)
+    public async Task<IActionResult> OnPostDeleteAsync(int id, CancellationToken cancellationToken)
+    {
+        var client = await _context.Clients.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        if (client == null) TempData["ErrorMessage"] = "Client introuvable.";
+        else
         {
             try
             {
-                await DeleteClientAsync(id);
-                TempData["SuccessMessage"] = "Le client a été supprimé avec succès.";
+                _context.Clients.Remove(client);
+                await _context.SaveChangesAsync(cancellationToken);
+                TempData["SuccessMessage"] = "Client supprimé avec succès.";
             }
-            catch (Exception ex)
+            catch (DbUpdateException exception)
             {
-                TempData["ErrorMessage"] = "Erreur lors de la suppression : " + ex.Message;
-            }
-
-            return RedirectToPage();
-        }
-
-        private async Task LoadClientsAsync()
-        {
-            // Simulation du chargement des clients depuis la base de données
-            var allClients = await GetAllClientsAsync();
-
-            // Application des filtres
-            var filteredClients = ApplyFilters(allClients);
-
-            // Application du tri
-            filteredClients = ApplySorting(filteredClients);
-
-            // Mise à jour du nombre total d'éléments
-            PageModel.Pagination.TotalItems = filteredClients.Count();
-
-            // Application de la pagination
-            var pagedClients = filteredClients
-                .Skip((PageModel.Pagination.CurrentPage - 1) * PageModel.Pagination.PageSize)
-                .Take(PageModel.Pagination.PageSize)
-                .ToList();
-
-            PageModel.Clients = pagedClients;
-
-            // Calcul des statistiques
-            PageModel.TotalClients = allClients.Count();
-            PageModel.ClientsActifs = allClients.Count(c => c.EstActif);
-            PageModel.ClientsInactifs = allClients.Count(c => !c.EstActif);
-        }
-
-        private async Task LoadFilterOptionsAsync()
-        {
-            var allClients = await GetAllClientsAsync();
-
-            PageModel.VillesDisponibles = allClients
-                .Where(c => !string.IsNullOrEmpty(c.Ville))
-                .Select(c => c.Ville!)
-                .Distinct()
-                .OrderBy(v => v)
-                .ToList();
-
-            PageModel.ZonesDisponibles = allClients
-                .Where(c => !string.IsNullOrEmpty(c.Zone))
-                .Select(c => c.Zone!)
-                .Distinct()
-                .OrderBy(z => z)
-                .ToList();
-
-            PageModel.TypesCategoriesDisponibles = allClients
-                .Where(c => !string.IsNullOrEmpty(c.TypeCategorie))
-                .Select(c => c.TypeCategorie!)
-                .Distinct()
-                .OrderBy(t => t)
-                .ToList();
-        }
-
-        private IQueryable<ClientListViewModel> ApplyFilters(IQueryable<ClientListViewModel> clients)
-        {
-            if (!string.IsNullOrEmpty(PageModel.Filters.SearchTerm))
-            {
-                var searchTerm = PageModel.Filters.SearchTerm.ToLower();
-                clients = clients.Where(c =>
-                    c.NomComplet.ToLower().Contains(searchTerm) ||
-                    (c.Email != null && c.Email.ToLower().Contains(searchTerm)) ||
-                    c.CodeClient.ToLower().Contains(searchTerm));
-            }
-
-            if (!string.IsNullOrEmpty(PageModel.Filters.Ville))
-            {
-                clients = clients.Where(c => c.Ville == PageModel.Filters.Ville);
-            }
-
-            if (!string.IsNullOrEmpty(PageModel.Filters.Zone))
-            {
-                clients = clients.Where(c => c.Zone == PageModel.Filters.Zone);
-            }
-
-            if (!string.IsNullOrEmpty(PageModel.Filters.TypeCategorie))
-            {
-                clients = clients.Where(c => c.TypeCategorie == PageModel.Filters.TypeCategorie);
-            }
-
-            if (PageModel.Filters.DateCreationDebut.HasValue)
-            {
-                clients = clients.Where(c => c.DateCreation >= PageModel.Filters.DateCreationDebut.Value);
-            }
-
-            if (PageModel.Filters.DateCreationFin.HasValue)
-            {
-                clients = clients.Where(c => c.DateCreation <= PageModel.Filters.DateCreationFin.Value);
-            }
-
-            if (PageModel.Filters.ClientsActifsUniquement)
-            {
-                clients = clients.Where(c => c.EstActif);
-            }
-
-            return clients;
-        }
-
-        private IQueryable<ClientListViewModel> ApplySorting(IQueryable<ClientListViewModel> clients)
-        {
-            return PageModel.Pagination.SortBy.ToLower() switch
-            {
-                "nomcomplet" => PageModel.Pagination.SortDirection == "desc"
-                    ? clients.OrderByDescending(c => c.NomComplet)
-                    : clients.OrderBy(c => c.NomComplet),
-                "email" => PageModel.Pagination.SortDirection == "desc"
-                    ? clients.OrderByDescending(c => c.Email)
-                    : clients.OrderBy(c => c.Email),
-                "ville" => PageModel.Pagination.SortDirection == "desc"
-                    ? clients.OrderByDescending(c => c.Ville)
-                    : clients.OrderBy(c => c.Ville),
-                "datecreation" => PageModel.Pagination.SortDirection == "desc"
-                    ? clients.OrderByDescending(c => c.DateCreation)
-                    : clients.OrderBy(c => c.DateCreation),
-                "solde" => PageModel.Pagination.SortDirection == "desc"
-                    ? clients.OrderByDescending(c => c.Solde)
-                    : clients.OrderBy(c => c.Solde),
-                _ => clients.OrderBy(c => c.NomComplet)
-            };
-        }
-
-        // Méthodes de simulation - À remplacer par votre logique de données réelle
-        private async Task<IQueryable<ClientListViewModel>> GetAllClientsAsync()
-        {
-            await Task.Delay(1); // Simulation
-
-            var clients = new List<ClientListViewModel>
-            {
-                new() { Id = 1, CodeClient = "CLI001", NomComplet = "DUPONT Jean", Email = "jean.dupont@email.com", Telephone = "01.23.45.67.89", Ville = "Paris", Zone = "Nord", TypeCategorie = "VIP", DateCreation = DateTime.Now.AddMonths(-6), Solde = 1250.50m, EstActif = true },
-                new() { Id = 2, CodeClient = "CLI002", NomComplet = "MARTIN Marie", Email = "marie.martin@email.com", Telephone = "02.34.56.78.90", Ville = "Lyon", Zone = "Sud", TypeCategorie = "Standard", DateCreation = DateTime.Now.AddMonths(-4), Solde = 890.00m, EstActif = true },
-                new() { Id = 3, CodeClient = "CLI003", NomComplet = "BERNARD Paul", Email = "paul.bernard@email.com", Telephone = "03.45.67.89.01", Ville = "Marseille", Zone = "Sud", TypeCategorie = "Grossiste", DateCreation = DateTime.Now.AddMonths(-8), Solde = 2150.75m, EstActif = true },
-                new() { Id = 4, CodeClient = "CLI004", NomComplet = "DUBOIS Sophie", Email = "sophie.dubois@email.com", Telephone = "04.56.78.90.12", Ville = "Bordeaux", Zone = "Ouest", TypeCategorie = "Détaillant", DateCreation = DateTime.Now.AddMonths(-2), Solde = 450.25m, EstActif = false },
-                new() { Id = 5, CodeClient = "CLI005", NomComplet = "LEROY Michel", Email = "michel.leroy@email.com", Telephone = "05.67.89.01.23", Ville = "Lille", Zone = "Nord", TypeCategorie = "VIP", DateCreation = DateTime.Now.AddMonths(-10), Solde = 3200.00m, EstActif = true },
-                new() { Id = 6, CodeClient = "CLI006", NomComplet = "MOREAU Claire", Email = "claire.moreau@email.com", Telephone = "06.78.90.12.34", Ville = "Toulouse", Zone = "Sud", TypeCategorie = "Standard", DateCreation = DateTime.Now.AddMonths(-1), Solde = 125.80m, EstActif = true },
-                new() { Id = 7, CodeClient = "CLI007", NomComplet = "LAURENT Pierre", Email = "pierre.laurent@email.com", Telephone = "07.89.01.23.45", Ville = "Nantes", Zone = "Ouest", TypeCategorie = "Grossiste", DateCreation = DateTime.Now.AddMonths(-12), Solde = 1875.90m, EstActif = true },
-                new() { Id = 8, CodeClient = "CLI008", NomComplet = "SIMON Isabelle", Email = "isabelle.simon@email.com", Telephone = "08.90.12.34.56", Ville = "Strasbourg", Zone = "Est", TypeCategorie = "Standard", DateCreation = DateTime.Now.AddMonths(-3), Solde = 675.40m, EstActif = false },
-                new() { Id = 9, CodeClient = "CLI009", NomComplet = "MICHEL Antoine", Email = "antoine.michel@email.com", Telephone = "09.01.23.45.67", Ville = "Rennes", Zone = "Ouest", TypeCategorie = "VIP", DateCreation = DateTime.Now.AddMonths(-7), Solde = 2890.15m, EstActif = true },
-                new() { Id = 10, CodeClient = "CLI010", NomComplet = "GARCIA Carmen", Email = "carmen.garcia@email.com", Telephone = "01.12.23.34.45", Ville = "Nice", Zone = "Sud", TypeCategorie = "Détaillant", DateCreation = DateTime.Now.AddMonths(-5), Solde = 1120.65m, EstActif = true }
-            };
-
-            return clients.AsQueryable();
-        }
-
-        private async Task DeleteClientAsync(int id)
-        {
-            // Simulation - remplacez par votre logique de suppression en base
-            await Task.Delay(100);
-
-            // Ici, vous pourriez vérifier si le client peut être supprimé
-            // (pas de commandes en cours, etc.)
-            if (id <= 0)
-            {
-                throw new ArgumentException("ID client invalide");
+                _logger.LogWarning(exception, "Suppression impossible du client {ClientId}", id);
+                TempData["ErrorMessage"] = "Suppression impossible : ce client est probablement utilisé par une commande.";
             }
         }
+        return RedirectToPage("./Index", BuildRouteValues());
     }
+
+    private object BuildRouteValues() => new { SearchTerm, FilterStatus, FilterType, FilterVille, SortBy, PageSize, CurrentPage = 1 };
 }

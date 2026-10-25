@@ -1,38 +1,372 @@
-﻿@page
-@model GestionCommerciale.Pages.Categories.CreateModel
+﻿@page "{id:int?}"
+@model GestionCommerciale.Pages.Categories.EditModel
 @{
-    ViewData["Title"] = "Modifier une categorie";
+    ViewData["Title"] = "Modifier la Catégorie";
 }
 
-<div class="container fade-in">
-    <h1>Modifier un article</h1>
+<link rel="stylesheet" href="~/css/category-form.css" />
 
-    <div class="form-container">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+<div class="form-container">
+
+    <!-- ============================================
+         EN-TÊTE DE LA PAGE
+         ============================================ -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1 class="page-title">
+                <i class="fas fa-edit"></i>
+                Modifier la Catégorie
+            </h1>
+            <p class="page-subtitle">Modifiez les informations de la catégorie</p>
+        </div>
+        <div class="header-actions">
+            <a asp-page="./Index" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <!-- ============================================
+         MÉTADONNÉES DE LA CATÉGORIE
+         ============================================ -->
+    <div class="metadata-section">
+        <div class="metadata-info">
+            <div class="metadata-item">
+                <i class="fas fa-calendar-plus"></i>
+                <span>Créé le @Model.Category.CreatedAt.ToString("dd/MM/yyyy à HH:mm")</span>
+            </div>
+            <div class="metadata-item">
+                <i class="fas fa-calendar-check"></i>
+                <span>Modifié le @Model.Category.UpdatedAt.Value.ToString("dd/MM/yyyy à HH:mm")</span>
+            </div>
+            <div class="metadata-item">
+                <i class="fas fa-fingerprint"></i>
+                <span>ID: @Model.Category.Id</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         FORMULAIRE D'ÉDITION
+         ============================================ -->
+    <form method="post" class="category-form">
+        <input type="hidden" asp-for="Category.Id" />
+        <input type="hidden" asp-for="Category.CreatedAt" />
+        
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        <!-- ============================================
+             SECTION: INFORMATIONS GÉNÉRALES
+             ============================================ -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Informations Générales
+                </h2>
+                <p class="section-description">Modifiez les informations de base de la catégorie</p>
+            </div>
+
+            <div class="form-row">
+                <!-- Code de la catégorie -->
+                <div class="form-group">
+                    <label asp-for="Category.Code" class="form-label">
+                        <i class="fas fa-barcode"></i>
+                        Code de la catégorie
+                        <span class="required">*</span>
+                    </label>
+                    <input asp-for="Category.Code" 
+                           class="form-control" 
+                           placeholder="Ex: INFO-ACC"
+                           maxlength="20"
+                           required />
+                    <span asp-validation-for="Category.Code" class="text-danger"></span>
+                    <small class="form-text">Code unique pour identifier la catégorie</small>
+                </div>
+
+                <!-- Nom de la catégorie -->
+                <div class="form-group">
+                    <label asp-for="Category.Name" class="form-label">
+                        <i class="fas fa-tag"></i>
+                        Nom de la catégorie
+                        <span class="required">*</span>
+                    </label>
+                    <input asp-for="Category.Name" 
+                           class="form-control" 
+                           placeholder="Ex: Accessoires Informatique"
+                           maxlength="100"
+                           required />
+                    <span asp-validation-for="Category.Name" class="text-danger"></span>
+                    <small class="form-text">Nom complet de la catégorie</small>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label asp-for="Category.Description" class="form-label">
+                    <i class="fas fa-align-left"></i>
+                    Description
+                </label>
+                <textarea asp-for="Category.Description" 
+                          class="form-control" 
+                          rows="4"
+                          placeholder="Décrivez cette catégorie et son contenu..."
+                          maxlength="500"></textarea>
+                <span asp-validation-for="Category.Description" class="text-danger"></span>
+                <small class="form-text">Description détaillée (optionnelle, max 500 caractères)</small>
+            </div>
+        </div>
+
+        <!-- ============================================
+             SECTION: APPARENCE
+             ============================================ -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-palette"></i>
+                    Apparence
+                </h2>
+                <p class="section-description">Personnalisez l'icône et la couleur de la catégorie</p>
+            </div>
+
+            <div class="form-row">
+                <!-- Icône -->
+                <div class="form-group">
+                    <label asp-for="Category.Icon" class="form-label">
+                        <i class="fas fa-icons"></i>
+                        Icône Font Awesome
+                    </label>
+                    <div class="icon-input-group">
+                        <div class="icon-preview" id="iconPreview">
+                            <i class="@Model.Category.Icon"></i>
+                        </div>
+                        <input asp-for="Category.Icon" 
+                               id="iconInput"
+                               class="form-control" 
+                               placeholder="Ex: fas fa-box"
+                               maxlength="50"
+                               onchange="updateIconPreview()" />
+                    </div>
+                    <span asp-validation-for="Category.Icon" class="text-danger"></span>
+                    <small class="form-text">
+                        Classe Font Awesome (ex: fas fa-box) - 
+                        <a href="https://fontawesome.com/icons" target="_blank" rel="noopener">
+                            <i class="fas fa-external-link-alt"></i> Voir les icônes
+                        </a>
+                    </small>
+                </div>
+
+                <!-- Couleur -->
+                <div class="form-group">
+                    <label asp-for="Category.Color" class="form-label">
+                        <i class="fas fa-fill-drip"></i>
+                        Couleur
+                    </label>
+                    <div class="color-input-group">
+                        <input type="color" 
+                               id="colorPicker"
+                               value="@Model.Category.Color"
+                               class="color-picker"
+                               onchange="updateColorPreview()" />
+                        <input asp-for="Category.Color" 
+                               id="colorText"
+                               class="form-control color-text" 
+                               placeholder="#2196F3"
+                               maxlength="7"
+                               pattern="^#[0-9A-Fa-f]{6}$"
+                               onchange="updateColorFromText()" />
+                    </div>
+                    <span asp-validation-for="Category.Color" class="text-danger"></span>
+                    <small class="form-text">Couleur en format hexadécimal (ex: #2196F3)</small>
+                </div>
+            </div>
+
+            <!-- Prévisualisation -->
+            <div class="preview-container">
+                <div class="preview-label">
+                    <i class="fas fa-eye"></i>
+                    Aperçu
+                </div>
+                <div class="category-preview">
+                    <div class="preview-icon" id="previewIcon" style="background-color: @Model.Category.Color">
+                        <i class="@Model.Category.Icon"></i>
+                    </div>
+                    <div class="preview-info">
+                        <div class="preview-code">@Model.Category.Code</div>
+                        <div class="preview-name">@Model.Category.Name</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             SECTION: ORGANISATION
+             ============================================ -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-sitemap"></i>
+                    Organisation
+                </h2>
+                <p class="section-description">Définissez la hiérarchie et l'ordre d'affichage</p>
+            </div>
+
+            <div class="form-row">
+                <!-- Catégorie parente -->
+                <div class="form-group">
+                    <label asp-for="Category.ParentCategoryId" class="form-label">
+                        <i class="fas fa-folder-tree"></i>
+                        Catégorie Parente
+                    </label>
+                    <select asp-for="Category.ParentCategoryId" 
+                            asp-items="Model.ParentCategoriesList"
+                            class="form-control">
+                        <option value="">-- Aucune (Catégorie racine) --</option>
+                    </select>
+                    <span asp-validation-for="Category.ParentCategoryId" class="text-danger"></span>
+                    <small class="form-text">Laissez vide pour une catégorie de niveau supérieur</small>
+                </div>
+
+                <!-- Ordre d'affichage -->
+                <div class="form-group">
+                    <label asp-for="Category.DisplayOrder" class="form-label">
+                        <i class="fas fa-sort-numeric-down"></i>
+                        Ordre d'Affichage
+                    </label>
+                    <input asp-for="Category.DisplayOrder" 
+                           type="number" 
+                           class="form-control" 
+                           min="0"
+                           max="999"
+                           placeholder="0" />
+                    <span asp-validation-for="Category.DisplayOrder" class="text-danger"></span>
+                    <small class="form-text">Ordre de tri (0 = premier)</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             SECTION: STATUT
+             ============================================ -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-toggle-on"></i>
+                    Statut
+                </h2>
+                <p class="section-description">Activez ou désactivez cette catégorie</p>
+            </div>
 
             <div class="form-group">
-                <label asp-for="Categorie.Libelle" class="form-label"></label>
-                <input asp-for="Categorie.Libelle" class="form-control" />
-                <span asp-validation-for="Categorie.Libelle" class="text-danger"></span>
+                <div class="switch-container">
+                    <label class="switch">
+                        <input asp-for="Category.IsActive" type="checkbox" />
+                        <span class="slider"></span>
+                    </label>
+                    <div class="switch-label">
+                        <strong>Catégorie Active</strong>
+                        <p>Les catégories inactives ne sont pas visibles dans les listes de sélection</p>
+                    </div>
+                </div>
+                <span asp-validation-for="Category.IsActive" class="text-danger"></span>
             </div>
+        </div>
 
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-save"></i>
-                    Modifier
-                </button>
-                <a asp-page="Index" class="btn btn-secondary">
-                    <i class="fas fa-times"></i>
-                    Annuler
-                </a>
-            </div>
-        </form>
-    </div>
+        <!-- ============================================
+             ACTIONS DU FORMULAIRE
+             ============================================ -->
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-save"></i>
+                Enregistrer les modifications
+            </button>
+            <a asp-page="./Index" class="btn-secondary">
+                <i class="fas fa-times"></i>
+                Annuler
+            </a>
+            <button type="button" class="btn-danger" onclick="confirmDelete(@Model.Category.Id)">
+                <i class="fas fa-trash"></i>
+                Supprimer
+            </button>
+        </div>
+    </form>
+
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/category-edit.js"></script>
+    <script>
+        // ============================================
+        // INITIALISATION DE LA PAGE
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialiser les prévisualisations avec les valeurs existantes
+            updateIconPreview();
+            updateColorPreview();
+        });
+
+        // ============================================
+        // CONFIRMATION DE SUPPRESSION
+        // ============================================
+        function confirmDelete(id) {
+            if (confirm('⚠️ Êtes-vous sûr de vouloir supprimer cette catégorie ?\n\nCette action est irréversible.')) {
+                window.location.href = `/Categories/Delete/${id}`;
+            }
+        }
+
+        // ============================================
+        // MISE À JOUR DE LA PRÉVISUALISATION ICÔNE
+        // ============================================
+        function updateIconPreview() {
+            const iconValue = document.getElementById('iconInput')?.value || 'fas fa-box';
+            const iconPreview = document.getElementById('iconPreview');
+            const previewIcon = document.getElementById('previewIcon');
+            
+            if (iconPreview) {
+                iconPreview.innerHTML = `<i class="${iconValue}"></i>`;
+            }
+            if (previewIcon) {
+                previewIcon.querySelector('i').className = iconValue;
+            }
+        }
+
+        // ============================================
+        // MISE À JOUR DE LA PRÉVISUALISATION COULEUR
+        // ============================================
+        function updateColorPreview() {
+            const color = document.getElementById('colorPicker')?.value;
+            const colorText = document.getElementById('colorText');
+            const previewIcon = document.getElementById('previewIcon');
+            
+            if (colorText && color) {
+                colorText.value = color;
+            }
+            if (previewIcon && color) {
+                previewIcon.style.backgroundColor = color;
+            }
+        }
+
+        // ============================================
+        // MISE À JOUR DEPUIS LE CHAMP TEXTE
+        // ============================================
+        function updateColorFromText() {
+            const colorText = document.getElementById('colorText')?.value;
+            const colorPicker = document.getElementById('colorPicker');
+            const previewIcon = document.getElementById('previewIcon');
+            
+            // Valider le format hexadécimal
+            if (colorText && /^#[0-9A-F]{6}$/i.test(colorText)) {
+                if (colorPicker) {
+                    colorPicker.value = colorText;
+                }
+                if (previewIcon) {
+                    previewIcon.style.backgroundColor = colorText;
+                }
+            } else if (colorText) {
+                alert('⚠️ Format de couleur invalide. Utilisez le format hexadécimal (ex: #2196F3)');
+            }
+        }
+    </script>
 }

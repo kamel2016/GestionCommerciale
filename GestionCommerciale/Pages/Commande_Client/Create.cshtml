@@ -16,7 +16,7 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    <form method="post">
+                    <form method="post" id="commande-form">
                         <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
                         <!-- Informations générales -->
@@ -25,7 +25,6 @@
                                 <div class="form-group mb-3">
                                     <label asp-for="CommandeClient.NumeroCommande" class="form-label"></label>
                                     <input asp-for="CommandeClient.NumeroCommande" class="form-control" readonly />
-                                    <span asp-validation-for="CommandeClient.NumeroCommande" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -51,43 +50,38 @@
                                 <div class="form-group mb-3">
                                     <label asp-for="CommandeClient.DateLivraison" class="form-label"></label>
                                     <input asp-for="CommandeClient.DateLivraison" class="form-control" type="date" />
-                                    <span asp-validation-for="CommandeClient.DateLivraison" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Articles de la commande -->
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">Articles commandés</h5>
+                        <!-- Articles -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Articles</h5>
                                     <button type="button" class="btn btn-success btn-sm" onclick="openArticleModal()">
                                         <i class="fas fa-plus me-1"></i> Ajouter un article
                                     </button>
                                 </div>
-                            </div>
-                            <div class="card-body">
-                                <div id="articles-container">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped" id="articles-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Article</th>
-                                                    <th>Quantité</th>
-                                                    <th>Prix unitaire</th>
-                                                    <th>Montant</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="articles-tbody">
-                                                <!-- Les lignes seront ajoutées dynamiquement -->
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div id="no-articles" class="text-center text-muted py-4">
-                                        <i class="fas fa-box-open fa-3x mb-3"></i>
-                                        <p>Aucun article ajouté. Cliquez sur "Ajouter un article" pour commencer.</p>
-                                    </div>
+
+                                <div class="table-responsive" id="articles-container">
+                                    <table class="table table-hover align-middle" id="articles-table">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Article</th>
+                                                <th class="text-end">Prix unitaire</th>
+                                                <th class="text-center">Quantité</th>
+                                                <th class="text-end">Montant HT</th>
+                                                <th class="text-center">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="articles-tbody"></tbody>
+                                    </table>
+                                </div>
+
+                                <div id="no-articles" class="text-center text-muted py-4">
+                                    <i class="fas fa-box-open fa-3x mb-3"></i>
+                                    <p>Aucun article ajouté. Cliquez sur « Ajouter un article » pour commencer.</p>
                                 </div>
                             </div>
                         </div>
@@ -98,16 +92,16 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <div class="row mb-2">
-                                            <div class="col-6"><strong>Montant HT:</strong></div>
+                                            <div class="col-6"><strong>Montant HT :</strong></div>
                                             <div class="col-6 text-end" id="montant-ht">0,00 €</div>
                                         </div>
                                         <div class="row mb-2">
-                                            <div class="col-6"><strong>TVA (20%):</strong></div>
+                                            <div class="col-6"><strong>TVA :</strong></div>
                                             <div class="col-6 text-end" id="montant-tva">0,00 €</div>
                                         </div>
                                         <hr>
                                         <div class="row">
-                                            <div class="col-6"><strong>Montant TTC:</strong></div>
+                                            <div class="col-6"><strong>Montant TTC :</strong></div>
                                             <div class="col-6 text-end fw-bold text-primary" id="montant-ttc">0,00 €</div>
                                         </div>
                                     </div>
@@ -122,9 +116,12 @@
                             <span asp-validation-for="CommandeClient.Commentaire" class="text-danger"></span>
                         </div>
 
+                        <!-- Données des lignes (sérialisées par JS) -->
+                        <input type="hidden" asp-for="LignesJson" id="lignes-json" />
+
                         <!-- Boutons -->
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="btn-submit">
                                 <i class="fas fa-save me-1"></i> Créer la commande
                             </button>
                             <a asp-page="./Index" class="btn btn-secondary">
@@ -138,62 +135,67 @@
     </div>
 </div>
 
-<!-- Modal pour ajouter un article -->
+<!-- Modal ajout article -->
 <div class="modal fade" id="articleModal" tabindex="-1" aria-labelledby="articleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="articleModalLabel">
-                    <i class="fas fa-plus-circle me-2"></i>
-                    Ajouter un article
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un article
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
-                <form id="article-form">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="article-select" class="form-label">Article</label>
-                                <select id="article-select" class="form-select">
-                                    <option value="">-- Sélectionner un article --</option>
-                                </select>
-                                <div class="invalid-feedback">Veuillez sélectionner un article.</div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="quantite" class="form-label">Quantité</label>
-                                <input type="number" id="quantite" class="form-control" min="1" value="1">
-                                <div class="invalid-feedback">Veuillez saisir une quantité valide.</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="prix-unitaire" class="form-label">Prix unitaire</label>
-                                <input type="number" id="prix-unitaire" class="form-control" step="0.01" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="stock-disponible" class="form-label">Stock disponible</label>
-                                <input type="number" id="stock-disponible" class="form-control" readonly>
-                            </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="article-select" class="form-label">Article</label>
+                            <select id="article-select" class="form-select">
+                                <option value="">-- Sélectionner un article --</option>
+                                @foreach (var a in Model.Articles)
+                                {
+                                    <option value="@a.Id"
+                                            data-prix="@a.Prix.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                            data-tva="@a.TauxTVA.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                            data-stock="@a.Stock"
+                                            data-nom="@a.Nom">
+                                        @a.Nom - @a.Prix.ToString("N2") €
+                                    </option>
+                                }
+                            </select>
+                            <div class="invalid-feedback">Veuillez sélectionner un article.</div>
                         </div>
                     </div>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Montant ligne:</strong> <span id="montant-ligne-preview">0,00 €</span>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="quantite" class="form-label">Quantité</label>
+                            <input type="number" id="quantite" class="form-control" min="1" value="1" />
+                            <div class="invalid-feedback">Veuillez saisir une quantité valide.</div>
+                        </div>
                     </div>
-                </form>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="prix-unitaire" class="form-label">Prix unitaire HT</label>
+                            <input type="text" id="prix-unitaire" class="form-control" readonly />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="stock-disponible" class="form-label">Stock disponible</label>
+                            <input type="text" id="stock-disponible" class="form-control" readonly />
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Montant ligne HT :</strong> <span id="montant-ligne-preview">0,00 €</span>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i> Annuler
-                </button>
-                <button type="button" class="btn btn-primary" onclick="addArticle()">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="btn-add-article">
                     <i class="fas fa-plus me-1"></i> Ajouter
                 </button>
             </div>
@@ -201,208 +203,7 @@
     </div>
 </div>
 
-<script>
-    let articles = [];
-    let commandeArticles = [];
-    let articleCounter = 0;
-
-    // Charger les articles au chargement de la page
-    document.addEventListener('DOMContentLoaded', function() {
-        loadArticles();
-    });
-
-    function loadArticles() {
-        // Simulation des données articles
-        articles = [
-            { id: 1, nom: 'Ordinateur portable', prix: 899.999, stock: 15 },
-            { id: 2, nom: 'Souris sans fil', prix: 25.500, stock: 50 },
-            { id: 3, nom: 'Clavier mécanique', prix: 89.990, stock: 30 },
-            { id: 4, nom: 'Écran 24 pouces', prix: 199.990, stock: 20 },
-            { id: 5, nom: 'Imprimante laser', prix: 249.990, stock: 10 }
-        ];
-
-        populateArticleSelect();
-    }
-
-    function populateArticleSelect() {
-        const select = document.getElementById('article-select');
-        select.innerHTML = '<option value="">-- Sélectionner un article --</option>';
-
-        articles.forEach(article => {
-            const option = document.createElement('option');
-            option.value = article.id;
-            option.textContent = `${article.nom} - ${article.prix.toFixed(2)} €`;
-            option.dataset.prix = article.prix;
-            option.dataset.stock = article.stock;
-            select.appendChild(option);
-        });
-    }
-
-    function openArticleModal() {
-        const modal = new bootstrap.Modal(document.getElementById('articleModal'));
-        resetArticleForm();
-        modal.show();
-    }
-
-    function resetArticleForm() {
-        document.getElementById('article-form').reset();
-        document.getElementById('prix-unitaire').value = '';
-        document.getElementById('stock-disponible').value = '';
-        document.getElementById('montant-ligne-preview').textContent = '0,00 €';
-
-        // Supprimer les classes de validation
-        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-    }
-
-    // Gérer les changements dans le select d'articles
-    document.getElementById('article-select').addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        if (selectedOption.value) {
-            document.getElementById('prix-unitaire').value = parseFloat(selectedOption.dataset.prix).toFixed(2);
-            document.getElementById('stock-disponible').value = selectedOption.dataset.stock;
-            updateMontantLignePreview();
-        } else {
-            document.getElementById('prix-unitaire').value = '';
-            document.getElementById('stock-disponible').value = '';
-            document.getElementById('montant-ligne-preview').textContent = '0,00 €';
-        }
-    });
-
-    // Gérer les changements dans la quantité
-    document.getElementById('quantite').addEventListener('input', updateMontantLignePreview);
-
-    function updateMontantLignePreview() {
-        const quantite = parseInt(document.getElementById('quantite').value) || 0;
-        const prix = parseFloat(document.getElementById('prix-unitaire').value) || 0;
-        const montant = quantite * prix;
-        document.getElementById('montant-ligne-preview').textContent = `${montant.toFixed(2)} €`;
-    }
-
-    function addArticle() {
-        if (!validateArticleForm()) {
-            return;
-        }
-
-        const articleId = parseInt(document.getElementById('article-select').value);
-        const articleNom = document.getElementById('article-select').options[document.getElementById('article-select').selectedIndex].text.split(' - ')[0];
-        const quantite = parseInt(document.getElementById('quantite').value);
-        const prixUnitaire = parseFloat(document.getElementById('prix-unitaire').value);
-        const montantLigne = quantite * prixUnitaire;
-
-        // Vérifier si l'article existe déjà
-        const existingIndex = commandeArticles.findIndex(a => a.articleId === articleId);
-        if (existingIndex >= 0) {
-            commandeArticles[existingIndex].quantite += quantite;
-            commandeArticles[existingIndex].montantLigne = commandeArticles[existingIndex].quantite * prixUnitaire;
-        } else {
-            commandeArticles.push({
-                articleId: articleId,
-                nomArticle: articleNom,
-                quantite: quantite,
-                prixUnitaire: prixUnitaire,
-                montantLigne: montantLigne
-            });
-        }
-
-        updateArticlesTable();
-        updateTotaux();
-
-        // Fermer le modal
-        bootstrap.Modal.getInstance(document.getElementById('articleModal')).hide();
-    }
-
-    function validateArticleForm() {
-        let isValid = true;
-
-        const articleSelect = document.getElementById('article-select');
-        const quantiteInput = document.getElementById('quantite');
-        const stockDisponible = parseInt(document.getElementById('stock-disponible').value) || 0;
-
-        // Validation article
-        if (!articleSelect.value) {
-            articleSelect.classList.add('is-invalid');
-            isValid = false;
-        } else {
-            articleSelect.classList.remove('is-invalid');
-        }
-
-        // Validation quantité
-        const quantite = parseInt(quantiteInput.value);
-        if (!quantite || quantite < 1 || quantite > stockDisponible) {
-            quantiteInput.classList.add('is-invalid');
-            isValid = false;
-        } else {
-            quantiteInput.classList.remove('is-invalid');
-        }
-
-        return isValid;
-    }
-
-    function updateArticlesTable() {
-        const tbody = document.getElementById('articles-tbody');
-        const noArticles = document.getElementById('no-articles');
-
-        if (commandeArticles.length === 0) {
-            tbody.innerHTML = '';
-            noArticles.style.display = 'block';
-            return;
-        }
-
-        noArticles.style.display = 'none';
-
-        tbody.innerHTML = commandeArticles.map((article, index) => `
-            <tr>
-                <td>${article.nomArticle}</td>
-                <td>${article.quantite}</td>
-                <td>${article.prixUnitaire.toFixed(2)} €</td>
-                <td>${article.montantLigne.toFixed(2)} €</td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeArticle(${index})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-
-        // Créer les champs cachés pour la soumission
-        updateHiddenFields();
-    }
-
-    function updateHiddenFields() {
-        // Supprimer les anciens champs cachés
-        document.querySelectorAll('input[name^="LignesCommande"]').forEach(input => input.remove());
-
-        // Créer les nouveaux champs cachés
-        commandeArticles.forEach((article, index) => {
-            const form = document.querySelector('form');
-
-            ['ArticleId', 'NomArticle', 'Quantite', 'PrixUnitaire', 'MontantLigne'].forEach(prop => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = `LignesCommande[${index}].${prop}`;
-                input.value = article[prop.toLowerCase()] || article[prop.charAt(0).toLowerCase() + prop.slice(1)];
-                form.appendChild(input);
-            });
-        });
-    }
-
-    function removeArticle(index) {
-        commandeArticles.splice(index, 1);
-        updateArticlesTable();
-        updateTotaux();
-    }
-
-    function updateTotaux() {
-        const montantHT = commandeArticles.reduce((sum, article) => sum + article.montantLigne, 0);
-        const montantTVA = montantHT * 0.20;
-        const montantTTC = montantHT + montantTVA;
-
-        document.getElementById('montant-ht').textContent = `${montantHT.toFixed(2)} €`;
-        document.getElementById('montant-tva').textContent = `${montantTVA.toFixed(2)} €`;
-        document.getElementById('montant-ttc').textContent = `${montantTTC.toFixed(2)} €`;
-    }
-</script>
-
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/commande-create.js" asp-append-version="true"></script>
 }

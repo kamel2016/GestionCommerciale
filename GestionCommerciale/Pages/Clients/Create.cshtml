@@ -1,840 +1,126 @@
 ﻿@page "/clients/create"
-@model GestionCommerciale.Pages.Clients.ClientDetailsModel
+@model GestionCommerciale.Pages.Clients.CreateModel
+@using GestionCommerciale.Models
 @{
-    ViewData["Title"] = "Nouveau Client";
+    ViewData["Title"] = "Nouveau client";
 }
 
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h2 class="text-dark mb-1">
-                <i class="fas fa-user-plus text-primary me-2"></i>
-                Nouveau Client
-            </h2>
-            <p class="text-muted mb-0">Créer un nouveau client dans le système</p>
-        </div>
-        <div class="col-md-4 text-end">
-            <a href="@Url.Page("./Index")" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-1"></i> Retour à la liste
-            </a>
-        </div>
+<link href="~/css/client-form.css" rel="stylesheet" asp-append-version="true" />
+
+<div class="clients-form-container">
+    <div class="clients-form-header">
+        <h1 class="clients-form-title">
+            <i class="fas fa-user-plus"></i> Nouveau client
+        </h1>
     </div>
 
-    <!-- Messages de notification -->
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
+    <form method="post" class="clients-form">
+        @if (!string.IsNullOrEmpty(ViewData["ErrorMessage"]?.ToString()))
+        {
+            <div class="clients-alert danger">
+                <i class="fas fa-exclamation-circle"></i>
+                @ViewData["ErrorMessage"]
+            </div>
+        }
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
+        <div class="clients-form-divider">
+            <h3><i class="fas fa-info-circle"></i> Informations de base</h3>
 
-    <!-- Affichage des erreurs de validation -->
-    @if (!ViewData.ModelState.IsValid)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            Veuillez corriger les erreurs ci-dessous avant de continuer.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    <!-- Formulaire de création -->
-    <form asp-page-handler="Create" method="post" id="createClientForm" novalidate>
-        
-        <!-- ONGLETS STYLE DOSSIER MODERNE -->
-        <div class="tabs-main-container">
-
-            <!-- HEADER DES ONGLETS -->
-            <div class="tabs-header-container">
-                <button type="button" id="tab1" class="simple-tab active" onclick="openTab('general')">
-                    <i class="fas fa-user"></i> <span class="tab-text">Général</span>
-                </button>
-                <button type="button" id="tab2" class="simple-tab" onclick="openTab('address')">
-                    <i class="fas fa-map-marker-alt"></i> <span class="tab-text">Adresse</span>
-                </button>
-                <button type="button" id="tab3" class="simple-tab" onclick="openTab('commercial')">
-                    <i class="fas fa-chart-line"></i> <span class="tab-text">Commercial</span>
-                </button>
-                <button type="button" id="tab4" class="simple-tab" onclick="openTab('fiscal')">
-                    <i class="fas fa-university"></i> <span class="tab-text">Fiscal</span>
-                </button>
-                <button type="button" id="tab5" class="simple-tab" onclick="openTab('notes')">
-                    <i class="fas fa-sticky-note"></i> <span class="tab-text">Notes</span>
-                </button>
+            <div class="clients-form-group">
+                <label asp-for="Client.TypeClient">Type de client</label>
+                <select asp-for="Client.TypeClient" id="typeClient" class="form-select">
+                    <option value="0">Particulier</option>
+                    <option value="1">Société</option>
+                </select>
+                <span asp-validation-for="Client.TypeClient" class="clients-form-error"></span>
             </div>
 
-            <!-- CONTENU DES ONGLETS -->
-            <div class="tabs-content-container">
-
-                <!-- ONGLET GÉNÉRAL -->
-                <div id="general" class="tab-content-simple active">
-                    <div class="section-title-modern">
-                        <i class="fas fa-info-circle"></i> Informations Générales
-                    </div>
-                    <div style="padding: 0 2rem 2rem 2rem;">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.CodeClient" class="field-label-modern">Code Client <span class="text-danger">*</span></label>
-                                    <input asp-for="Client.CodeClient" class="form-control form-control-lg" placeholder="Ex: CLI001" />
-                                    <span asp-validation-for="Client.CodeClient" class="text-danger small"></span>
-                                </div>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.Nom" class="field-label-modern">Nom <span class="text-danger">*</span></label>
-                                    <input asp-for="Client.Nom" class="form-control form-control-lg" placeholder="Nom de famille" />
-                                    <span asp-validation-for="Client.Nom" class="text-danger small"></span>
-                                </div>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.Prenom" class="field-label-modern">Prénom <span class="text-danger">*</span></label>
-                                    <input asp-for="Client.Prenom" class="form-control form-control-lg" placeholder="Prénom" />
-                                    <span asp-validation-for="Client.Prenom" class="text-danger small"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.Telephone" class="field-label-modern">Téléphone</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light border-end-0">
-                                            <i class="fas fa-phone text-muted"></i>
-                                        </span>
-                                        <input asp-for="Client.Telephone" type="tel" class="form-control form-control-lg border-start-0" placeholder="01.23.45.67.89" />
-                                    </div>
-                                    <span asp-validation-for="Client.Telephone" class="text-danger small"></span>
-                                </div>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.Email" class="field-label-modern">Email <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light border-end-0">
-                                            <i class="fas fa-envelope text-muted"></i>
-                                        </span>
-                                        <input asp-for="Client.Email" type="email" class="form-control form-control-lg border-start-0" placeholder="email@exemple.com" />
-                                    </div>
-                                    <span asp-validation-for="Client.Email" class="text-danger small"></span>
-                                </div>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.Zone" class="field-label-modern">Zone</label>
-                                    <select asp-for="Client.Zone" class="form-select form-select-lg">
-                                        <option value="">Sélectionner une zone...</option>
-                                        <option value="Nord">Nord</option>
-                                        <option value="Sud">Sud</option>
-                                        <option value="Est">Est</option>
-                                        <option value="Ouest">Ouest</option>
-                                        <option value="Centre">Centre</option>
-                                    </select>
-                                    <span asp-validation-for="Client.Zone" class="text-danger small"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="clients-form-row">
+                <div class="clients-form-group">
+                    <label asp-for="Client.Nom">Nom</label>
+                    <input asp-for="Client.Nom" type="text" placeholder="Ex: Dupont" />
+                    <span asp-validation-for="Client.Nom" class="clients-form-error"></span>
                 </div>
 
-                <!-- ONGLET ADRESSE -->
-                <div id="address" class="tab-content-simple">
-                    <div class="section-title-modern">
-                        <i class="fas fa-map-marker-alt"></i> Informations d'Adresse
-                    </div>
-                    <div style="padding: 0 2rem 2rem 2rem;">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5 class="subsection-title">
-                                    <i class="fas fa-home"></i> Adresse Principale
-                                </h5>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.Adresse" class="field-label-modern">Adresse</label>
-                                    <textarea asp-for="Client.Adresse" class="form-control" rows="3" placeholder="Numéro et nom de rue"></textarea>
-                                    <span asp-validation-for="Client.Adresse" class="text-danger small"></span>
-                                </div>
-                                <div class="row">
-                                    <div class="col-4">
-                                        <div style="margin-bottom: 1.5rem;">
-                                            <label asp-for="Client.CodePostal" class="field-label-modern">Code Postal</label>
-                                            <input asp-for="Client.CodePostal" class="form-control form-control-lg" placeholder="75001" />
-                                            <span asp-validation-for="Client.CodePostal" class="text-danger small"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-8">
-                                        <div style="margin-bottom: 1.5rem;">
-                                            <label asp-for="Client.Ville" class="field-label-modern">Ville</label>
-                                            <input asp-for="Client.Ville" class="form-control form-control-lg" placeholder="Nom de la ville" />
-                                            <span asp-validation-for="Client.Ville" class="text-danger small"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <h5 class="subsection-title">
-                                    <i class="fas fa-truck"></i> Adresse de Livraison
-                                </h5>
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" id="sameAsMainAddress" checked onchange="toggleDeliveryAddress()">
-                                    <label class="form-check-label" for="sameAsMainAddress">
-                                        Identique à l'adresse principale
-                                    </label>
-                                </div>
-                                <div id="deliveryAddressFields" style="display: none;">
-                                    <div style="margin-bottom: 1.5rem;">
-                                        <label asp-for="Client.AdresseLivraison" class="field-label-modern">Adresse de Livraison</label>
-                                        <textarea asp-for="Client.AdresseLivraison" class="form-control" rows="3" placeholder="Adresse de livraison différente"></textarea>
-                                        <span asp-validation-for="Client.AdresseLivraison" class="text-danger small"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="clients-form-group" id="prenomGroup">
+                    <label asp-for="Client.Prenom">Prénom</label>
+                    <input asp-for="Client.Prenom" type="text" placeholder="Ex: Jean" />
+                    <span asp-validation-for="Client.Prenom" class="clients-form-error"></span>
                 </div>
-
-                <!-- ONGLET COMMERCIAL -->
-                <div id="commercial" class="tab-content-simple">
-                    <div class="section-title-modern">
-                        <i class="fas fa-chart-line"></i> Informations Commerciales
-                    </div>
-                    <div style="padding: 0 2rem 2rem 2rem;">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5 class="subsection-title">
-                                    <i class="fas fa-tags"></i> Catégorie & Remises
-                                </h5>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.TypeCategorie" class="field-label-modern">Type de Catégorie</label>
-                                    <select asp-for="Client.TypeCategorie" class="form-select form-select-lg">
-                                        <option value="">Sélectionner...</option>
-                                        <option value="Standard">Standard</option>
-                                        <option value="VIP">VIP</option>
-                                        <option value="Grossiste">Grossiste</option>
-                                        <option value="Détaillant">Détaillant</option>
-                                    </select>
-                                    <span asp-validation-for="Client.TypeCategorie" class="text-danger small"></span>
-                                </div>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.RemiseParDefaut" class="field-label-modern">Remise Par Défaut (%)</label>
-                                    <div class="input-group">
-                                        <input asp-for="Client.RemiseParDefaut" type="number" step="0.01" min="0" max="100" class="form-control form-control-lg" placeholder="0.00" />
-                                        <span class="input-group-text">%</span>
-                                    </div>
-                                    <span asp-validation-for="Client.RemiseParDefaut" class="text-danger small"></span>
-                                </div>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.Representant" class="field-label-modern">Représentant</label>
-                                    <select asp-for="Client.Representant" class="form-select form-select-lg">
-                                        <option value="">Sélectionner un représentant...</option>
-                                        <option value="Marie Martin">Marie Martin</option>
-                                        <option value="Pierre Dubois">Pierre Dubois</option>
-                                        <option value="Sophie Moreau">Sophie Moreau</option>
-                                        <option value="Lucas Bernard">Lucas Bernard</option>
-                                    </select>
-                                    <span asp-validation-for="Client.Representant" class="text-danger small"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <h5 class="subsection-title">
-                                    <i class="fas fa-euro-sign"></i> Finances
-                                </h5>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.MontantCredit" class="field-label-modern">Montant Crédit (€)</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">€</span>
-                                        <input asp-for="Client.MontantCredit" type="number" step="0.01" min="0" class="form-control form-control-lg" placeholder="0.00" />
-                                    </div>
-                                    <span asp-validation-for="Client.MontantCredit" class="text-danger small"></span>
-                                </div>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.Solde" class="field-label-modern">Solde Initial (€)</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">€</span>
-                                        <input asp-for="Client.Solde" type="number" step="0.01" class="form-control form-control-lg" placeholder="0.00" />
-                                    </div>
-                                    <span asp-validation-for="Client.Solde" class="text-danger small"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ONGLET FISCAL -->
-                <div id="fiscal" class="tab-content-simple">
-                    <div class="section-title-modern">
-                        <i class="fas fa-university"></i> Informations Fiscales et Bancaires
-                    </div>
-                    <div style="padding: 0 2rem 2rem 2rem;">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5 class="subsection-title">
-                                    <i class="fas fa-file-invoice"></i> Fiscal
-                                </h5>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.MatriculeFiscal" class="field-label-modern">Matricule Fiscal</label>
-                                    <input asp-for="Client.MatriculeFiscal" class="form-control form-control-lg" placeholder="Matricule fiscal" />
-                                    <span asp-validation-for="Client.MatriculeFiscal" class="text-danger small"></span>
-                                </div>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.CodeTva" class="field-label-modern">Code TVA</label>
-                                    <input asp-for="Client.CodeTva" class="form-control form-control-lg" placeholder="Code TVA" />
-                                    <span asp-validation-for="Client.CodeTva" class="text-danger small"></span>
-                                </div>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.Cin" class="field-label-modern">CIN</label>
-                                    <input asp-for="Client.Cin" class="form-control form-control-lg" placeholder="Numéro CIN" />
-                                    <span asp-validation-for="Client.Cin" class="text-danger small"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <h5 class="subsection-title">
-                                    <i class="fas fa-university"></i> Bancaire
-                                </h5>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.Banque" class="field-label-modern">Banque</label>
-                                    <input asp-for="Client.Banque" class="form-control form-control-lg" placeholder="Nom de la banque" />
-                                    <span asp-validation-for="Client.Banque" class="text-danger small"></span>
-                                </div>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.Compte" class="field-label-modern">Compte</label>
-                                    <input asp-for="Client.Compte" class="form-control form-control-lg" placeholder="Numéro de compte" />
-                                    <span asp-validation-for="Client.Compte" class="text-danger small"></span>
-                                </div>
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label asp-for="Client.Rib" class="field-label-modern">RIB</label>
-                                    <input asp-for="Client.Rib" class="form-control form-control-lg" placeholder="RIB" />
-                                    <span asp-validation-for="Client.Rib" class="text-danger small"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ONGLET NOTES -->
-                <div id="notes" class="tab-content-simple">
-                    <div class="section-title-modern">
-                        <i class="fas fa-sticky-note"></i> Critères et Notes
-                    </div>
-                    <div style="padding: 0 2rem 2rem 2rem;">
-                        <div style="margin-bottom: 1.5rem;">
-                            <label asp-for="Client.Criteres" class="field-label-modern">Notes et critères</label>
-                            <textarea asp-for="Client.Criteres" class="form-control" rows="8" placeholder="Ajoutez ici vos notes et critères concernant ce client..."></textarea>
-                            <span asp-validation-for="Client.Criteres" class="text-danger small"></span>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
 
-        <!-- Boutons d'action -->
-        <div class="mt-4 d-flex justify-content-between">
-            <a href="@Url.Page("./Index")" class="btn btn-outline-secondary btn-lg">
-                <i class="fas fa-times me-1"></i>
-                Annuler
+        <div class="clients-form-divider">
+            <h3><i class="fas fa-envelope"></i> Contact</h3>
+
+            <div class="clients-form-row">
+                <div class="clients-form-group">
+                    <label asp-for="Client.Email">Email</label>
+                    <input asp-for="Client.Email" type="email" placeholder="exemple@email.com" />
+                    <span asp-validation-for="Client.Email" class="clients-form-error"></span>
+                </div>
+
+                <div class="clients-form-group">
+                    <label asp-for="Client.Telephone">Téléphone</label>
+                    <input asp-for="Client.Telephone" type="tel" placeholder="Ex: +216 XX XXX XXX" />
+                    <span asp-validation-for="Client.Telephone" class="clients-form-error"></span>
+                </div>
+            </div>
+
+            <div class="clients-form-row">
+                <div class="clients-form-group">
+                    <label asp-for="Client.Adresse">Adresse</label>
+                    <input asp-for="Client.Adresse" type="text" placeholder="Ex: 123 rue de la Paix" />
+                    <span asp-validation-for="Client.Adresse" class="clients-form-error"></span>
+                </div>
+
+                <div class="clients-form-group">
+                    <label asp-for="Client.Gouvernorat">Gouvernorat</label>
+                    <select asp-for="Client.Gouvernorat">
+                        <option value="">-- Sélectionner --</option>
+                        @foreach (var gov in CreateModel.Gouvernorats)
+                        {
+                            <option value="@gov">@gov</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Client.Gouvernorat" class="clients-form-error"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="clients-form-divider">
+            <h3><i class="fas fa-file-invoice"></i> Informations fiscales</h3>
+
+            <div class="clients-form-group">
+                <label asp-for="Client.MatriculeFiscale">Matricule fiscal</label>
+                <input asp-for="Client.MatriculeFiscale" type="text" placeholder="Ex: 12345678" />
+                <span asp-validation-for="Client.MatriculeFiscale" class="clients-form-error"></span>
+            </div>
+        </div>
+
+        <div class="clients-form-actions">
+            <button type="submit" class="clients-btn-primary">
+                <i class="fas fa-save"></i> Enregistrer
+            </button>
+            <a href="/clients" class="clients-btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fas fa-times"></i> Annuler
             </a>
-            <div>
-                <button type="button" class="btn btn-outline-primary btn-lg me-2" onclick="resetForm()">
-                    <i class="fas fa-undo me-1"></i>
-                    Réinitialiser
-                </button>
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-save me-1"></i>
-                    Créer le client
-                </button>
-            </div>
         </div>
     </form>
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-
-    <style>
-        /* CSS SIMPLIFIE SANS KEYFRAMES NI MEDIA QUERIES */
-        .simple-tab {
-            background: #f8f9fa;
-            border: 2px solid #ced4da;
-            border-bottom: none;
-            padding: 14px 24px 10px 24px;
-            margin-right: 3px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            color: #495057;
-            position: relative;
-            transition: all 0.3s ease;
-            border-radius: 12px 12px 0 0;
-            box-shadow: 0 -3px 6px rgba(0,0,0,0.1);
-            transform: translateY(2px);
-            min-width: 130px;
-            text-align: center;
-        }
-
-            .simple-tab::before {
-                content: '';
-                position: absolute;
-                top: -2px;
-                left: -2px;
-                right: -2px;
-                height: 4px;
-                background: transparent;
-                border-radius: 12px 12px 0 0;
-                transition: all 0.3s ease;
-            }
-
-            .simple-tab:hover {
-                background: #ffffff;
-                color: #343a40;
-                transform: translateY(-1px);
-                box-shadow: 0 -6px 12px rgba(0,0,0,0.15);
-                border-color: #adb5bd;
-            }
-
-                .simple-tab:hover::before {
-                    background: linear-gradient(90deg, #007bff, #0056b3);
-                    box-shadow: 0 0 8px rgba(0,123,255,0.4);
-                }
-
-            .simple-tab.active {
-                background: #ffffff;
-                color: #007bff;
-                font-weight: 600;
-                transform: translateY(-4px);
-                border-color: #007bff;
-                box-shadow: 0 -8px 16px rgba(0,123,255,0.2);
-                z-index: 10;
-            }
-
-                .simple-tab.active::before {
-                    background: linear-gradient(90deg, #007bff, #0056b3);
-                    box-shadow: 0 0 12px rgba(0,123,255,0.6);
-                }
-
-            .simple-tab i {
-                margin-right: 8px;
-                font-size: 15px;
-                transition: transform 0.3s ease;
-            }
-
-            .simple-tab:hover i {
-                transform: scale(1.1);
-            }
-
-            .simple-tab.active i {
-                transform: scale(1.15);
-                color: #007bff;
-            }
-
-        /* Conteneur principal */
-        .tabs-main-container {
-            border: 2px solid #007bff;
-            border-radius: 0 12px 12px 12px;
-            overflow: hidden;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            position: relative;
-            background: #ffffff;
-        }
-
-            .tabs-main-container::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 3px;
-                background: linear-gradient(90deg, #007bff, #0056b3);
-                z-index: 5;
-            }
-
-        .tabs-header-container {
-            display: flex;
-            background: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-            position: relative;
-            padding: 0 10px;
-        }
-
-        .tabs-content-container {
-            background: #ffffff;
-            min-height: 400px;
-        }
-
-        /* Contenu des onglets */
-        .tab-content-simple {
-            display: none;
-        }
-
-            .tab-content-simple.active {
-                display: block;
-                animation: fadeInSimple 0.4s ease;
-            }
-
-        .fadeInSimple {
-            opacity: 1;
-        }
-
-        /* Champs de formulaire */
-        .form-control, .form-select {
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-
-            .form-control:focus, .form-select:focus {
-                border-color: #007bff;
-                box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
-            }
-
-        /* Titres */
-        .section-title-modern {
-            color: #007bff;
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            padding: 15px 20px;
-            background: rgba(0,123,255,0.1);
-            border-left: 4px solid #007bff;
-            border-radius: 0 8px 8px 0;
-            position: relative;
-        }
-
-            .section-title-modern::after {
-                content: '';
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                height: 2px;
-                background: linear-gradient(90deg, #007bff, transparent);
-            }
-
-        .subsection-title {
-            color: #495057;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            padding: 8px 0;
-            border-bottom: 2px solid #e9ecef;
-            position: relative;
-        }
-
-            .subsection-title::before {
-                content: '';
-                position: absolute;
-                bottom: -2px;
-                left: 0;
-                width: 60px;
-                height: 2px;
-                background: #007bff;
-            }
-
-        .field-label-modern {
-            font-weight: 600;
-            color: #495057;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        .simple-tab:focus {
-            outline: 3px solid rgba(0,123,255,0.3);
-            outline-offset: 2px;
-        }
-
-        /* Validation styles */
-        .field-validation-error {
-            color: #dc3545;
-            font-size: 0.875em;
-            margin-top: 0.25rem;
-            display: block;
-        }
-
-        .is-invalid {
-            border-color: #dc3545;
-            box-shadow: 0 0 0 0.2rem rgba(220,53,69,0.25);
-        }
-
-        .is-valid {
-            border-color: #28a745;
-            box-shadow: 0 0 0 0.2rem rgba(40,167,69,0.25);
-        }
-    </style>
-
     <script>
-        // Variables pour gérer les changements non sauvegardés
-        let hasUnsavedChanges = false;
+        document.addEventListener('DOMContentLoaded', function () {
+            const typeClient = document.getElementById('typeClient');
+            const prenomGroup = document.getElementById('prenomGroup');
 
-        // Fonction pour ouvrir les onglets
-        function openTab(tabName) {
-            console.log('Opening tab: ' + tabName);
-
-            var contents = document.querySelectorAll('.tab-content-simple');
-            for (var i = 0; i < contents.length; i++) {
-                contents[i].classList.remove('active');
+            function togglePrenom() {
+                prenomGroup.style.display = typeClient.value === '1' ? 'none' : '';
             }
 
-            var tabs = document.querySelectorAll('.simple-tab');
-            for (var i = 0; i < tabs.length; i++) {
-                tabs[i].classList.remove('active');
-            }
-
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
-
-            localStorage.setItem('activeCreateClientTab', tabName);
-            console.log('Tab opened successfully');
-        }
-
-        // Fonction pour basculer l'affichage de l'adresse de livraison
-        function toggleDeliveryAddress() {
-            const checkbox = document.getElementById('sameAsMainAddress');
-            const deliveryFields = document.getElementById('deliveryAddressFields');
-            const deliveryInput = document.querySelector('textarea[name="Client.AdresseLivraison"]');
-            
-            if (checkbox.checked) {
-                deliveryFields.style.display = 'none';
-                if (deliveryInput) deliveryInput.value = '';
-            } else {
-                deliveryFields.style.display = 'block';
-            }
-        }
-
-        // Fonction pour réinitialiser le formulaire
-        function resetForm() {
-            if (confirm('Êtes-vous sûr de vouloir réinitialiser tous les champs ?')) {
-                document.getElementById('createClientForm').reset();
-                hasUnsavedChanges = false;
-                
-                // Réinitialiser la checkbox de l'adresse de livraison
-                document.getElementById('sameAsMainAddress').checked = true;
-                toggleDeliveryAddress();
-            }
-        }
-
-        // Détecter les changements dans le formulaire
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Create client page loaded');
-
-            // Restaurer l'onglet actif depuis le localStorage
-            var savedTab = localStorage.getItem('activeCreateClientTab');
-            if (savedTab && document.getElementById(savedTab)) {
-                var savedTabButton = document.querySelector('[onclick*="' + savedTab + '"]');
-                if (savedTabButton) {
-                    var allTabs = document.querySelectorAll('.simple-tab');
-                    var allContents = document.querySelectorAll('.tab-content-simple');
-
-                    for (var i = 0; i < allTabs.length; i++) {
-                        allTabs[i].classList.remove('active');
-                    }
-                    for (var i = 0; i < allContents.length; i++) {
-                        allContents[i].classList.remove('active');
-                    }
-
-                    savedTabButton.classList.add('active');
-                    document.getElementById(savedTab).classList.add('active');
-                }
-            }
-
-            // Détecter les changements dans le formulaire
-            const formInputs = document.querySelectorAll('#createClientForm input, #createClientForm select, #createClientForm textarea');
-            formInputs.forEach(input => {
-                input.addEventListener('change', function() {
-                    hasUnsavedChanges = true;
-                });
-                input.addEventListener('input', function() {
-                    hasUnsavedChanges = true;
-                });
-            });
-
-            // Validation en temps réel
-            formInputs.forEach(input => {
-                input.addEventListener('blur', function() {
-                    validateField(this);
-                });
-            });
-
-            // Génération automatique du code client
-            const nomInput = document.querySelector('input[name="Client.Nom"]');
-            const prenomInput = document.querySelector('input[name="Client.Prenom"]');
-            const codeClientInput = document.querySelector('input[name="Client.CodeClient"]');
-
-            if (nomInput && prenomInput && codeClientInput) {
-                function generateClientCode() {
-                    const nom = nomInput.value.trim().toUpperCase();
-                    const prenom = prenomInput.value.trim().toUpperCase();
-                    
-                    if (nom && prenom && !codeClientInput.value.trim()) {
-                        const code = `CLI${nom.substring(0, 3)}${prenom.substring(0, 2)}${Math.floor(Math.random() * 100).toString().padStart(2, '0')}`;
-                        codeClientInput.value = code;
-                        hasUnsavedChanges = true;
-                    }
-                }
-
-                nomInput.addEventListener('blur', generateClientCode);
-                prenomInput.addEventListener('blur', generateClientCode);
-            }
+            typeClient.addEventListener('change', togglePrenom);
+            togglePrenom();
         });
-
-        // Avertir avant de quitter la page si des changements non sauvegardés
-        window.addEventListener('beforeunload', function(e) {
-            if (hasUnsavedChanges) {
-                e.preventDefault();
-                e.returnValue = 'Vous avez des modifications non sauvegardées. Êtes-vous sûr de vouloir quitter ?';
-            }
-        });
-
-        // Fonction de validation des champs
-        function validateField(field) {
-            const fieldName = field.name;
-            const value = field.value.trim();
-            
-            // Supprimer les classes de validation précédentes
-            field.classList.remove('is-valid', 'is-invalid');
-            
-            // Validation basique
-            let isValid = true;
-            
-            // Champs obligatoires
-            if (fieldName.includes('CodeClient') || fieldName.includes('Nom') || fieldName.includes('Prenom') || fieldName.includes('Email')) {
-                if (!value) {
-                    isValid = false;
-                }
-            }
-            
-            // Validation email
-            if (fieldName.includes('Email') && value) {
-                const emailRegex = /^\w+([\.-]?\w+)*\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-                if (!emailRegex.test(value)) {
-                    isValid = false;
-                }
-            }
-            
-            // Validation téléphone
-            if (fieldName.includes('Telephone') && value) {
-                const phoneRegex = /^[\d\s\.\-\+\(\)]+$/;
-                if (!phoneRegex.test(value)) {
-                    isValid = false;
-                }
-            }
-            
-            // Validation code postal
-            if (fieldName.includes('CodePostal') && value) {
-                const postalRegex = /^\d{5}$/;
-                if (!postalRegex.test(value)) {
-                    isValid = false;
-                }
-            }
-            
-            // Validation pourcentage de remise
-            if (fieldName.includes('RemiseParDefaut') && value) {
-                const remise = parseFloat(value);
-                if (isNaN(remise) || remise < 0 || remise > 100) {
-                    isValid = false;
-                }
-            }
-            
-            // Appliquer la classe de validation
-            if (isValid && value) {
-                field.classList.add('is-valid');
-            } else if (!isValid) {
-                field.classList.add('is-invalid');
-            }
-        }
-
-        // Copier l'adresse principale vers l'adresse de livraison
-        function copyMainAddressToDelivery() {
-            const mainAddress = document.querySelector('textarea[name="Client.Adresse"]').value;
-            const deliveryAddress = document.querySelector('textarea[name="Client.AdresseLivraison"]');
-            
-            if (deliveryAddress) {
-                deliveryAddress.value = mainAddress;
-                hasUnsavedChanges = true;
-            }
-        }
-
-        // Validation du formulaire avant soumission
-        document.getElementById('createClientForm').addEventListener('submit', function(e) {
-            let hasErrors = false;
-            
-            // Valider tous les champs obligatoires
-            const requiredFields = ['Client.CodeClient', 'Client.Nom', 'Client.Prenom', 'Client.Email'];
-            
-            requiredFields.forEach(fieldName => {
-                const field = document.querySelector(`[name="${fieldName}"]`);
-                if (field && !field.value.trim()) {
-                    field.classList.add('is-invalid');
-                    hasErrors = true;
-                    
-                    // Afficher l'onglet contenant le champ invalide
-                    const tabContent = field.closest('.tab-content-simple');
-                    if (tabContent) {
-                        const tabId = tabContent.id;
-                        const tabButton = document.querySelector(`[onclick*="${tabId}"]`);
-                        if (tabButton) {
-                            openTab(tabId);
-                        }
-                    }
-                }
-            });
-            
-            if (hasErrors) {
-                e.preventDefault();
-                
-                // Afficher un message d'erreur
-                const errorAlert = document.createElement('div');
-                errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3';
-                errorAlert.innerHTML = `
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Veuillez remplir tous les champs obligatoires avant de continuer.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `;
-                
-                const container = document.querySelector('.container-fluid');
-                const existingAlert = container.querySelector('.alert-danger');
-                if (existingAlert) {
-                    existingAlert.remove();
-                }
-                
-                container.insertBefore(errorAlert, container.children[1]);
-                
-                // Faire défiler vers le haut pour voir l'erreur
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            } else {
-                hasUnsavedChanges = false;
-            }
-        });
-
-        // Auto-complétion du code postal vers ville (exemple pour la France)
-        const codePostalInput = document.querySelector('input[name="Client.CodePostal"]');
-        const villeInput = document.querySelector('input[name="Client.Ville"]');
-
-        if (codePostalInput && villeInput) {
-            codePostalInput.addEventListener('blur', function() {
-                const codePostal = this.value.trim();
-                
-                // Exemple de correspondances (à remplacer par une vraie base de données)
-                const villesParCP = {
-                    '75001': 'Paris 1er',
-                    '75008': 'Paris 8ème',
-                    '69001': 'Lyon 1er',
-                    '13001': 'Marseille 1er',
-                    '33000': 'Bordeaux',
-                    '59000': 'Lille',
-                    '67000': 'Strasbourg',
-                    '44000': 'Nantes'
-                };
-                
-                if (villesParCP[codePostal] && !villeInput.value.trim()) {
-                    villeInput.value = villesParCP[codePostal];
-                    hasUnsavedChanges = true;
-                }
-            });
-        }
     </script>
 }

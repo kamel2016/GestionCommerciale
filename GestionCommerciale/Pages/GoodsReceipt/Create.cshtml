@@ -1,0 +1,192 @@
+﻿@page
+@model GestionCommerciale.Pages.GoodsReceipt.CreateModel
+@{
+    ViewData["Title"] = "Nouveau bon de réception";
+}
+
+<link rel="stylesheet" href="~/css/goods-receipt-create.css" asp-append-version="true" />
+<div class="gr-page">
+
+    <header class="gr-header">
+        <div class="gr-header__title">
+            <span class="gr-header__icon"><i class="fas fa-dolly"></i></span>
+            <div>
+                <h1>Nouveau bon de réception</h1>
+                <p>Enregistrer les marchandises reçues d'un fournisseur</p>
+            </div>
+        </div>
+        <a asp-page="Index" class="btn btn-gr-ghost">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+    </header>
+
+    @if (!ModelState.IsValid)
+    {
+        <div class="gr-alert gr-alert--danger" role="alert">
+            <i class="fas fa-exclamation-circle"></i>
+            <div asp-validation-summary="All" class="mb-0"></div>
+        </div>
+    }
+
+    <form method="post" id="grForm" novalidate>
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Input.LignesJson" id="lignesJson" />
+
+        <div class="row g-4">
+
+            <!-- Colonne gauche -->
+            <div class="col-lg-8">
+
+                <section class="gr-card gr-section">
+                    <h2 class="gr-section__title"><i class="fas fa-info-circle"></i> Informations générales</h2>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="gr-label" asp-for="Input.FournisseurId">Fournisseur *</label>
+                            <select asp-for="Input.FournisseurId" asp-items="Model.Fournisseurs"
+                                    class="gr-select w-100" id="selFournisseur">
+                                <option value="">— Sélectionner —</option>
+                            </select>
+                            <span asp-validation-for="Input.FournisseurId" class="gr-error"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="gr-label" asp-for="Input.CommandeFournisseurId">Commande fournisseur *</label>
+                            <select asp-for="Input.CommandeFournisseurId" asp-items="Model.CommandesFournisseur"
+                                    class="gr-select w-100" id="selCommande">
+                                <option value="">— Sélectionner un fournisseur d'abord —</option>
+                            </select>
+                            <span asp-validation-for="Input.CommandeFournisseurId" class="gr-error"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="gr-label" asp-for="Input.ReferenceFournisseur">Référence fournisseur</label>
+                            <input asp-for="Input.ReferenceFournisseur" class="gr-input w-100" placeholder="N° BL fournisseur" />
+                            <span asp-validation-for="Input.ReferenceFournisseur" class="gr-error"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="gr-label" asp-for="Input.DateReception">Date de réception *</label>
+                            <input asp-for="Input.DateReception" type="date" class="gr-input w-100" />
+                            <span asp-validation-for="Input.DateReception" class="gr-error"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="gr-label" asp-for="Input.HeureReception">Heure</label>
+                            <input asp-for="Input.HeureReception" type="time" class="gr-input w-100" />
+                        </div>
+                        <div class="col-12">
+                            <label class="gr-label" asp-for="Input.Commentaire">Commentaire</label>
+                            <textarea asp-for="Input.Commentaire" rows="2" class="gr-input w-100"></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="gr-card gr-section">
+                    <div class="gr-section__head">
+                        <h2 class="gr-section__title"><i class="fas fa-list"></i> Articles reçus</h2>
+                        <small class="text-muted">Quantités reprises de la commande, à ajuster si besoin</small>
+                        <button type="button" class="btn btn-gr-ghost btn-sm" id="btnAjouterLigne" disabled>
+                            <i class="fas fa-plus"></i> Ajouter un article
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="gr-table">
+                            <thead>
+                                <tr>
+                                    <th>Référence</th>
+                                    <th>Libellé</th>
+                                    <th class="text-end">Qté commandée</th>
+                                    <th class="text-end">Qté reçue</th>
+                                    <th class="text-end">P.U. HT</th>
+                                    <th class="text-end">TVA</th>
+                                    <th class="text-end">Total HT</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lignesBody">
+                                <tr class="gr-empty-row">
+                                    <td colspan="7">
+                                        <i class="fas fa-box-open"></i> Sélectionnez une commande pour charger les articles
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Colonne droite -->
+            <div class="col-lg-4">
+                <aside class="gr-card gr-section gr-totaux">
+                    <h2 class="gr-section__title"><i class="fas fa-calculator"></i> Récapitulatif</h2>
+                    <dl>
+                        <dt>Total HT</dt>
+                        <dd id="totalHT">0,00 €</dd>
+                        <dt>TVA</dt>
+                        <dd id="totalTVA">0,00 €</dd>
+                        <dt class="gr-totaux__ttc">Total TTC</dt>
+                        <dd class="gr-totaux__ttc" id="totalTTC">0,00 €</dd>
+                    </dl>
+
+                    <div class="gr-totaux__actions">
+                        <button type="submit" id="btnEnregistrer" name="action" value="save" class="btn btn-gr-primary w-100">
+                            <i class="fas fa-save"></i> Enregistrer
+                        </button>
+                        <button type="submit" name="action" value="saveAndNew" class="btn btn-gr-ghost w-100">
+                            <i class="fas fa-plus"></i> Enregistrer et nouveau
+                        </button>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </form>
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body" id="confirmModalBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="confirmModalOk">Confirmer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalLigne" tabindex="-1" aria-labelledby="modalLigneLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLigneLabel">Ajouter un article</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalErreur" class="alert alert-danger d-none"></div>
+
+                <div class="mb-3">
+                    <label class="form-label">Article</label>
+                    <select id="selArticle" class="form-select">
+                        <option value="">— Sélectionner —</option>
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <label class="form-label">Quantité</label>
+                        <input type="number" id="inpQte" class="form-control" min="1" value="1" />
+                    </div>
+                    <div class="col">
+                        <label class="form-label">Prix unitaire</label>
+                        <input type="number" id="inpPU" class="form-control" step="0.01" min="0" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="btnValiderLigne">Valider la ligne</button>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/js/goods-receipt-create.js" asp-append-version="true"></script>
+}

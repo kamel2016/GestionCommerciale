@@ -15,7 +15,7 @@ namespace GestionCommerciale.Pages.Commande_Client
             _context = context;
         }
 
-        public CommandeClient CommandeClient { get; set; } = default!;
+        public Models.CommandeClient CommandeClient { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {

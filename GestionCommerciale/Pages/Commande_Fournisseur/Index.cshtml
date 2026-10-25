@@ -1,8 +1,8 @@
 ﻿@page
 @using GestionCommerciale.Enums
-@model GestionCommerciale.Pages.Commande_Client.IndexModel
+@model GestionCommerciale.Pages.Commande_Fournisseur.IndexModel
 @{
-    ViewData["Title"] = "Commandes clients";
+    ViewData["Title"] = "Commandes fournisseurs";
     Layout = "~/Pages/Shared/_Layout.cshtml";
 }
 
@@ -13,8 +13,8 @@
                 <div class="card-header bg-primary text-white">
                     <div class="d-flex justify-content-between align-items-center">
                         <h4 class="mb-0">
-                            <i class="fas fa-shopping-cart me-2"></i>
-                            Commandes clients
+                            <i class="fas fa-truck me-2"></i>
+                            Commandes fournisseurs
                         </h4>
                         <a asp-page="Create" class="btn btn-light">
                             <i class="fas fa-plus me-1"></i>
@@ -29,10 +29,8 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-search"></i>
-                                    </span>
-                                    <input asp-for="SearchString" class="form-control" placeholder="Rechercher par numéro de commande ou client..." />
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input asp-for="SearchString" class="form-control" placeholder="Rechercher par numéro ou fournisseur..." />
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -47,12 +45,10 @@
                             <div class="col-md-3">
                                 <div class="d-flex gap-2">
                                     <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-filter me-1"></i>
-                                        Filtrer
+                                        <i class="fas fa-filter me-1"></i>Filtrer
                                     </button>
                                     <a asp-page="./Index" class="btn btn-outline-secondary">
-                                        <i class="fas fa-times me-1"></i>
-                                        Effacer
+                                        <i class="fas fa-times me-1"></i>Effacer
                                     </a>
                                 </div>
                             </div>
@@ -63,97 +59,76 @@
                     <div class="row mb-4">
                         <div class="col-md-3">
                             <div class="card bg-info text-white">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <h6 class="card-title">Total commandes</h6>
-                                            <h4 class="mb-0">@Model.CommandeClients.Count</h4>
-                                        </div>
-                                        <div class="align-self-center">
-                                            <i class="fas fa-shopping-cart fa-2x"></i>
-                                        </div>
+                                <div class="card-body d-flex justify-content-between">
+                                    <div>
+                                        <h6>Total commandes</h6>
+                                        <h4 class="mb-0">@Model.CommandesFournisseur.Count</h4>
                                     </div>
+                                    <i class="fas fa-truck fa-2x align-self-center"></i>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="card bg-warning text-white">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <h6 class="card-title">En attente</h6>
-                                            <h4 class="mb-0">@Model.CommandeClients.Count(c => c.Statut == StatutCommande.EnAttente)</h4>
-                                        </div>
-                                        <div class="align-self-center">
-                                            <i class="fas fa-clock fa-2x"></i>
-                                        </div>
+                                <div class="card-body d-flex justify-content-between">
+                                    <div>
+                                        <h6>En attente</h6>
+                                        <h4 class="mb-0">@Model.CommandesFournisseur.Count(c => c.Statut == StatutCommande.EnAttente)</h4>
                                     </div>
+                                    <i class="fas fa-clock fa-2x align-self-center"></i>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="card bg-primary text-white">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <h6 class="card-title">En cours</h6>
-                                            <h4 class="mb-0">@Model.CommandeClients.Count(c => c.Statut == StatutCommande.EnPreparation)</h4>
-                                        </div>
-                                        <div class="align-self-center">
-                                            <i class="fas fa-spinner fa-2x"></i>
-                                        </div>
+                                <div class="card-body d-flex justify-content-between">
+                                    <div>
+                                        <h6>En cours</h6>
+                                        <h4 class="mb-0">@Model.CommandesFournisseur.Count(c => c.Statut == StatutCommande.EnPreparation)</h4>
                                     </div>
+                                    <i class="fas fa-spinner fa-2x align-self-center"></i>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="card bg-success text-white">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <h6 class="card-title">Livrées</h6>
-                                            <h4 class="mb-0">@Model.CommandeClients.Count(c => c.Statut == StatutCommande.Livree)</h4>
-                                        </div>
-                                        <div class="align-self-center">
-                                            <i class="fas fa-check fa-2x"></i>
-                                        </div>
+                                <div class="card-body d-flex justify-content-between">
+                                    <div>
+                                        <h6>Livrées</h6>
+                                        <h4 class="mb-0">@Model.CommandesFournisseur.Count(c => c.Statut == StatutCommande.Livree)</h4>
                                     </div>
+                                    <i class="fas fa-check fa-2x align-self-center"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Tableau des commandes -->
+                    <!-- Tableau -->
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
                                 <tr>
                                     <th>Numéro</th>
                                     <th>Date commande</th>
-                                    <th>Client</th>
+                                    <th>Fournisseur</th>
                                     <th>Statut</th>
                                     <th>Montant TTC</th>
-                                    <th>Date livraison</th>
-                                    <th>Actions</th>
+                                    <th>Livraison prévue</th>
+                                    <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @if (Model.CommandeClients.Any())
+                                @if (Model.CommandesFournisseur.Any())
                                 {
-                                    @foreach (var commande in Model.CommandeClients)
+                                    @foreach (var commande in Model.CommandesFournisseur)
                                     {
                                         <tr>
+                                            <td><strong>@commande.NumeroCommande</strong></td>
+                                            <td>@commande.DateCommande.ToString("dd/MM/yyyy")</td>
                                             <td>
-                                                <strong>@commande.NumeroCommande</strong>
-                                            </td>
-                                            <td>
-                                                @commande.DateCommande.ToString("dd/MM/yyyy")
-                                            </td>
-                                            <td>
-                                                <div>
-                                                    <strong>@commande.Client.Nom @commande.Client.Prenom</strong>
-                                                </div>
-                                                <small class="text-muted">@commande.Client.Email</small>
+                                                <strong>@commande.Fournisseur.Nom</strong>
+                                                <br />
+                                                <small class="text-muted">@commande.Fournisseur.Email</small>
                                             </td>
                                             <td>
                                                 @switch (commande.Statut)
@@ -174,20 +149,20 @@
                                             </td>
                                             <td>
                                                 <strong>@commande.MontantTTC.ToString("C")</strong>
-                                                <br>
-                                                <small class="text-muted">HT: @commande.MontantHT.ToString("C")</small>
+                                                <br />
+                                                <small class="text-muted">HT : @commande.MontantHT.ToString("C")</small>
                                             </td>
                                             <td>
-                                                @if (commande.DateLivraison.HasValue)
+                                                @if (commande.DateLivraisonPrevue.HasValue)
                                                 {
-                                                    @commande.DateLivraison.Value.ToString("dd/MM/yyyy")
+                                                    @commande.DateLivraisonPrevue.Value.ToString("dd/MM/yyyy")
                                                 }
                                                 else
                                                 {
                                                     <span class="text-muted">-</span>
                                                 }
                                             </td>
-                                            <td>
+                                            <td class="text-center">
                                                 <div class="btn-group btn-group-sm" role="group">
                                                     <a asp-page="./Details" asp-route-id="@commande.Id" class="btn btn-outline-info" title="Détails">
                                                         <i class="fas fa-eye"></i>
@@ -195,7 +170,8 @@
                                                     <a asp-page="./Edit" asp-route-id="@commande.Id" class="btn btn-outline-warning" title="Modifier">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <button type="button" class="btn btn-outline-danger" title="Supprimer" onclick="confirmDelete(@commande.Id, '@commande.NumeroCommande')">
+                                                    <button type="button" class="btn btn-outline-danger" title="Supprimer"
+                                                            onclick="confirmDelete(@commande.Id, '@commande.NumeroCommande')">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
@@ -208,12 +184,8 @@
                                     <tr>
                                         <td colspan="7" class="text-center py-4">
                                             <div class="text-muted">
-                                                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
-                                                <p class="mb-0">Aucune commande trouvée</p>
-                                                @if (!string.IsNullOrEmpty(Model.SearchString) || Model.StatutFilter.HasValue)
-                                                {
-                                                    <small>Essayez de modifier vos critères de recherche</small>
-                                                }
+                                                <i class="fas fa-truck fa-3x mb-3"></i>
+                                                <p class="mb-0">Aucune commande fournisseur trouvée</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -227,27 +199,23 @@
     </div>
 </div>
 
-<!-- Modal de confirmation de suppression -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<!-- Modal suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Êtes-vous sûr de vouloir supprimer la commande <strong id="commandeNumero"></strong> ?</p>
-                <p class="text-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Cette action est irréversible.
-                </p>
+                <p>Supprimer la commande <strong id="commandeNumero"></strong> ?</p>
+                <p class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Cette action est irréversible.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <form method="post" class="d-inline" id="deleteForm">
+                <form method="post" id="deleteForm" class="d-inline">
                     <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-1"></i>
-                        Supprimer
+                        <i class="fas fa-trash me-1"></i>Supprimer
                     </button>
                 </form>
             </div>
@@ -256,10 +224,9 @@
 </div>
 
 <script>
-    function confirmDelete(id, numeroCommande) {
-        document.getElementById('commandeNumero').textContent = numeroCommande;
+    function confirmDelete(id, numero) {
+        document.getElementById('commandeNumero').textContent = numero;
         document.getElementById('deleteForm').action = './Delete?id=' + id;
-        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-        modal.show();
-    }
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
 </script>

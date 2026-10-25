@@ -1,0 +1,204 @@
+﻿/* ===== FORMULAIRE CRÉATION/ÉDITION CLIENT ===== */
+
+.clients-form-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.clients-form-header {
+    margin-bottom: 2rem;
+}
+
+.clients-form-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0;
+    color: #172b4d;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+    .clients-form-title i {
+        color: #2196f3;
+        font-size: 2.2rem;
+    }
+
+/* Sections avec dividers */
+.clients-form-divider {
+    background: #fff;
+    border: 1px solid #e7edf3;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+    .clients-form-divider h3 {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        margin: 0 0 1.5rem 0;
+        color: #172b4d;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-bottom: 2px solid #f0f2f5;
+        padding-bottom: 1rem;
+    }
+
+        .clients-form-divider h3 i {
+            color: #2196f3;
+            font-size: 1.3rem;
+        }
+
+/* Groupes de formulaire */
+.clients-form-group {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+    .clients-form-group label {
+        display: block;
+        margin-bottom: 0.6rem;
+        color: #263238;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .clients-form-group input,
+    .clients-form-group select,
+    .clients-form-group textarea {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid #d7e0ea;
+        border-radius: 7px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        color: #263238;
+        background: #fff;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+    }
+
+        .clients-form-group input:focus,
+        .clients-form-group select:focus,
+        .clients-form-group textarea:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+            background: #f8fafd;
+        }
+
+/* Lignes avec 2 colonnes */
+.clients-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+    .clients-form-row .clients-form-group {
+        margin-bottom: 0;
+    }
+
+/* Messages d'erreur */
+.clients-form-error {
+    color: #d32f2f;
+    font-size: 0.85rem;
+    margin-top: 0.4rem;
+    display: block;
+}
+
+/* Alertes */
+.clients-alert {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-radius: 7px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+    .clients-alert.danger {
+        background: #ffebee;
+        border-left: 4px solid #d32f2f;
+        color: #b71c1c;
+    }
+
+    .clients-alert i {
+        font-size: 1.2rem;
+    }
+
+/* Boutons d'action */
+.clients-form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e7edf3;
+}
+
+.clients-btn-primary,
+.clients-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 7px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.clients-btn-primary {
+    background: #2196f3;
+    color: white;
+}
+
+    .clients-btn-primary:hover {
+        background: #1976d2;
+        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+
+    .clients-btn-primary:active {
+        transform: scale(0.98);
+    }
+
+.clients-btn-secondary {
+    background: #e7edf3;
+    color: #263238;
+}
+
+    .clients-btn-secondary:hover {
+        background: #d7e0ea;
+    }
+
+    .clients-btn-secondary:active {
+        transform: scale(0.98);
+    }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .clients-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .clients-form-title {
+        font-size: 1.5rem;
+    }
+
+    .clients-form-actions {
+        flex-direction: column;
+    }
+
+    .clients-btn-primary,
+    .clients-btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+}

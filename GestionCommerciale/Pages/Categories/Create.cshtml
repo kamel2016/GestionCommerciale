@@ -1,38 +1,246 @@
 ﻿@page
 @model GestionCommerciale.Pages.Categories.CreateModel
 @{
-    ViewData["Title"] = "Créer une nouvelle categorie";
+    ViewData["Title"] = "Nouvelle Catégorie";
 }
 
-<div class="container fade-in">
-    <h1>Créer une nouvelle categorie</h1>
+<link rel="stylesheet" href="~/css/category-form.css" />
 
-    <div class="form-container">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+<div class="form-container">
 
-            <div class="form-group">
-                <label asp-for="Categorie.Libelle" class="form-label"></label>
-                <input asp-for="Categorie.Libelle" class="form-control" />
-                <span asp-validation-for="Categorie.Libelle" class="text-danger"></span>
-            </div>
-
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-save"></i>
-                    Créer
-                </button>
-                <a asp-page="Index" class="btn btn-secondary">
-                    <i class="fas fa-times"></i>
-                    Annuler
-                </a>
-            </div>
-        </form>
+    <!-- ============================================
+         EN-TÊTE DE LA PAGE
+         ============================================ -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1 class="page-title">
+                <i class="fas fa-plus-circle"></i>
+                Nouvelle Catégorie
+            </h1>
+            <p class="page-subtitle">Créez une nouvelle catégorie pour organiser vos articles</p>
+        </div>
+        <div class="header-actions">
+            <a asp-page="./Index" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Retour à la liste
+            </a>
+        </div>
     </div>
+
+    <!-- ============================================
+         FORMULAIRE DE CRÉATION
+         ============================================ -->
+    <form method="post" class="category-form">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        <!-- ============================================
+             SECTION: INFORMATIONS GÉNÉRALES
+             ============================================ -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Informations Générales
+                </h2>
+                <p class="section-description">Définissez les informations de base de la catégorie</p>
+            </div>
+
+            <div class="form-grid">
+                <!-- Code -->
+                <div class="form-group required">
+                    <label asp-for="Category.Code" class="form-label">
+                        <i class="fas fa-barcode"></i>
+                        Code de la catégorie
+                    </label>
+                    <input asp-for="Category.Code" class="form-control" placeholder="Ex: INFO-ORD" maxlength="20" />
+                    <small class="form-text">Code unique pour identifier la catégorie (ex: INFO-ORD, MOBI-BUR)</small>
+                    <span asp-validation-for="Category.Code" class="text-danger"></span>
+                </div>
+
+                <!-- Nom -->
+                <div class="form-group required">
+                    <label asp-for="Category.Name" class="form-label">
+                        <i class="fas fa-tag"></i>
+                        Nom de la catégorie
+                    </label>
+                    <input asp-for="Category.Name" class="form-control" placeholder="Ex: Ordinateurs" maxlength="100" />
+                    <small class="form-text">Nom descriptif de la catégorie</small>
+                    <span asp-validation-for="Category.Name" class="text-danger"></span>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group full-width">
+                    <label asp-for="Category.Description" class="form-label">
+                        <i class="fas fa-align-left"></i>
+                        Description
+                    </label>
+                    <textarea asp-for="Category.Description" class="form-control" rows="4"
+                              placeholder="Décrivez brièvement cette catégorie..." maxlength="500"></textarea>
+                    <small class="form-text">Description détaillée (optionnelle, max 500 caractères)</small>
+                    <span asp-validation-for="Category.Description" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             SECTION: HIÉRARCHIE
+             ============================================ -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-sitemap"></i>
+                    Hiérarchie
+                </h2>
+                <p class="section-description">Définissez la position de cette catégorie dans la hiérarchie</p>
+            </div>
+
+            <div class="form-grid">
+                <!-- Catégorie parente -->
+                <div class="form-group">
+                    <label asp-for="Category.ParentCategoryId" class="form-label">
+                        <i class="fas fa-layer-group"></i>
+                        Catégorie parente
+                    </label>
+                    <select asp-for="Category.ParentCategoryId" asp-items="Model.ParentCategoriesList" class="form-control">
+                        <option value="">-- Aucune (Catégorie principale) --</option>
+                    </select>
+                    <small class="form-text">Laissez vide pour créer une catégorie principale</small>
+                    <span asp-validation-for="Category.ParentCategoryId" class="text-danger"></span>
+                </div>
+
+                <!-- Ordre d'affichage -->
+                <div class="form-group">
+                    <label asp-for="Category.DisplayOrder" class="form-label">
+                        <i class="fas fa-sort-numeric-down"></i>
+                        Ordre d'affichage
+                    </label>
+                    <input asp-for="Category.DisplayOrder" type="number" class="form-control" min="0" value="0" />
+                    <small class="form-text">Position dans la liste (0 = premier)</small>
+                    <span asp-validation-for="Category.DisplayOrder" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             SECTION: APPARENCE
+             ============================================ -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-palette"></i>
+                    Apparence
+                </h2>
+                <p class="section-description">Personnalisez l'apparence visuelle de la catégorie</p>
+            </div>
+
+            <div class="form-grid">
+                <!-- Icône -->
+                <div class="form-group">
+                    <label asp-for="Category.Icon" class="form-label">
+                        <i class="fas fa-icons"></i>
+                        Icône
+                    </label>
+                    <div class="icon-picker-wrapper">
+                        <input asp-for="Category.Icon" class="form-control" placeholder="fas fa-box"
+                               id="iconInput" onchange="updateIconPreview()" />
+                        <div class="icon-preview" id="iconPreview">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    </div>
+                    <small class="form-text">
+                        Classe Font Awesome (ex: fas fa-laptop, fas fa-chair) -
+                        <a href="https://fontawesome.com/icons" target="_blank">Voir les icônes</a>
+                    </small>
+                    <span asp-validation-for="Category.Icon" class="text-danger"></span>
+                </div>
+
+                <!-- Couleur -->
+                <div class="form-group">
+                    <label asp-for="Category.Color" class="form-label">
+                        <i class="fas fa-fill-drip"></i>
+                        Couleur
+                    </label>
+                    <div class="color-picker-wrapper">
+                        <input asp-for="Category.Color" type="color" class="form-control-color"
+                               id="colorPicker" value="#2196F3" onchange="updateColorPreview()" />
+                        <input type="text" class="form-control color-text" id="colorText"
+                               value="#2196F3" pattern="^#[0-9A-Fa-f]{6}$"
+                               onchange="updateColorFromText()" placeholder="#2196F3" />
+                    </div>
+                    <small class="form-text">Couleur d'identification de la catégorie</small>
+                    <span asp-validation-for="Category.Color" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Prévisualisation -->
+            <div class="preview-section">
+                <label class="form-label">
+                    <i class="fas fa-eye"></i>
+                    Aperçu
+                </label>
+                <div class="category-preview" id="categoryPreview">
+                    <div class="preview-icon" id="previewIcon" style="background-color: #2196F3;">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="preview-content">
+                        <div class="preview-name" id="previewName">Nom de la catégorie</div>
+                        <div class="preview-code" id="previewCode">CODE</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             SECTION: OPTIONS
+             ============================================ -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-cog"></i>
+                    Options
+                </h2>
+                <p class="section-description">Configurez les paramètres de la catégorie</p>
+            </div>
+
+            <div class="form-options">
+                <!-- Statut actif -->
+                <div class="form-check-group">
+                    <div class="custom-switch">
+                        <input asp-for="Category.IsActive" type="checkbox" class="custom-switch-input"
+                               id="isActiveSwitch" checked />
+                        <label class="custom-switch-label" for="isActiveSwitch">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-content">
+                        <label class="form-label" for="isActiveSwitch">
+                            <i class="fas fa-toggle-on"></i>
+                            Catégorie active
+                        </label>
+                        <small class="form-text">La catégorie sera visible et utilisable</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             BOUTONS D'ACTION
+             ============================================ -->
+        <div class="form-actions">
+            <button type="submit" class="btn-success">
+                <i class="fas fa-save"></i>
+                Créer la catégorie
+            </button>
+            <a asp-page="./Index" class="btn-secondary">
+                <i class="fas fa-times"></i>
+                Annuler
+            </a>
+        </div>
+    </form>
+
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/category-form.js"></script>
 }

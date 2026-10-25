@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using GestionCommerciale.Enums;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace GestionCommerciale.Models
 {
@@ -29,17 +30,17 @@ namespace GestionCommerciale.Models
         [Display(Name = "Statut")]
         public StatutCommande Statut { get; set; } = StatutCommande.EnAttente;
 
-        [Column(TypeName = "decimal(18,2)")]
+        [Column(TypeName = "decimal(18,3)")]
         [Display(Name = "Montant HT")]
         [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
         public decimal MontantHT { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
+        [Column(TypeName = "decimal(18,3)")]
         [Display(Name = "Montant TTC")]
         [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
         public decimal MontantTTC { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
+        [Column(TypeName = "decimal(18,3)")]
         [Display(Name = "Montant TVA")]
         [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
         public decimal MontantTVA { get; set; }
@@ -55,7 +56,8 @@ namespace GestionCommerciale.Models
         public DateTime? DateModification { get; set; }
 
         // Navigation properties
-        public virtual Client Client { get; set; } = null!;
+        [ValidateNever]
+        public virtual Client? Client { get; set; }
         public virtual ICollection<LigneCommandeClient> LignesCommande { get; set; } = new List<LigneCommandeClient>();
     }
 }

@@ -20,12 +20,12 @@ namespace GestionCommerciale.Models
         public int Quantite { get; set; }
 
         [Required]
-        [Column(TypeName = "decimal(18,2)")]
+        [Column(TypeName = "decimal(18,3)")]
         [Display(Name = "Prix unitaire")]
         [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
         public decimal PrixUnitaire { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
+        [Column(TypeName = "decimal(18,3)")]
         [Display(Name = "Montant ligne")]
         [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
         public decimal MontantLigne { get; set; }

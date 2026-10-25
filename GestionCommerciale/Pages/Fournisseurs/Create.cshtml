@@ -1,4 +1,141 @@
 ﻿@page
 @model GestionCommerciale.Pages.Fournisseurs.CreateModel
 @{
+    ViewData["Title"] = "Nouveau fournisseur";
+}
+
+<div class="container-fluid py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0"><i class="fas fa-truck me-2"></i>Nouveau fournisseur</h1>
+        <a asp-page="./Index" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Retour à la liste
+        </a>
+    </div>
+
+    <form method="post" novalidate>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        <!-- Identité -->
+        <div class="card mb-3">
+            <div class="card-header fw-semibold"><i class="fas fa-id-card me-2"></i>Identité</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label asp-for="Input.Nom" class="form-label"></label>
+                        <input asp-for="Input.Nom" class="form-control" autofocus />
+                        <span asp-validation-for="Input.Nom" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.MatriculeFiscale" class="form-label"></label>
+                        <input asp-for="Input.MatriculeFiscale" class="form-control" placeholder="Ex : 1234567/A/M/000" />
+                        <span asp-validation-for="Input.MatriculeFiscale" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="card mb-3">
+            <div class="card-header fw-semibold"><i class="fas fa-phone me-2"></i>Contact</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Input.PersonneContact" class="form-label"></label>
+                        <input asp-for="Input.PersonneContact" class="form-control" />
+                        <span asp-validation-for="Input.PersonneContact" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.Email" class="form-label"></label>
+                        <input asp-for="Input.Email" type="email" class="form-control" />
+                        <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.Telephone" class="form-label"></label>
+                        <input asp-for="Input.Telephone" class="form-control" />
+                        <span asp-validation-for="Input.Telephone" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.Fax" class="form-label"></label>
+                        <input asp-for="Input.Fax" class="form-control" />
+                        <span asp-validation-for="Input.Fax" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adresse -->
+        <div class="card mb-3">
+            <div class="card-header fw-semibold"><i class="fas fa-map-marker-alt me-2"></i>Adresse</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Input.Adresse" class="form-label"></label>
+                        <textarea asp-for="Input.Adresse" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="Input.Adresse" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.Ville" class="form-label"></label>
+                        <input asp-for="Input.Ville" class="form-control" />
+                        <span asp-validation-for="Input.Ville" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.CodePostal" class="form-label"></label>
+                        <input asp-for="Input.CodePostal" class="form-control" />
+                        <span asp-validation-for="Input.CodePostal" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.Gouvernorat" class="form-label"></label>
+                        <select asp-for="Input.Gouvernorat" asp-items="Model.GouvernoratOptions" class="form-select">
+                            <option value="">-- Sélectionner --</option>
+                        </select>
+                        <span asp-validation-for="Input.Gouvernorat" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conditions commerciales -->
+        <div class="card mb-3">
+            <div class="card-header fw-semibold"><i class="fas fa-handshake me-2"></i>Conditions commerciales</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Input.DelaiLivraison" class="form-label"></label>
+                        <input asp-for="Input.DelaiLivraison" type="number" min="0" max="365" class="form-control" />
+                        <span asp-validation-for="Input.DelaiLivraison" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.DelaiPaiement" class="form-label"></label>
+                        <input asp-for="Input.DelaiPaiement" type="number" min="0" max="365" class="form-control" />
+                        <span asp-validation-for="Input.DelaiPaiement" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.RemiseAccordee" class="form-label"></label>
+                        <input asp-for="Input.RemiseAccordee" type="number" step="0.01" min="0" max="100" class="form-control" />
+                        <span asp-validation-for="Input.RemiseAccordee" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statut -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="form-check form-switch">
+                    <input asp-for="Input.EstActif" class="form-check-input" />
+                    <label asp-for="Input.EstActif" class="form-check-label"></label>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Enregistrer</button>
+            <a asp-page="./Index" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }

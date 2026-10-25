@@ -1,0 +1,555 @@
+﻿/* Pages/Suppliers/supplier-form.css */
+
+:root {
+    --primary-color: #2563eb;
+    --primary-dark: #1e40af;
+    --primary-light: #dbeafe;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --border-radius: 0.5rem;
+    --box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --box-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+/* ============================================
+   CONTENEUR PRINCIPAL
+   ============================================ */
+
+.suppliers-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+/* ============================================
+   EN-TÊTE
+   ============================================ */
+
+.suppliers-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    border-radius: var(--border-radius);
+    color: white;
+    box-shadow: var(--box-shadow-md);
+}
+
+    .suppliers-header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: white;
+    }
+
+        .suppliers-header h1 i {
+            font-size: 1.75rem;
+        }
+
+.header-info {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    margin-top: 0.5rem;
+}
+
+/* ============================================
+   CONTENEUR DU FORMULAIRE
+   ============================================ */
+
+.form-container {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-md);
+    padding: 2rem;
+}
+
+/* ============================================
+   FORMULAIRE
+   ============================================ */
+
+.supplier-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* ============================================
+   SECTION DU FORMULAIRE
+   ============================================ */
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+    .form-section:last-of-type {
+        border-bottom: none;
+    }
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+    .section-header i {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+    }
+
+    .section-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+
+/* ============================================
+   LIGNES DE FORMULAIRE - IMPORTANT!
+   ============================================ */
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+    /* Une seule colonne pour les champs pleine largeur */
+    .form-row.full-width,
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+.form-group.full-width {
+    width: 100%;
+}
+
+/* ============================================
+   GROUPES DE FORMULAIRE
+   ============================================ */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+    .form-group label {
+        font-weight: 600;
+        color: var(--gray-700);
+        font-size: 0.95rem;
+    }
+
+        .form-group label::after {
+            content: "";
+        }
+
+        .form-group label:has(+ input[required])::after,
+        .form-group label:has(+ select[required])::after,
+        .form-group label:has(+ textarea[required])::after {
+            content: " *";
+            color: var(--danger-color);
+        }
+
+/* ============================================
+   CHAMPS DE SAISIE
+   ============================================ */
+
+.form-control {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: var(--transition);
+    background-color: white;
+}
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        background-color: var(--primary-light);
+    }
+
+    .form-control:disabled {
+        background-color: var(--gray-100);
+        color: var(--gray-500);
+        cursor: not-allowed;
+    }
+
+    .form-control.is-invalid {
+        border-color: var(--danger-color);
+        background-color: rgba(239, 68, 68, 0.05);
+    }
+
+        .form-control.is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+
+/* ============================================
+   INPUT GROUP
+   ============================================ */
+
+.input-group {
+    display: flex;
+    gap: 0;
+}
+
+    .input-group .form-control {
+        flex: 1;
+        border-radius: var(--border-radius) 0 0 var(--border-radius);
+    }
+
+    .input-group .input-group-text {
+        padding: 0.75rem 1rem;
+        background-color: var(--gray-100);
+        border: 1px solid var(--gray-300);
+        border-left: none;
+        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        font-weight: 600;
+        color: var(--gray-700);
+        display: flex;
+        align-items: center;
+    }
+
+    .input-group .form-control:focus ~ .input-group-text {
+        border-color: var(--primary-color);
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+    }
+
+/* ============================================
+   TEXTE D'AIDE
+   ============================================ */
+
+.form-text {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    margin-top: 0.25rem;
+}
+
+/* ============================================
+   MESSAGES DE VALIDATION
+   ============================================ */
+
+.text-danger {
+    color: var(--danger-color);
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.field-validation-error {
+    color: var(--danger-color);
+    font-size: 0.85rem;
+}
+
+/* ============================================
+   CHECKBOX PERSONNALISÉ
+   ============================================ */
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 1rem;
+    background-color: var(--gray-50);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--gray-200);
+    transition: var(--transition);
+}
+
+    .checkbox-label:hover {
+        background-color: var(--gray-100);
+        border-color: var(--primary-color);
+    }
+
+.checkbox-input {
+    display: none;
+}
+
+.checkbox-custom {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid var(--gray-300);
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    background-color: white;
+}
+
+.checkbox-input:checked ~ .checkbox-custom {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+    .checkbox-input:checked ~ .checkbox-custom::after {
+        content: "✓";
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+
+.checkbox-text {
+    color: var(--gray-700);
+    font-weight: 500;
+}
+
+/* ============================================
+   BOUTONS D'ACTION
+   ============================================ */
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--gray-200);
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    text-align: center;
+    justify-content: center;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: var(--box-shadow-md);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+
+.btn-secondary {
+    background-color: var(--gray-200);
+    color: var(--gray-700);
+}
+
+    .btn-secondary:hover {
+        background-color: var(--gray-300);
+        transform: translateY(-2px);
+    }
+
+/* ============================================
+   CARTES D'INFORMATIONS
+   ============================================ */
+
+.info-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.info-card {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--primary-light) 0%, white 100%);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-sm);
+    transition: var(--transition);
+}
+
+    .info-card:hover {
+        box-shadow: var(--box-shadow-md);
+        transform: translateY(-2px);
+    }
+
+.info-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+    .info-header i {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+    }
+
+    .info-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--gray-700);
+    }
+
+.info-body {
+    text-align: center;
+}
+
+.info-value {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.info-label {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.85rem;
+    color: var(--gray-500);
+}
+
+/* ============================================
+   ALERTE
+   ============================================ */
+
+.alert {
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--danger-color);
+    color: var(--danger-color);
+}
+
+.alert-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--success-color);
+    color: var(--success-color);
+}
+
+.alert i {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.alert ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.alert li {
+    margin-bottom: 0.5rem;
+}
+
+.alert strong {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .suppliers-container {
+        padding: 1rem;
+    }
+
+    .suppliers-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+        .suppliers-header h1 {
+            font-size: 1.25rem;
+        }
+
+    .form-container {
+        padding: 1.5rem;
+    }
+
+    /* IMPORTANT: 1 seule colonne sur mobile */
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .info-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group label {
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        font-size: 16px; /* Évite le zoom sur iOS */
+    }
+}
+
+@media (max-width: 480px) {
+    .suppliers-header h1 {
+        font-size: 1rem;
+    }
+
+    .section-header h2 {
+        font-size: 1rem;
+    }
+
+    .form-container {
+        padding: 1rem;
+    }
+
+    .form-section {
+        gap: 1rem;
+    }
+
+    .btn {
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .info-value {
+        font-size: 1.5rem;
+    }
+}

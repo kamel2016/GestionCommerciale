@@ -1,71 +1,71 @@
-using GestionCommerciale.Enums;
+using GestionCommerciale.Data;
 using GestionCommerciale.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
-namespace GestionCommerciale.Pages.Commande_Client
+namespace GestionCommerciale.Pages.Commande_Fournisseur
 {
     public class DeleteModel : PageModel
     {
-        //private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        //public DeleteModel(ApplicationDbContext context)
-        //{
-        //    _context = context;
-        //}
-
+        public DeleteModel(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
         [BindProperty]
-        public CommandeClient CommandeClient { get; set; }
+        public CommandeFournisseur CommandeFournisseur { get; set; } = default!;
 
-        public IActionResult OnGet(int id)
+        public int NombreBonsReception { get; set; }
+
+        public async Task<IActionResult> OnGetAsync(int? id)
         {
-            CommandeClient = new CommandeClient
-            {
-                Id = 1,
-                NumeroCommande = "CMD20250101001",
-                DateCommande = DateTime.Now.AddDays(-10),
-                DateLivraison = DateTime.Now.AddDays(-5),
-                ClientId = 1,
-                Statut = StatutCommande.Livree,
-                MontantHT = 1200.00m,
-                MontantTVA = 240.00m,
-                MontantTTC = 1440.00m,
-                DateCreation = DateTime.Now.AddDays(-10),
-                Client = new Client { Id = 1, Nom = "Dupont", Prenom = "Jean", Email = "jean.dupont@example.com" }
-            };
-
-            //Client = await _context.Clients
-            //    .Include(c => c.CommandesClient)
-            //    .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (CommandeClient == null)
-            {
+            if (id == null)
                 return NotFound();
-            }
+
+            var commande = await _context.CommandesFournisseur
+                .Include(c => c.Fournisseur)
+                .Include(c => c.LignesCommande)
+                    .ThenInclude(l => l.Article)
+                .Include(c => c.BonsReception)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (commande == null)
+                return NotFound();
+
+            CommandeFournisseur = commande;
+            NombreBonsReception = commande.BonsReception.Count;
 
             return Page();
         }
 
-        public IActionResult OnPost(int id)
+        public async Task<IActionResult> OnPostAsync(int? id)
         {
-            //Client = await _context.Clients
-            //    .Include(c => c.CommandesClient)
-            //    .FirstOrDefaultAsync(m => m.Id == id);
+            if (id == null)
+                return NotFound();
 
-            //if (Client != null)
-            //{
-            //    if (Client.CommandesClient.Any())
-            //    {
-            //        ModelState.AddModelError("", "Impossible de supprimer un client qui a des commandes.");
-            //        return Page();
-            //    }
+            var commande = await _context.CommandesFournisseur
+                .Include(c => c.LignesCommande)
+                .Include(c => c.BonsReception)
+                .FirstOrDefaultAsync(c => c.Id == id);
 
-            //    //_context.Clients.Remove(Client);
-            //    //await _context.SaveChangesAsync();
-            //}
+            if (commande == null)
+                return NotFound();
 
+            // Une commande ayant déjà des bons de réception ne peut pas être supprimée
+            if (commande.BonsReception.Any())
+            {
+                TempData["Error"] = "Impossible de supprimer cette commande : elle possède des bons de réception.";
+                return RedirectToPage("./Index");
+            }
+
+            _context.LignesCommandeFournisseur.RemoveRange(commande.LignesCommande);
+            _context.CommandesFournisseur.Remove(commande);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"La commande {commande.NumeroCommande} a été supprimée.";
             return RedirectToPage("./Index");
         }
     }

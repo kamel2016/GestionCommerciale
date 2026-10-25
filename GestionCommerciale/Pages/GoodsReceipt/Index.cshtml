@@ -1,249 +1,192 @@
 ﻿@page "/GoodsReceipt"
 @model GestionCommerciale.Pages.GoodsReceipt.IndexModel
 @{
-    ViewData["Title"] = "Bons de Réception";
-    Layout = "_Layout";
+    ViewData["Title"] = "Bons de réception";
 }
 
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-<link href="~/css/goods-receipt-index.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/css/goods-receipt-index.css" asp-append-version="true" />
 
-<div class="container-fluid">
+<div class="gr-page">
+
     <!-- En-tête -->
-    <div class="page-header">
-        <div>
-            <h1><i class="fas fa-dolly"></i> Bons de Réception</h1>
-            <p class="header-subtitle">Gestion des réceptions de marchandises</p>
+    <header class="gr-header">
+        <div class="gr-header__title">
+            <span class="gr-header__icon"><i class="fas fa-dolly"></i></span>
+            <div>
+                <h1>Bons de réception</h1>
+                <p>Suivi des marchandises reçues auprès des fournisseurs</p>
+            </div>
         </div>
-        <div class="header-actions">
-            <a href="/GoodsReceipt/Create" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nouveau bon
-            </a>
-        </div>
-    </div>
+        <a asp-page="Create" class="btn btn-gr-primary">
+            <i class="fas fa-plus"></i> Nouveau bon
+        </a>
+    </header>
 
-    <!-- Filtres et Recherche -->
-    <div class="filters-section">
-        <form method="get" class="filters-form">
-            <div class="filter-group">
-                <input type="text" name="searchTerm" class="form-control" 
-                       placeholder="Rechercher par numéro, fournisseur..." 
-                       value="@Model.SearchTerm" />
-            </div>
-
-            <div class="filter-group">
-                <select name="status" class="form-control">
-                    <option value="">-- Tous les statuts --</option>
-                    <option value="Brouillon" selected="@(Model.StatusFilter == "Brouillon")">Brouillon</option>
-                    <option value="Validé" selected="@(Model.StatusFilter == "Validé")">Validé</option>
-                    <option value="Liquidé" selected="@(Model.StatusFilter == "Liquidé")">Liquidé</option>
-                    <option value="Annulé" selected="@(Model.StatusFilter == "Annulé")">Annulé</option>
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <input type="date" name="dateFrom" class="form-control" 
-                       value="@Model.DateFrom?.ToString("yyyy-MM-dd")" placeholder="Du" />
-            </div>
-
-            <div class="filter-group">
-                <input type="date" name="dateTo" class="form-control" 
-                       value="@Model.DateTo?.ToString("yyyy-MM-dd")" placeholder="Au" />
-            </div>
-
-            <button type="submit" class="btn btn-search">
-                <i class="fas fa-search"></i> Rechercher
-            </button>
-            <a href="/GoodsReceipt" class="btn btn-reset">
-                <i class="fas fa-redo"></i> Réinitialiser
-            </a>
-        </form>
-    </div>
-
-    <!-- Messages d'alerte -->
-    @if (TempData["SuccessMessage"] != null)
+    <!-- Messages -->
+    @if (TempData["SuccessMessage"] is string success)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle"></i>
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="gr-alert gr-alert--success" role="alert">
+            <i class="fas fa-check-circle"></i> @success
+        </div>
+    }
+    @if (TempData["ErrorMessage"] is string error)
+    {
+        <div class="gr-alert gr-alert--danger" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @error
         </div>
     }
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle"></i>
-            @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <!-- Filtres -->
+    <form method="get" class="gr-filters">
+        <div class="gr-filters__search">
+            <i class="fas fa-search"></i>
+            <input type="text" name="SearchTerm" value="@Model.SearchTerm"
+                   placeholder="Numéro, référence ou fournisseur…" />
         </div>
-    }
 
-    <!-- Tableau des bons de réception -->
-    <div class="table-section">
+        <select name="Status" class="gr-select">
+            <option value="">Tous les statuts</option>
+            @foreach (var s in Model.StatutsDisponibles)
+            {
+                <option value="@s" selected="@(Model.Status == s)">@s</option>
+            }
+        </select>
+
+        <input type="date" name="DateFrom" class="gr-input" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" title="Du" />
+        <input type="date" name="DateTo" class="gr-input" value="@Model.DateTo?.ToString("yyyy-MM-dd")" title="Au" />
+
+        <div class="gr-filters__actions">
+            <button type="submit" class="btn btn-gr-primary"><i class="fas fa-filter"></i> Filtrer</button>
+            <a asp-page="Index" class="btn btn-gr-ghost"><i class="fas fa-rotate-left"></i> Réinitialiser</a>
+        </div>
+    </form>
+
+    <!-- Tableau -->
+    <section class="gr-card">
         @if (Model.GoodsReceipts.Any())
         {
-            <table class="receipt-table">
-                <thead>
-                    <tr>
-                        <th>N° Bon</th>
-                        <th>Date</th>
-                        <th>Fournisseur</th>
-                        <th>Code Fournisseur</th>
-                        <th>Montant HT</th>
-                        <th>Montant TTC</th>
-                        <th>Statut</th>
-                        <th>Créé par</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var receipt in Model.GoodsReceipts)
-                    {
+            <div class="table-responsive">
+                <table class="gr-table">
+                    <thead>
                         <tr>
-                            <td data-label="N° Bon">
-                                <strong>@receipt.InternalNumber</strong>
-                            </td>
-                            <td data-label="Date">
-                                @receipt.ReceiptDate.ToString("dd/MM/yyyy")
-                            </td>
-                            <td data-label="Fournisseur">
-                                @receipt.SupplierName
-                            </td>
-                            <td data-label="Code Fournisseur">
-                                <code>@receipt.SupplierCode</code>
-                            </td>
-                            <td data-label="Montant HT" class="text-right">
-                                @receipt.AmountExcludingTax.ToString("N2") €
-                            </td>
-                            <td data-label="Montant TTC" class="text-right">
-                                <strong>@receipt.AmountIncludingTax.ToString("N2")</strong> €
-                            </td>
-                            <td data-label="Statut">
-                                <span class="status-badge status-@receipt.Status.ToLower()">
-                                    @receipt.Status
-                                </span>
-                            </td>
-                            <td data-label="Créé par">
-                                <small>@receipt.CreatedBy</small>
-                            </td>
-                            <td data-label="Actions">
-                                <div class="action-buttons">
-                                    <a href="/GoodsReceipt/Details/@receipt.Id" 
-                                       class="btn-icon" 
-                                       title="Consulter" 
-                                       onclick="openReceiptPopup(@receipt.Id); return false;">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    @if (receipt.Status == "Brouillon")
-                                    {
-                                        <a href="/GoodsReceipt/Edit/@receipt.Id" 
-                                           class="btn-icon" 
-                                           title="Modifier">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                    }
-                                    <a href="#" 
-                                       class="btn-icon btn-print" 
-                                       title="Imprimer" 
-                                       onclick="printReceipt(@receipt.Id); return false;">
-                                        <i class="fas fa-print"></i>
-                                    </a>
-                                    @if (receipt.Status != "Annulé")
-                                    {
-                                        <a href="#" 
-                                           class="btn-icon btn-delete" 
-                                           title="Annuler" 
-                                           onclick="cancelReceipt(@receipt.Id); return false;">
-                                            <i class="fas fa-times"></i>
-                                        </a>
-                                    }
-                                </div>
-                            </td>
+                            <th>Numéro</th>
+                            <th>Fournisseur</th>
+                            <th>Réf. fournisseur</th>
+                            <th>Date</th>
+                            <th class="text-end">Montant HT</th>
+                            <th class="text-end">Montant TTC</th>
+                            <th>Statut</th>
+                            <th>Créé par</th>
+                            <th class="text-center">Actions</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.GoodsReceipts)
+                        {
+                            <tr>
+                                <td><span class="gr-code">@r.InternalNumber</span></td>
+                                <td>
+                                    <div class="gr-supplier">
+                                        <span class="gr-supplier__name">@r.SupplierName</span>
+                                        <small class="text-muted">@r.SupplierCode</small>
+                                    </div>
+                                </td>
+                                <td>@r.SupplierReference</td>
+                                <td>
+                                    <div>@r.ReceiptDate.ToString("dd/MM/yyyy")</div>
+                                    <small class="text-muted">@r.ReceiptTime.ToString(@"hh\:mm")</small>
+                                </td>
+                                <td class="text-end">@r.AmountExcludingTax.ToString("N2") €</td>
+                                <td class="text-end"><strong>@r.AmountIncludingTax.ToString("N2") €</strong></td>
+                                <td>
+                                    <span class="gr-badge gr-badge--@r.Status.ToLower()">@r.Status</span>
+                                </td>
+                                <td><small>@r.CreatedBy</small></td>
+                                <td>
+                                    <div class="gr-actions">
+                                        <button type="button" class="gr-icon-btn" title="Consulter"
+                                                onclick="openReceiptPopup(@r.Id)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        @if (r.Status == "Brouillon")
+                                        {
+                                            <a asp-page="Edit" asp-route-id="@r.Id" class="gr-icon-btn" title="Modifier">
+                                                <i class="fas fa-pen"></i>
+                                            </a>
+                                        }
+                                        <button type="button" class="gr-icon-btn" title="Imprimer"
+                                                onclick="printReceipt(@r.Id)">
+                                            <i class="fas fa-print"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
 
             <!-- Pagination -->
-            @if (Model.TotalPages > 1)
-            {
-                <div class="pagination-section">
-                    <nav aria-label="Pagination">
-                        <ul class="pagination">
-                            @if (Model.CurrentPage > 1)
-                            {
-                                <li class="page-item">
-                                    <a class="page-link" href="/GoodsReceipt?page=1&searchTerm=@Model.SearchTerm&status=@Model.StatusFilter">
-                                        <i class="fas fa-chevron-left"></i> Première
-                                    </a>
-                                </li>
-                            }
-
-                            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
-                            {
-                                @if (i == Model.CurrentPage)
-                                {
-                                    <li class="page-item active">
-                                        <span class="page-link">@i</span>
-                                    </li>
-                                }
-                                else
-                                {
-                                    <li class="page-item">
-                                        <a class="page-link" href="/GoodsReceipt?page=@i&searchTerm=@Model.SearchTerm&status=@Model.StatusFilter">
-                                            @i
-                                        </a>
-                                    </li>
-                                }
-                            }
-
-                            @if (Model.CurrentPage < Model.TotalPages)
-                            {
-                                <li class="page-item">
-                                    <a class="page-link" href="/GoodsReceipt?page=@Model.TotalPages&searchTerm=@Model.SearchTerm&status=@Model.StatusFilter">
-                                        Dernière <i class="fas fa-chevron-right"></i>
-                                    </a>
-                                </li>
-                            }
-                        </ul>
-                    </nav>
-                    <span class="pagination-info">
-                        Page @Model.CurrentPage sur @Model.TotalPages (@Model.TotalRecords bons)
-                    </span>
-                </div>
-            }
+            <footer class="gr-pagination">
+                <span>
+                    Page @Model.PageNumber / @Model.TotalPages · @Model.TotalRecords bon(s)
+                </span>
+                <nav>
+                    <ul>
+                        <li class="@(Model.PageNumber <= 1 ? "disabled" : "")">
+                            <a asp-page="Index" asp-route-PageNumber="@(Model.PageNumber - 1)"
+                               asp-route-SearchTerm="@Model.SearchTerm" asp-route-Status="@Model.Status"
+                               asp-route-DateFrom="@Model.DateFrom" asp-route-DateTo="@Model.DateTo">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        @for (int i = Math.Max(1, Model.PageNumber - 2); i <= Math.Min(Model.TotalPages, Model.PageNumber + 2); i++)
+                        {
+                            <li class="@(i == Model.PageNumber ? "active" : "")">
+                                <a asp-page="Index" asp-route-PageNumber="@i"
+                                   asp-route-SearchTerm="@Model.SearchTerm" asp-route-Status="@Model.Status"
+                                   asp-route-DateFrom="@Model.DateFrom" asp-route-DateTo="@Model.DateTo">@i</a>
+                            </li>
+                        }
+                        <li class="@(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+                            <a asp-page="Index" asp-route-PageNumber="@(Model.PageNumber + 1)"
+                               asp-route-SearchTerm="@Model.SearchTerm" asp-route-Status="@Model.Status"
+                               asp-route-DateFrom="@Model.DateFrom" asp-route-DateTo="@Model.DateTo">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </footer>
         }
         else
         {
-            <div class="empty-state">
+            <div class="gr-empty">
                 <i class="fas fa-inbox"></i>
-                <h3>Aucun bon de réception trouvé</h3>
-                <p>@(string.IsNullOrEmpty(Model.SearchTerm) ? "Commencez par créer votre premier bon de réception." : "Aucun résultat ne correspond à votre recherche.")</p>
-                <a href="/GoodsReceipt/Create" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Créer un bon
-                </a>
+                <h3>Aucun bon de réception</h3>
+                <p>
+                    @(string.IsNullOrWhiteSpace(Model.SearchTerm) && string.IsNullOrWhiteSpace(Model.Status)
+                        ? "Créez votre premier bon pour commencer."
+                        : "Aucun résultat pour ces critères.")
+                </p>
+                <a asp-page="Create" class="btn btn-gr-primary"><i class="fas fa-plus"></i> Créer un bon</a>
             </div>
         }
-    </div>
+    </section>
 </div>
 
-<!-- Modal pour la popup de consultation -->
+<!-- Modal consultation -->
 <div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content gr-modal">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-eye"></i> Bon de Réception
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title"><i class="fas fa-file-invoice"></i> Détail du bon</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
-            <div class="modal-body" id="receiptModalBody">
-                <!-- Le contenu sera chargé via AJAX -->
-            </div>
+            <div class="modal-body" id="receiptModalBody"></div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                <button type="button" class="btn btn-primary" id="printModalBtn" onclick="printReceiptFromModal()">
+                <button type="button" class="btn btn-gr-ghost" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-gr-primary" onclick="printReceiptFromModal()">
                     <i class="fas fa-print"></i> Imprimer
                 </button>
             </div>
@@ -252,5 +195,5 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/goods-receipt-index.js"></script>
+    <script src="~/js/goods-receipt-index.js" asp-append-version="true"></script>
 }

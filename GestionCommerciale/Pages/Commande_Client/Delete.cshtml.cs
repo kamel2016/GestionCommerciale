@@ -17,11 +17,11 @@ namespace GestionCommerciale.Pages.Commande_Client
 
 
         [BindProperty]
-        public CommandeClient CommandeClient { get; set; }
+        public Models.CommandeClient CommandeClient { get; set; }
 
         public IActionResult OnGet(int id)
         {
-            CommandeClient = new CommandeClient
+            CommandeClient = new Models.CommandeClient
             {
                 Id = 1,
                 NumeroCommande = "CMD20250101001",

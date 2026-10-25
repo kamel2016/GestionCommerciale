@@ -1,120 +1,83 @@
+using GestionCommerciale.Data;
+using GestionCommerciale.Infrastructure.Persistence;
+using GestionCommerciale.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using GestionCommerciale.ViewModel;
-using GestionCommerciale.ViewModel.DTO;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
-namespace GestionCommerciale.Pages.Articles
+namespace GestionCommerciale.Pages.Articles;
+
+public class CreateModel : PageModel
 {
-    public class CreateModel : PageModel
+    private readonly ApplicationDbContext _db;
+    private readonly ILogger<CreateModel> _logger;
+
+    public CreateModel(ApplicationDbContext db, ILogger<CreateModel> logger)
     {
-        private readonly ILogger<CreateModel> _logger;
+        _db = db;
+        _logger = logger;
+    }
 
-        public CreateModel(ILogger<CreateModel> logger)
+    [BindProperty]
+    public Article Article { get; set; } = new();
+
+    public List<SelectListItem> Categories { get; private set; } = new();
+    public List<SelectListItem> Units { get; private set; } = new();
+
+    public async Task OnGetAsync()
+    {
+        Article = new Article { EstActif = true, TauxTVA = 19m, Unite = "Pièce" };
+        await InitializeSelectListsAsync();
+    }
+
+    public async Task<IActionResult> OnPostAsync()
+    {
+        if (!ModelState.IsValid)
         {
-            _logger = logger;
+            await InitializeSelectListsAsync();
+            return Page();
         }
 
-        [BindProperty]
-        public ArticleViewModel Article { get; set; } = new();
-
-        // Listes pour les dropdowns
-        public List<SelectListItem> Categories { get; set; } = new();
-        public List<SelectListItem> Units { get; set; } = new();
-
-        public async Task<IActionResult> OnGetAsync()
+        try
         {
-            try
-            {
-                await InitializeSelectLists();
-
-                // Initialiser un nouvel article avec les valeurs par défaut
-                Article = new ArticleViewModel
-                {
-                    IsActive = true,
-                    VatRate = 20,
-                    Unit = "pcs",
-                    CreatedAt = DateTime.Now
-                };
-
-                return Page();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erreur lors du chargement de la page de création");
-                TempData["ErrorMessage"] = "Erreur lors du chargement des données.";
-                return RedirectToPage("./Index");
-            }
+            Article.DateCreation = DateTime.Now;
+            _db.Articles.Add(Article);
+            await _db.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"L'article {Article.Libelle} a été créé avec succès.";
+            return RedirectToPage("./Index");
         }
-
-        public async Task<IActionResult> OnPostAsync()
+        catch (DbUpdateException ex)
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    await InitializeSelectLists();
-                    return Page();
-                }
-
-                // TODO: Implémenter la validation des données
-                // await ValidateArticleData();
-
-                if (!ModelState.IsValid)
-                {
-                    await InitializeSelectLists();
-                    return Page();
-                }
-
-                // TODO: Implémenter la sauvegarde de l'article en base de données
-                // var articleId = await SaveArticle();
-
-                _logger.LogInformation($"Article créé - Ref: {Article.Reference}");
-                TempData["SuccessMessage"] = $"L'article {Article.Name} a été créé avec succès.";
-
-                return RedirectToPage("./Index");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erreur lors de la création de l'article");
-                ModelState.AddModelError("", "Erreur lors de la création: " + ex.Message);
-                await InitializeSelectLists();
-                return Page();
-            }
+            _logger.LogError(ex, "Erreur EF Core lors de la création de l'article");
+            ModelState.AddModelError(string.Empty, "L'article n'a pas pu être enregistré.");
+            await InitializeSelectListsAsync();
+            return Page();
         }
+    }
 
-        #region Méthodes privées
+    private async Task InitializeSelectListsAsync()
+    {
+        var categories = await _db.Categories
+            .OrderBy(c => c.Name)          // adapte le nom de la propriété
+            .ToListAsync();
 
-        private async Task InitializeSelectLists()
-        {
-            Categories = new List<SelectListItem>
+        Categories = categories
+            .Select(c => new SelectListItem
             {
-                new() { Text = "-- Sélectionner une catégorie --", Value = "" },
-                new() { Text = "Informatique", Value = "Informatique" },
-                new() { Text = "Bureautique", Value = "Bureautique" },
-                new() { Text = "Fournitures", Value = "Fournitures" },
-                new() { Text = "Mobilier", Value = "Mobilier" },
-                new() { Text = "Outils", Value = "Outils" },
-                new() { Text = "Services", Value = "Services" }
-            };
+                Value = c.Id.ToString(),  // la valeur envoyée au serveur
+                Text = c.Name             // le libellé affiché
+            })
+            .ToList();
 
-            Units = new List<SelectListItem>
-            {
-                new() { Text = "-- Sélectionner une unité --", Value = "" },
-                new() { Text = "Pièce(s)", Value = "pcs" },
-                new() { Text = "Kilogramme(s)", Value = "kg" },
-                new() { Text = "Litre(s)", Value = "l" },
-                new() { Text = "Mètre(s)", Value = "m" },
-                new() { Text = "Boîte(s)", Value = "box" },
-                new() { Text = "Paquet(s)", Value = "pack" }
-            };
-
-            await Task.CompletedTask;
-        }
-
-        #endregion
+        Units = new List<SelectListItem>
+    {
+        new("Pièce(s)", "Pièce"),
+        new("Kilogramme(s)", "Kg"),
+        new("Litre(s)", "L"),
+        new("Mètre(s)", "M"),
+        new("Boîte(s)", "Boîte"),
+        new("Paquet(s)", "Paquet")
+    };
     }
 }

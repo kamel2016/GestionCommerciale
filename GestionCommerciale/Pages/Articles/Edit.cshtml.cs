@@ -1,358 +1,286 @@
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.AspNetCore.Mvc.RazorPages;
-//using GestionCommerciale.Models;
-//using GestionCommerciale.ViewModel.DTO;
-//using Microsoft.AspNetCore.Mvc.Rendering;
-//using Microsoft.EntityFrameworkCore;
-//using GestionCommerciale.Data;
-
-//namespace GestionCommerciale.Pages.Articles
-//{
-//    public class EditModel : PageModel
-//    {
-//        private readonly ApplicationDbContext _context;
-
-//        public EditModel(ApplicationDbContext context)
-//        {
-//            _context = context;
-//        }
-
-//        [BindProperty]
-//        public CommandeClient CommandeClient { get; set; } = default!;
-
-//        [BindProperty]
-//        public List<LigneCommandeClientDto> LignesCommande { get; set; } = new List<LigneCommandeClientDto>();
-
-//        public SelectList ClientsSelectList { get; set; } = default!;
-//        public List<Article> Articles { get; set; } = default!;
-
-//        public async Task<IActionResult> OnGetAsync(int? id)
-//        {
-//            if (id == null || _context.CommandesClient == null)
-//            {
-//                return NotFound();
-//            }
-
-//            var commandeclient = await _context.CommandesClient
-//                .Include(c => c.LignesCommande)
-//                .ThenInclude(l => l.Article)
-//                .FirstOrDefaultAsync(m => m.Id == id);
-
-//            if (commandeclient == null)
-//            {
-//                return NotFound();
-//            }
-
-//            CommandeClient = commandeclient;
-//            LignesCommande = commandeclient.LignesCommande.Select(l => new LigneCommandeClientDto
-//            {
-//                ArticleId = l.ArticleId,
-//                ArticleNom = l.Article.Libelle,
-//                Quantite = l.Quantite,
-//                PrixUnitaire = l.PrixUnitaire,
-//                MontantLigne = l.MontantLigne
-//            }).ToList();
-
-//            await LoadSelectLists();
-//            return Page();
-//        }
-
-//        public async Task<IActionResult> OnPostAsync()
-//        {
-//            if (!ModelState.IsValid)
-//            {
-//                await LoadSelectLists();
-//                return Page();
-//            }
-
-//            CommandeClient.DateModification = DateTime.Now;
-
-//            // Calculer les montants
-//            CommandeClient.MontantHT = LignesCommande.Sum(l => l.MontantLigne);
-//            CommandeClient.MontantTVA = CommandeClient.MontantHT * 0.20m;
-//            CommandeClient.MontantTTC = CommandeClient.MontantHT + CommandeClient.MontantTVA;
-
-//            _context.Attach(CommandeClient).State = EntityState.Modified;
-
-//            // Supprimer les anciennes lignes
-//            var anciennesLignes = await _context.LignesCommandeClient
-//                .Where(l => l.CommandeClientId == CommandeClient.Id)
-//                .ToListAsync();
-//            _context.LignesCommandeClient.RemoveRange(anciennesLignes);
-
-//            // Ajouter les nouvelles lignes
-//            foreach (var ligneDto in LignesCommande)
-//            {
-//                var ligne = new LigneCommandeClient
-//                {
-//                    CommandeClientId = CommandeClient.Id,
-//                    ArticleId = ligneDto.ArticleId,
-//                    Quantite = ligneDto.Quantite,
-//                    PrixUnitaire = ligneDto.PrixUnitaire,
-//                    MontantLigne = ligneDto.MontantLigne
-//                };
-//                _context.LignesCommandeClient.Add(ligne);
-//            }
-
-//            try
-//            using Microsoft.AspNetCore.Mvc;
-using GestionCommerciale.ViewModel;
-using GestionCommerciale.ViewModel.DTO;
+using GestionCommerciale.Data;
+using GestionCommerciale.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
-namespace GestionCommerciale.Pages.Articles
+namespace GestionCommerciale.Pages.Articles;
+
+public class EditModel : PageModel
 {
-    public class EditModel : PageModel
+    private readonly ApplicationDbContext _context;
+    private readonly ILogger<EditModel> _logger;
+
+    public EditModel(ApplicationDbContext context, ILogger<EditModel> logger)
     {
-        private readonly ILogger<EditModel> _logger;
+        _context = context;
+        _logger = logger;
+    }
 
-        public EditModel(ILogger<EditModel> logger)
+    [BindProperty]
+    public Article Article { get; set; } = new();
+
+    [BindProperty]
+    public SupplierInput NewSupplier { get; set; } = new();
+
+    [BindProperty]
+    public StockInput NewStock { get; set; } = new();
+
+    public List<SelectListItem> Categories { get; set; } = new();
+    public List<SelectListItem> Units { get; set; } = new();
+    public List<SelectListItem> AvailableSuppliers { get; set; } = new();
+    public List<ArticleFournisseur> SupplierPricings { get; set; } = new();
+    public List<MouvementStock> Mouvements { get; set; } = new();
+
+    public class SupplierInput
+    {
+        [Required(ErrorMessage = "Sélectionnez un fournisseur")]
+        public int FournisseurId { get; set; }
+
+        [Range(0, 9999999)] public decimal PrixGrosHT { get; set; }
+        [Range(0, 9999999)] public decimal PrixDetailHT { get; set; }
+        [Range(0, 9999999)] public decimal? PrixPromoHT { get; set; }
+        [Range(0, 100)] public decimal RemiseMax { get; set; }
+    }
+
+    public class StockInput
+    {
+        [Required] public string Type { get; set; } = "Entrée";
+
+        [Range(1, 9999999, ErrorMessage = "Quantité invalide")]
+        public int Quantite { get; set; }
+
+        [StringLength(250)] public string? Commentaire { get; set; }
+    }
+
+    // ---------------- GET ----------------
+    public async Task<IActionResult> OnGetAsync(int id)
+    {
+        var article = await _context.Articles.AsNoTracking().FirstOrDefaultAsync(a => a.ID == id);
+        if (article == null) return NotFound();
+
+        Article = article;
+        await LoadListsAsync();
+        await LoadRelatedAsync(id);
+        return Page();
+    }
+
+    // ---------------- Enregistrer l'article ----------------
+    public async Task<IActionResult> OnPostAsync()
+    {
+        ClearModalState();
+        ModelState.Remove("Article.Category");
+        ModelState.Remove("Article.Fournisseur");
+
+        if (await _context.Articles.AnyAsync(a => a.Reference == Article.Reference && a.ID != Article.ID))
+            ModelState.AddModelError("Article.Reference", "Cette référence existe déjà.");
+
+        if (Article.StockMax.HasValue && Article.StockMax < Article.StockMin)
+            ModelState.AddModelError("Article.StockMax", "Le stock maximum doit être supérieur au stock minimum.");
+
+        if (!ModelState.IsValid)
         {
-            _logger = logger;
+            await LoadListsAsync();
+            await LoadRelatedAsync(Article.ID);
+            return Page();
         }
 
-        [BindProperty]
-        public ArticleViewModel Article { get; set; } = new();
+        var db = await _context.Articles.FirstOrDefaultAsync(a => a.ID == Article.ID);
+        if (db == null) return NotFound();
 
-        [BindProperty(SupportsGet = true)]
-        public int? Id { get; set; }
+        db.Reference = Article.Reference;
+        db.CodeBarre = Article.CodeBarre;
+        db.Libelle = Article.Libelle;
+        db.CategoryId = Article.CategoryId;
+        db.Unite = Article.Unite;
+        db.PrixAchatHT = Article.PrixAchatHT;
+        db.PrixVenteHT = Article.PrixVenteHT;
+        db.PrixVenteTTC = Article.PrixVenteTTC;
+        db.TauxTVA = Article.TauxTVA;
+        db.Fodec = Article.Fodec;
+        db.StockMin = Article.StockMin;
+        db.StockMax = Article.StockMax;
+        db.EstActif = Article.EstActif;
+        db.Description = Article.Description;
+        db.Marque = Article.Marque;
+        db.Modele = Article.Modele;
+        db.Couleur = Article.Couleur;
+        db.Taille = Article.Taille;
+        db.Poids = Article.Poids;
+        db.DateModification = DateTime.Now;
+        // Quantite n'est PAS modifiée ici : uniquement via les mouvements de stock
 
-        // Listes pour les dropdowns
-        public List<SelectListItem> Categories { get; set; } = new();
-        public List<SelectListItem> Units { get; set; } = new();
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "Article enregistré avec succès.";
+        return RedirectToPage("./Edit", new { id = db.ID });
+    }
 
-        // Données de tarification
-        public List<SupplierPricingDto> SupplierPricings { get; set; } = new();
-        public List<SupplierOptionDto> AvailableSuppliers { get; set; } = new();
+    // ---------------- Suppression ----------------
+    public async Task<IActionResult> OnPostDeleteAsync()
+    {
+        var db = await _context.Articles.FindAsync(Article.ID);
+        if (db == null) return NotFound();
 
-        public string PageTitle => Article.Id > 0 ? "Modifier l'article" : "Nouvel article";
-
-        public async Task<IActionResult> OnGetAsync()
+        try
         {
-            try
-            {
-                await InitializeSelectLists();
+            _context.Articles.Remove(db);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Article supprimé.";
+            return RedirectToPage("./Index");
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Suppression impossible article {Id}", Article.ID);
+            TempData["ErrorMessage"] = "Suppression impossible : l'article est utilisé ailleurs.";
+            return RedirectToPage("./Edit", new { id = Article.ID });
+        }
+    }
 
-                if (Id.HasValue && Id.Value > 0)
-                {
-                    await LoadArticle(Id.Value);
-                }
-                else
-                {
-                    Article = new ArticleViewModel
-                    {
-                        IsActive = true,
-                        VatRate = 20,
-                        Unit = "pcs",
-                        CreatedAt = DateTime.Now
-                    };
-                }
+    // ---------------- Fournisseurs ----------------
+    public async Task<IActionResult> OnPostAddSupplierAsync()
+    {
+        var articleId = Article.ID;
 
-                await LoadSupplierPricings();
-                await LoadAvailableSuppliers();
-
-                return Page();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erreur lors du chargement de la page article");
-                TempData["ErrorMessage"] = "Erreur lors du chargement des données.";
-                return RedirectToPage("./Index");
-            }
+        if (!TryValidateModel(NewSupplier, nameof(NewSupplier)))
+        {
+            TempData["ErrorMessage"] = "Données fournisseur invalides.";
+            return RedirectToPage("./Edit", new { id = articleId });
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        if (await _context.ArticleFournisseurs.AnyAsync(af =>
+                af.ArticleId == articleId && af.FournisseurId == NewSupplier.FournisseurId))
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    await InitializeSelectLists();
-                    await LoadSupplierPricings();
-                    await LoadAvailableSuppliers();
-                    return Page();
-                }
-
-                // Valider les données
-                //await ValidateArticleData();
-
-                if (!ModelState.IsValid)
-                {
-                    await InitializeSelectLists();
-                    await LoadSupplierPricings();
-                    await LoadAvailableSuppliers();
-                    return Page();
-                }
-
-                // Sauvegarder l'article
-                //var articleId = await SaveArticle();
-
-                //_logger.LogInformation($"Article sauvegardé - ID: {articleId}, Ref: {Article.Reference}");
-                //TempData["SuccessMessage"] = $"L'article {Article.Name} a été sauvegardé avec succès.";
-
-                return RedirectToPage("./Edit", new { id = 1 });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erreur lors de la sauvegarde de l'article");
-                ModelState.AddModelError("", "Erreur lors de la sauvegarde: " + ex.Message);
-                await InitializeSelectLists();
-                await LoadSupplierPricings();
-                await LoadAvailableSuppliers();
-                return Page();
-            }
+            TempData["ErrorMessage"] = "Ce fournisseur est déjà associé à l'article.";
+            return RedirectToPage("./Edit", new { id = articleId });
         }
 
-        public async Task<IActionResult> OnPostDeleteAsync()
+        _context.ArticleFournisseurs.Add(new ArticleFournisseur
         {
-            if (Article.Id==null || Article.Id == 0)
-                return NotFound();
+            ArticleId = articleId,
+            FournisseurId = NewSupplier.FournisseurId,
+            PrixGrosHT = NewSupplier.PrixGrosHT,
+            PrixDetailHT = NewSupplier.PrixDetailHT,
+            PrixPromoHT = NewSupplier.PrixPromoHT,
+            RemiseMax = NewSupplier.RemiseMax
+        });
+        await _context.SaveChangesAsync();
 
-            try
-            {
-                _logger.LogInformation($"Article supprimé - ID: {Article.Id}");
-                TempData["SuccessMessage"] = $"L'article a été supprimé avec succès.";
-                return RedirectToPage("./Index");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erreur lors de la suppression de l'article");
-                TempData["ErrorMessage"] = "Erreur lors de la suppression.";
-                return RedirectToPage("./Edit", new { id = Article.Id });
-            }
+        TempData["SuccessMessage"] = "Fournisseur ajouté.";
+        return RedirectToPage("./Edit", new { id = articleId });
+    }
+
+    public async Task<IActionResult> OnPostRemoveSupplierAsync(int supplierId)
+    {
+        var articleId = Article.ID;
+        var link = await _context.ArticleFournisseurs
+            .FirstOrDefaultAsync(af => af.ArticleId == articleId && af.FournisseurId == supplierId);
+
+        if (link != null)
+        {
+            _context.ArticleFournisseurs.Remove(link);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Fournisseur retiré.";
+        }
+        return RedirectToPage("./Edit", new { id = articleId });
+    }
+
+    // ---------------- Mouvement de stock ----------------
+    public async Task<IActionResult> OnPostAddStockMovementAsync()
+    {
+        var articleId = Article.ID;
+
+        //if (!TryValidateModel(NewStock, nameof(NewStock)))
+        //{
+        //    foreach (var entry in ModelState)
+        //    {
+        //        foreach (var error in entry.Value.Errors)
+        //        {
+        //            // entry.Key = nom du champ (ex: "NewStock.Quantite")
+        //            // error.ErrorMessage = message défini dans [Required], [Range], etc.
+        //            Console.WriteLine($"{entry.Key} : {error.ErrorMessage}");
+        //        }
+        //    }
+
+        //    TempData["ErrorMessage"] = "Mouvement de stock invalide.";
+        //    return RedirectToPage("./Edit", new { id = articleId });
+        //}
+
+        if (string.IsNullOrEmpty(NewStock.Type) || NewStock.Quantite == 0)
+        {
+            TempData["ErrorMessage"] = "Mouvement de stock invalide.";
+            return RedirectToPage("./Edit", new { id = articleId });
         }
 
-        public async Task<IActionResult> OnPostRemoveSupplierAsync(int supplierId)
-        {
-            if (Article.Id == null || Article.Id == 0)
-                return BadRequest();
+        var db = await _context.Articles.FirstOrDefaultAsync(a => a.ID == articleId);
+        if (db == null) return NotFound();
 
-            try
-            {
-                // Simulation de suppression du fournisseur
-                _logger.LogInformation($"Fournisseur {supplierId} retiré de l'article {Article.Id}");
-                TempData["SuccessMessage"] = "Le fournisseur a été retiré de cet article.";
-                return RedirectToPage("./Edit", new { id = Article.Id });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erreur lors du retrait du fournisseur");
-                return BadRequest(new { error = ex.Message });
-            }
+        var delta = NewStock.Type == "Sortie" ? -NewStock.Quantite : NewStock.Quantite;
+
+        if (db.Quantite + delta < 0)
+        {
+            TempData["ErrorMessage"] = "Stock insuffisant pour cette sortie.";
+            return RedirectToPage("./Edit", new { id = articleId });
         }
 
-        #region Méthodes privées
+        db.Quantite += delta;
+        db.DateModification = DateTime.Now;
 
-        private async Task InitializeSelectLists()
+        _context.MouvementsStock.Add(new MouvementStock
         {
-            Categories = new List<SelectListItem>
-            {
-                new() { Text = "-- Sélectionner une catégorie --", Value = "" },
-                new() { Text = "Informatique", Value = "Informatique" },
-                new() { Text = "Bureautique", Value = "Bureautique" },
-                new() { Text = "Fournitures", Value = "Fournitures" },
-                new() { Text = "Mobilier", Value = "Mobilier" },
-                new() { Text = "Outils", Value = "Outils" },
-                new() { Text = "Services", Value = "Services" }
-            };
+            ArticleId = articleId,
+            Type = NewStock.Type,
+            Quantite = delta,
+            StockApres = db.Quantite,
+            Commentaire = NewStock.Commentaire,
+            Date = DateTime.Now
+        });
 
-            Units = new List<SelectListItem>
-            {
-                new() { Text = "-- Sélectionner une unité --", Value = "" },
-                new() { Text = "Pièce(s)", Value = "pcs" },
-                new() { Text = "Kilogramme(s)", Value = "kg" },
-                new() { Text = "Litre(s)", Value = "l" },
-                new() { Text = "Mètre(s)", Value = "m" },
-                new() { Text = "Boîte(s)", Value = "box" },
-                new() { Text = "Paquet(s)", Value = "pack" }
-            };
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "Mouvement de stock enregistré.";
+        return RedirectToPage("./Edit", new { id = articleId });
+    }
 
-            await Task.CompletedTask;
-        }
+    // ---------------- Utilitaires ----------------
+    private void ClearModalState()
+    {
+        foreach (var k in ModelState.Keys
+                     .Where(k => k.StartsWith("NewSupplier") || k.StartsWith("NewStock"))
+                     .ToList())
+            ModelState.Remove(k);
+    }
 
-        private async Task LoadArticle(int articleId)
-        {
-            // Simulation de chargement
-            await Task.Delay(100);
+    private async Task LoadListsAsync()
+    {
+        Categories = await _context.Categories.AsNoTracking()
+            .OrderBy(c => c.Name)
+            .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
+            .ToListAsync();
+        Categories.Insert(0, new SelectListItem("-- Sélectionner une catégorie --", ""));
 
-            Article = new ArticleViewModel
-            {
-                Id = articleId,
-                Reference = "LAPTOP-DELL-XPS13",
-                Barcode = "8717285912345",
-                Name = "Ordinateur Portable Dell XPS 13",
-                Category = "Informatique",
-                Unit = "pcs",
-                Brand = "Dell",
-                Model = "XPS 13",
-                Color = "Argent",
-                Size = "13 pouces",
-                Weight = 1.20m,
-                VatRate = 20,
-                Description = "Ordinateur portable professionnel haute performance...",
-                StockMinimum = 5,
-                StockMaximum = 50,
-                CurrentStock = 45,
-                ReservedStock = 2,
-                OnOrderStock = 10,
-                IsActive = true,
-                CreatedAt = DateTime.Now.AddMonths(-6),
-                UpdatedAt = DateTime.Now.AddDays(-2),
-                LastStockUpdate = DateTime.Now.AddHours(-3)
-            };
-        }
+        Units = new[] { "Pièce", "Kg", "L", "M", "Boîte", "Paquet" }
+            .Select(u => new SelectListItem(u, u)).ToList();
+    }
 
-        private async Task LoadSupplierPricings()
-        {
-            // Simulation de chargement des tarifs fournisseurs
-            await Task.Delay(100);
+    private async Task LoadRelatedAsync(int articleId)
+    {
+        SupplierPricings = await _context.ArticleFournisseurs.AsNoTracking()
+            .Include(af => af.Fournisseur)
+            .Where(af => af.ArticleId == articleId)
+            .ToListAsync();
 
-            SupplierPricings = new List<SupplierPricingDto>
-            {
-                new()
-                {
-                    SupplierId = 1,
-                    SupplierCode = "FOUR001",
-                    SupplierName = "TECH SUPPLIES SARL",
-                    WholesalePrice = 699.99m,
-                    RetailPrice = 899.99m,
-                    PromotionalPrice = 749.99m,
-                    RetailMargin = 28.57m,
-                    RetailMaxDiscount = 10,
-                    LastPurchaseDate = DateTime.Now.AddDays(-5)
-                },
-                new()
-                {
-                    SupplierId = 2,
-                    SupplierCode = "FOUR002",
-                    SupplierName = "FOURNITURES BUREAU PLUS",
-                    WholesalePrice = 695.00m,
-                    RetailPrice = 899.99m,
-                    PromotionalPrice = 0,
-                    RetailMargin = 29.41m,
-                    RetailMaxDiscount = 8,
-                    LastPurchaseDate = DateTime.Now.AddDays(-15)
-                }
-            };
-        }
+        var linkedIds = SupplierPricings.Select(s => s.FournisseurId).ToList();
+        AvailableSuppliers = await _context.Fournisseurs.AsNoTracking()
+            .Where(f => !linkedIds.Contains(f.Id))
+            .OrderBy(f => f.Nom)
+            .Select(f => new SelectListItem(f.Nom, f.Id.ToString()))
+            .ToListAsync();
 
-        private async Task LoadAvailableSuppliers()
-        {
-            // Simulation de chargement des fournisseurs disponibles
-            await Task.Delay(100);
-
-            var AvailableSuppliers = new List<SupplierOptionDto>
-                {
-                    new() { Id = 1, Name = "TECH SUPPLIES SARL", Code = "FOUR001" },
-                    new() { Id = 2, Name = "FOURNITURES INDUSTRIELLES", Code = "FOUR002" },
-                    new() { Id = 3, Name = "GLOBAL TECH DISTRIBUTION", Code = "FOUR003" },
-                    new() { Id = 4, Name = "EURO MATÉRIAUX", Code = "FOUR004" },
-                    new() { Id = 5, Name = "LOGISTIQUE & CO", Code = "FOUR005" }
-                };
-        }
-        #endregion
+        Mouvements = await _context.MouvementsStock.AsNoTracking()
+            .Where(m => m.ArticleId == articleId)
+            .OrderByDescending(m => m.Date)
+            .Take(50)
+            .ToListAsync();
     }
 }

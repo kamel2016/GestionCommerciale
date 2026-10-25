@@ -4,15 +4,24 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - GestionCommerciale</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <!-- CSS moderne -->
-    <link rel="stylesheet" href="~/css/articles.css" asp-append-version="true" />
 
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/GestionCommerciale.styles.css" asp-append-version="true" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
+    <!-- CSS globaux et par module -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/commande-list.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/articles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/category-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/GestionCommerciale.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/fournisseur-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/fournisseur-form.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/goods-receipt-create.css" asp-append-version="true" />
+    <!-- Section CSS spécifique par page (Create, Index, etc.) -->
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <header>
@@ -29,9 +38,6 @@
                             <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/Articles/Index">Articles</a>
                         </li>
                         <li class="nav-item">
@@ -41,15 +47,17 @@
                             <a class="nav-link text-dark" asp-area="" asp-page="/Clients/Index">Clients</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Supplier/Index">Fournisseur</a>
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Fournisseurs/Index">Fournisseur</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/Commande_Client/Index">Commande Client</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Commande_Fournisseur/Index">Commande Fournisseur</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/GoodsReceipt/Index">Bon Réception</a>
                         </li>
-
                     </ul>
                 </div>
             </div>
@@ -67,12 +75,12 @@
         </div>
     </footer>
 
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
+    <!-- Section Scripts spécifique par page -->
     @await RenderSectionAsync("Scripts", required: false)
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </body>
 </html>

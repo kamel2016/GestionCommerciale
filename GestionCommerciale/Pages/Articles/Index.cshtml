@@ -103,7 +103,7 @@
             <div class="header-info">@Model.TotalRecords article(s) au total</div>
         </div>
         <div class="btn-group">
-            <a asp-page="./Edit" class="btn btn-success">
+            <a asp-page="./Create" class="btn btn-success">
                 <i class="fas fa-plus"></i> Nouvel article
             </a>
         </div>
@@ -429,7 +429,7 @@
                 <i class="fas fa-inbox"></i>
                 <h3>Aucun article trouvé</h3>
                 <p>@(string.IsNullOrEmpty(Model.SearchTerm) ? "Créez votre premier article en cliquant sur le bouton \"Nouvel article\"." : "Aucun article ne correspond à votre recherche.")</p>
-                <a asp-page="./Edit" class="btn btn-success">
+                <a asp-page="./Create" class="btn btn-success">
                     <i class="fas fa-plus"></i> Créer un article
                 </a>
             </div>
