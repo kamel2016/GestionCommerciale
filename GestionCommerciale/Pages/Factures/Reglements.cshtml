@@ -1,0 +1,179 @@
+﻿@page "{id:int}"
+@model GestionCommerciale.Pages.Factures.ReglementsModel
+@using GestionCommerciale.Models.Enums
+@{
+    ViewData["Title"] = "Règlements - " + Model.Facture.Numero;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+        <i class="fa-solid fa-money-bill-wave me-2"></i>
+        Règlements - Facture @Model.Facture.Numero
+    </h4>
+    <a asp-page="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i>Retour
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+<!-- Récapitulatif -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Client</div>
+                <div class="fw-bold">@Model.Facture.Client?.NomComplet  </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Net à payer</div>
+                <div class="fw-bold">@Model.Facture.NetAPayer.ToString("N3") DT</div>
+            </div>
+        </div>
+    </div>
+    @if (Model.Facture.MontantRetenueSource > 0)
+    {
+        <div class="col-md-3">
+            <div class="text-muted small">Retenue à la source (@Model.Facture.TauxRetenueSource %)</div>
+            <div class="fw-bold text-info">@Model.Facture.MontantRetenueSource.ToString("N3") DT</div>
+        </div>
+    }
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Déjà réglé</div>
+                <div class="fw-bold text-success">@Model.Facture.MontantRegle.ToString("N3") DT</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Reste à payer</div>
+                <div class="fw-bold text-danger">@Model.Facture.ResteAPayer.ToString("N3") DT</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Formulaire d'ajout -->
+    <div class="col-lg-4">
+        @if (Model.Facture.ResteAPayer > 0)
+        {
+            <div class="card">
+                <div class="card-header fw-bold">Nouveau règlement</div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="Ajouter" asp-route-id="@Model.Facture.Id">
+                        <div class="mb-3">
+                            <label asp-for="Nouveau.DateReglement" class="form-label">Date</label>
+                            <input asp-for="Nouveau.DateReglement" type="date" class="form-control" />
+                            <span asp-validation-for="Nouveau.DateReglement" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Nouveau.Montant" class="form-label">Montant (DT)</label>
+                            <input asp-for="Nouveau.Montant" type="number" step="0.001" class="form-control" />
+                            <span asp-validation-for="Nouveau.Montant" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Nouveau.Mode" class="form-label">Mode de règlement</label>
+                            <select asp-for="Nouveau.Mode" class="form-select">
+                                <option value="@((int)ModeReglement.Especes)">Espèces</option>
+                                <option value="@((int)ModeReglement.Cheque)">Chèque</option>
+                                <option value="@((int)ModeReglement.Virement)">Virement</option>
+                                <option value="@((int)ModeReglement.Carte)">Carte bancaire</option>
+                                <option value="@((int)ModeReglement.Traite)">Traite</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Nouveau.Reference" class="form-label">Référence (n° chèque, virement...)</label>
+                            <input asp-for="Nouveau.Reference" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Nouveau.Banque" class="form-label">Banque</label>
+                            <input asp-for="Nouveau.Banque" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Nouveau.Note" class="form-label">Note</label>
+                            <textarea asp-for="Nouveau.Note" class="form-control" rows="2"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fa-solid fa-check me-1"></i>Enregistrer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-success mb-0">
+                <i class="fa-solid fa-circle-check me-1"></i>Facture entièrement réglée.
+            </div>
+        }
+    </div>
+
+    <!-- Historique -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header fw-bold">Historique des règlements</div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Mode</th>
+                            <th>Référence</th>
+                            <th>Banque</th>
+                            <th class="text-end">Montant</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Reglements.Any())
+                        {
+                            <tr><td colspan="6" class="text-center text-muted py-3">Aucun règlement.</td></tr>
+                        }
+                        @foreach (var r in Model.Reglements)
+                        {
+                            <tr>
+                                <td>@r.DateReglement.ToString("dd/MM/yyyy")</td>
+                                <td>@r.Mode</td>
+                                <td>@r.Reference</td>
+                                <td>@r.Banque</td>
+                                <td class="text-end">@r.Montant.ToString("N3")</td>
+                                <td class="text-end">
+                                    <form method="post" asp-page-handler="Supprimer"
+                                          asp-route-id="@Model.Facture.Id" asp-route-reglementId="@r.Id"
+                                          onsubmit="return confirm('Supprimer ce règlement ?');">
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

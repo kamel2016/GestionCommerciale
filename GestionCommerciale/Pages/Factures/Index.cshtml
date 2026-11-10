@@ -1,0 +1,104 @@
+﻿@page
+@model GestionCommerciale.Pages.Factures.IndexModel
+@using GestionCommerciale.Enums
+@using GestionCommerciale.Models.Enums
+@{
+    ViewData["Title"] = "Factures";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Factures</h2>
+    <a asp-page="Create" class="btn btn-primary">
+        + Nouvelle facture
+    </a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+@if (!string.IsNullOrEmpty(Model.Erreur))
+{
+    <div class="alert alert-danger">@Model.Erreur</div>
+}
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <input type="text" name="Recherche" value="@Model.Recherche"
+               class="form-control" placeholder="Numéro ou client..." />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Rechercher</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Réinitialiser</a>
+    </div>
+</form>
+
+<table class="table table-striped table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Numéro</th>
+            <th>Date</th>
+            <th>Client</th>
+            <th class="text-end">Total TTC</th>
+            <th class="text-end">Net à payer</th>
+            <th>Statut</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var f in Model.Factures)
+        {
+            <tr>
+                <td>@(string.IsNullOrEmpty(f.Numero) ? "(brouillon)" : f.Numero)</td>
+                <td>@f.Date.ToString("dd/MM/yyyy")</td>
+                <td>@f.Client?.Nom</td>
+                <td class="text-end">@f.TotalTtc.ToString("N3")</td>
+                <td class="text-end">@f.NetAPayer.ToString("N3")</td>
+                <td>
+                    @switch (f.Statut)
+                    {
+                        case StatutFacture.Brouillon:
+                            <span class="badge bg-secondary">Brouillon</span>
+                            break;
+                        case StatutFacture.Validee:
+                            <span class="badge bg-success">Validée</span>
+                            break;
+                        case StatutFacture.Annulee:
+                            <span class="badge bg-danger">Annulée</span>
+                            break;
+                        default:
+                            <span class="badge bg-light text-dark">@f.Statut</span>
+                            break;
+                    }
+                </td>
+                <td>
+                    @switch (f.StatutPaiement)
+                    {
+                        case StatutPaiement.Payee:
+                            <span class="badge bg-success">Payée</span>
+                            break;
+                        case StatutPaiement.PartiellementPayee:
+                            <span class="badge bg-warning text-dark">Partielle</span>
+                            break;
+                        default:
+                            <span class="badge bg-danger">Impayée</span>
+                            break;
+                    }
+                </td>
+                <td class="text-end">
+                    <a asp-page="Details" asp-route-id="@f.Id" class="btn btn-sm btn-outline-primary">Détails</a>
+                    <a asp-page="Pdf" asp-route-id="@f.Id" target="_blank" class="btn btn-sm btn-outline-dark">PDF</a>
+                    <a asp-page="Reglements" asp-route-id="@f.Id" class="btn btn-sm btn-outline-success" title="Règlements">
+                        <i class="fa-solid fa-money-bill-wave"></i>
+                    </a>
+                </td>
+            </tr>
+        }
+        @if (!Model.Factures.Any())
+        {
+            <tr>
+                <td colspan="7" class="text-center text-muted">Aucune facture.</td>
+            </tr>
+        }
+    </tbody>
+</table>

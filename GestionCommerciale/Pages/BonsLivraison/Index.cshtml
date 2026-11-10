@@ -1,0 +1,66 @@
+﻿@* Pages/BonsLivraison/Index.cshtml *@
+@page
+@model GestionCommerciale.Pages.BonsLivraison.IndexModel
+@using GestionCommerciale.Enums
+@{
+    ViewData["Title"] = "Bons de livraison";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Bons de livraison</h2>
+    <a asp-page="Create" class="btn btn-primary">Nouveau bon de livraison</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <input asp-for="Recherche" class="form-control" placeholder="N° BL ou client" />
+    </div>
+    <div class="col-md-3">
+        <select asp-for="Statut" class="form-select"
+                asp-items="Html.GetEnumSelectList<StatutBonLivraison>()">
+            <option value="">Tous les statuts</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-secondary">Filtrer</button>
+    </div>
+</form>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>N°</th>
+            <th>Date</th>
+            <th>Client</th>
+            <th class="text-end">Total HT</th>
+            <th>Statut</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var bl in Model.BonsLivraison)
+        {
+            <tr>
+                <td>@bl.Numero</td>
+                <td>@bl.Date.ToString("dd/MM/yyyy")</td>
+                <td>@bl.Client?.Nom</td>
+                <td class="text-end">@bl.TotalHT.ToString("N3") DT</td>
+                <td>
+                    @{
+                        var badge = bl.Statut switch
+                        {
+                            StatutBonLivraison.Brouillon => "bg-secondary",
+                            StatutBonLivraison.Valide => "bg-success",
+                            StatutBonLivraison.Facture => "bg-primary",
+                            _ => "bg-danger"
+                        };
+                    }
+                    <span class="badge @badge">@bl.Statut</span>
+                </td>
+                <td class="text-end">
+                    <a asp-page="Details" asp-route-id="@bl.ID" class="btn btn-sm btn-outline-primary">Détails</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

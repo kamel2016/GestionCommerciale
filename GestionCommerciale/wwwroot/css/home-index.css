@@ -1,4 +1,4 @@
-﻿.home-container {
+﻿/*.home-container {
     max-width: 1100px;
     margin: 0 auto;
     padding: 1.5rem;
@@ -109,4 +109,226 @@
         margin: 0;
         color: #64748b;
         font-size: .9rem;
+    }*/
+
+/* =================================================================aya
+   HOME INDEX - TABLEAU DE BORD MODERNE
+   ================================================================ */
+
+.home-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding-bottom: 3rem;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---------- Bandeau Héroïque (Hero) ---------- */
+.home-hero {
+    background: linear-gradient(135deg, var(--app-primary, #1e293b) 0%, #0f172a 100%);
+    color: #ffffff;
+    border-radius: 1rem;
+    padding: 2.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+    .home-hero::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, var(--app-accent-soft, rgba(59, 130, 246, 0.25)) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .home-hero h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        margin-bottom: 0.5rem;
+    }
+
+    .home-hero p {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 1.05rem;
+        margin-bottom: 0;
+        max-width: 600px;
+    }
+
+    .home-hero .hero-icon {
+        font-size: 4rem;
+        color: var(--app-accent, #3b82f6);
+        opacity: 0.85;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1.25rem;
+        border-radius: 1rem;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: none;
+    }
+
+@media (min-width: 768px) {
+    .home-hero .hero-icon {
+        display: block;
+    }
+}
+
+/* ---------- Indicateurs (Stats Cards) ---------- */
+.home-stats {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+    .home-stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.stat-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease;
+}
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+        border-color: var(--app-accent, #3b82f6);
+    }
+
+    .stat-card i {
+        font-size: 1.75rem;
+        color: var(--app-accent, #3b82f6);
+        background: var(--app-accent-soft, rgba(59, 130, 246, 0.15));
+        width: 3.5rem;
+        height: 3.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .stat-card .stat-value {
+        display: block;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--app-primary, #1e293b);
+        line-height: 1.2;
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.875rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+/* ---------- Modules (Quick Navigation Cards) ---------- */
+.home-modules {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+    .home-modules {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.module-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 2rem 1.5rem;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 1, 0.02);
+    transition: all 0.25s ease;
+}
+
+    .module-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: transparent;
+        transition: background 0.25s ease;
+    }
+
+    .module-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px -4px rgba(15, 23, 42, 0.08);
+        border-color: #cbd5e1;
+    }
+
+        .module-card:hover::before {
+            background: var(--app-accent, #3b82f6);
+        }
+
+    .module-card i {
+        font-size: 1.5rem;
+        color: var(--app-primary, #1e293b);
+        background: #f1f5f9;
+        width: 3rem;
+        height: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        margin-bottom: 1.25rem;
+        transition: all 0.25s ease;
+    }
+
+    .module-card:hover i {
+        background: var(--app-accent, #3b82f6);
+        color: #ffffff;
+    }
+
+    .module-card h3 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--app-primary, #1e293b);
+        margin-bottom: 0.5rem;
+    }
+
+    .module-card p {
+        font-size: 0.9rem;
+        color: #64748b;
+        line-height: 1.5;
+        margin-bottom: 0;
     }

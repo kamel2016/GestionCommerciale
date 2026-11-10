@@ -1,0 +1,37 @@
+﻿@page
+@model GestionCommerciale.Pages.Factures.CreateModel
+@{
+    ViewData["Title"] = "Nouvelle facture";
+}
+
+<h2>Nouvelle facture</h2>
+<p class="text-muted">
+    La facture est créée en brouillon à partir d'un bon de livraison.
+    Vous pourrez la vérifier avant de la valider.
+</p>
+
+@if (!string.IsNullOrEmpty(Model.Erreur))
+{
+    <div class="alert alert-danger">@Model.Erreur</div>
+}
+
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="BlId" class="form-label">Bon de livraison à facturer</label>
+        <select asp-for="BlId" asp-items="Model.BonsLivraison" class="form-select">
+            <option value="">-- Choisir un bon de livraison --</option>
+        </select>
+    </div>
+
+    @if (!Model.BonsLivraison.Any())
+    {
+        <div class="alert alert-info">Aucun bon de livraison en attente de facturation.</div>
+    }
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary" @(Model.BonsLivraison.Any() ? "" : "disabled")>
+            Créer la facture
+        </button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </div>
+</form>

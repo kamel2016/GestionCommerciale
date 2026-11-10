@@ -30,6 +30,10 @@ namespace GestionCommerciale.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
+                    b.Property<decimal>("CMUP")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
                     b.Property<int?>("CategoryId")
                         .HasColumnType("int");
 
@@ -52,6 +56,9 @@ namespace GestionCommerciale.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("DeviseAchatId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("EstActif")
                         .HasColumnType("bit");
 
@@ -60,6 +67,9 @@ namespace GestionCommerciale.Migrations
 
                     b.Property<int?>("FournisseurId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("GereNumeroSerie")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Libelle")
                         .IsRequired()
@@ -77,6 +87,10 @@ namespace GestionCommerciale.Migrations
                     b.Property<decimal?>("Poids")
                         .HasPrecision(10, 3)
                         .HasColumnType("decimal(10,3)");
+
+                    b.Property<decimal?>("PrixAchatDevise")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.Property<decimal>("PrixAchatHT")
                         .HasPrecision(18, 3)
@@ -97,6 +111,11 @@ namespace GestionCommerciale.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<int?>("StockMax")
                         .HasColumnType("int");
@@ -122,6 +141,8 @@ namespace GestionCommerciale.Migrations
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("CodeBarre");
+
+                    b.HasIndex("DeviseAchatId");
 
                     b.HasIndex("EstActif");
 
@@ -172,6 +193,45 @@ namespace GestionCommerciale.Migrations
                     b.ToTable("ArticleFournisseurs");
                 });
 
+            modelBuilder.Entity("GestionCommerciale.Models.BonLivraison", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CommandeClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Commentaire")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Numero")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Statut")
+                        .HasColumnType("int");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("CommandeClientId");
+
+                    b.HasIndex("Numero")
+                        .IsUnique();
+
+                    b.ToTable("BonsLivraison");
+                });
+
             modelBuilder.Entity("GestionCommerciale.Models.BonReception", b =>
                 {
                     b.Property<int>("Id")
@@ -210,6 +270,9 @@ namespace GestionCommerciale.Migrations
                     b.Property<decimal>("MontantHT")
                         .HasColumnType("decimal(18,3)");
 
+                    b.Property<decimal>("MontantRetenueSource")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("MontantTTC")
                         .HasColumnType("decimal(18,3)");
 
@@ -227,6 +290,9 @@ namespace GestionCommerciale.Migrations
 
                     b.Property<int>("Statut")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("TauxRetenueSource")
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -361,6 +427,12 @@ namespace GestionCommerciale.Migrations
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
+                    b.Property<bool>("SoumisRetenueSource")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("TauxRetenueSource")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<string>("Telephone")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -485,6 +557,162 @@ namespace GestionCommerciale.Migrations
                     b.ToTable("CommandesFournisseur");
                 });
 
+            modelBuilder.Entity("GestionCommerciale.Models.Devise", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Actif")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModification")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("EstDevisePrincipale")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Libelle")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Symbole")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("EstDevisePrincipale")
+                        .IsUnique()
+                        .HasFilter("[EstDevisePrincipale] = 1");
+
+                    b.ToTable("Devises");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Actif = true,
+                            Code = "TND",
+                            DateCreation = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EstDevisePrincipale = true,
+                            Libelle = "Dinar tunisien",
+                            Symbole = "د.ت"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Actif = true,
+                            Code = "EUR",
+                            DateCreation = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EstDevisePrincipale = false,
+                            Libelle = "Euro",
+                            Symbole = "€"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Actif = true,
+                            Code = "USD",
+                            DateCreation = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EstDevisePrincipale = false,
+                            Libelle = "Dollar américain",
+                            Symbole = "$"
+                        });
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.Facture", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BonLivraisonId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateEcheance")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("MontantFodec")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MontantRegle")
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("MontantRetenueSource")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("NetAPayer")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Numero")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("RemiseGlobalePourcent")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("RetenueSourceApplicable")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Statut")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StatutPaiement")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TauxRetenueSource")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("TimbreFiscal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalHt")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalTtc")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalTva")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("Numero")
+                        .IsUnique()
+                        .HasFilter("[Numero] IS NOT NULL");
+
+                    b.ToTable("Factures");
+                });
+
             modelBuilder.Entity("GestionCommerciale.Models.Fournisseur", b =>
                 {
                     b.Property<int>("Id")
@@ -545,6 +773,12 @@ namespace GestionCommerciale.Migrations
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
+                    b.Property<bool>("SoumisRetenueSource")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("TauxRetenueSource")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Telephone")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -556,6 +790,41 @@ namespace GestionCommerciale.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Fournisseurs");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.LigneBonLivraison", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
+
+                    b.Property<int>("ArticleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BonLivraisonId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("LigneCommandeClientId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PrixUnitaire")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<int>("Quantite")
+                        .HasColumnType("int");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("ArticleId");
+
+                    b.HasIndex("BonLivraisonId");
+
+                    b.HasIndex("LigneCommandeClientId");
+
+                    b.ToTable("LignesBonLivraison");
                 });
 
             modelBuilder.Entity("GestionCommerciale.Models.LigneBonReception", b =>
@@ -615,6 +884,9 @@ namespace GestionCommerciale.Migrations
                     b.Property<int>("Quantite")
                         .HasColumnType("int");
 
+                    b.Property<int>("QuantiteLivree")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ArticleId");
@@ -657,6 +929,48 @@ namespace GestionCommerciale.Migrations
                     b.ToTable("LignesCommandeFournisseur");
                 });
 
+            modelBuilder.Entity("GestionCommerciale.Models.LigneFacture", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ArticleId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Designation")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("FactureId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PrixUnitaireHt")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Quantite")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("RemisePourcent")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TauxTva")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalHt")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArticleId");
+
+                    b.HasIndex("FactureId");
+
+                    b.ToTable("LignesFacture");
+                });
+
             modelBuilder.Entity("GestionCommerciale.Models.MouvementStock", b =>
                 {
                     b.Property<int>("ID")
@@ -672,110 +986,92 @@ namespace GestionCommerciale.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
+                    b.Property<decimal>("CoutUnitaire")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Quantite")
                         .HasColumnType("int");
 
-                    b.Property<int>("StockApres")
+                    b.Property<int>("QuantiteApres")
                         .HasColumnType("int");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<int>("QuantiteAvant")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int?>("SourceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
 
                     b.HasKey("ID");
 
-                    b.HasIndex("ArticleId");
+                    b.HasIndex("ArticleId", "Date");
 
                     b.ToTable("MouvementsStock");
                 });
 
             modelBuilder.Entity("GestionCommerciale.Models.ParametresSociete", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
                     b.Property<string>("Adresse")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("CodePostal")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
 
                     b.Property<string>("Email")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("Fax")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("FodecDefaut")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Gouvernorat")
+                    b.Property<string>("LogoPath")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("MatriculeFiscale")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("LogoPath")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("MatriculeFiscale")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("PrefixeBonCommande")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("PrefixeBonLivraison")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("PrefixeDevis")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("PrefixeFacture")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("ProchainNumeroBonCommande")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProchainNumeroBonLivraison")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProchainNumeroDevis")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProchainNumeroFacture")
-                        .HasColumnType("int");
-
                     b.Property<string>("RaisonSociale")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("RegistreCommerce")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("SiteWeb")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<bool>("RetenueActive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("TauxFodec")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TauxRetenueSource")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("TauxTVADefaut")
                         .HasPrecision(5, 2)
@@ -789,13 +1085,172 @@ namespace GestionCommerciale.Migrations
                         .HasPrecision(18, 3)
                         .HasColumnType("decimal(18,3)");
 
-                    b.Property<string>("Ville")
+                    b.HasKey("ID");
+
+                    b.ToTable("ParametresSociete");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.Reglement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Banque")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateReglement")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FactureId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Mode")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Montant")
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.HasKey("Id");
 
-                    b.ToTable("ParametresSociete");
+                    b.HasIndex("FactureId");
+
+                    b.ToTable("Reglements");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.SequenceDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DernierNumero")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Exercice")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("TypeDocument")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TypeDocument", "Exercice")
+                        .IsUnique();
+
+                    b.ToTable("SequencesDocument");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.TauxChange", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModification")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DeviseId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("Taux")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviseId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("TauxChanges");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.TauxTva", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
+
+                    b.Property<bool>("Actif")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Libelle")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("Taux")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("TauxTva");
+
+                    b.HasData(
+                        new
+                        {
+                            ID = 1,
+                            Actif = true,
+                            Libelle = "Exonéré (0 %)",
+                            Taux = 0m
+                        },
+                        new
+                        {
+                            ID = 2,
+                            Actif = true,
+                            Libelle = "TVA 7 %",
+                            Taux = 7m
+                        },
+                        new
+                        {
+                            ID = 3,
+                            Actif = true,
+                            Libelle = "TVA 13 %",
+                            Taux = 13m
+                        },
+                        new
+                        {
+                            ID = 4,
+                            Actif = true,
+                            Libelle = "TVA 19 %",
+                            Taux = 19m
+                        });
                 });
 
             modelBuilder.Entity("GestionCommerciale.Models.Article", b =>
@@ -805,12 +1260,19 @@ namespace GestionCommerciale.Migrations
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("GestionCommerciale.Models.Devise", "DeviseAchat")
+                        .WithMany()
+                        .HasForeignKey("DeviseAchatId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("GestionCommerciale.Models.Fournisseur", "Fournisseur")
                         .WithMany("Articles")
                         .HasForeignKey("FournisseurId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Category");
+
+                    b.Navigation("DeviseAchat");
 
                     b.Navigation("Fournisseur");
                 });
@@ -832,6 +1294,21 @@ namespace GestionCommerciale.Migrations
                     b.Navigation("Article");
 
                     b.Navigation("Fournisseur");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.BonLivraison", b =>
+                {
+                    b.HasOne("GestionCommerciale.Models.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId");
+
+                    b.HasOne("GestionCommerciale.Models.CommandeClient", "CommandeClient")
+                        .WithMany()
+                        .HasForeignKey("CommandeClientId");
+
+                    b.Navigation("Client");
+
+                    b.Navigation("CommandeClient");
                 });
 
             modelBuilder.Entity("GestionCommerciale.Models.BonReception", b =>
@@ -881,6 +1358,41 @@ namespace GestionCommerciale.Migrations
                         .IsRequired();
 
                     b.Navigation("Fournisseur");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.Facture", b =>
+                {
+                    b.HasOne("GestionCommerciale.Models.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId");
+
+                    b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.LigneBonLivraison", b =>
+                {
+                    b.HasOne("GestionCommerciale.Models.Article", "Article")
+                        .WithMany()
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GestionCommerciale.Models.BonLivraison", "BonLivraison")
+                        .WithMany("Lignes")
+                        .HasForeignKey("BonLivraisonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GestionCommerciale.Models.LigneCommandeClient", "LigneCommandeClient")
+                        .WithMany()
+                        .HasForeignKey("LigneCommandeClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Article");
+
+                    b.Navigation("BonLivraison");
+
+                    b.Navigation("LigneCommandeClient");
                 });
 
             modelBuilder.Entity("GestionCommerciale.Models.LigneBonReception", b =>
@@ -940,6 +1452,25 @@ namespace GestionCommerciale.Migrations
                     b.Navigation("CommandeFournisseur");
                 });
 
+            modelBuilder.Entity("GestionCommerciale.Models.LigneFacture", b =>
+                {
+                    b.HasOne("GestionCommerciale.Models.Article", "Article")
+                        .WithMany()
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GestionCommerciale.Models.Facture", "Facture")
+                        .WithMany("Lignes")
+                        .HasForeignKey("FactureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Article");
+
+                    b.Navigation("Facture");
+                });
+
             modelBuilder.Entity("GestionCommerciale.Models.MouvementStock", b =>
                 {
                     b.HasOne("GestionCommerciale.Models.Article", "Article")
@@ -951,11 +1482,38 @@ namespace GestionCommerciale.Migrations
                     b.Navigation("Article");
                 });
 
+            modelBuilder.Entity("GestionCommerciale.Models.Reglement", b =>
+                {
+                    b.HasOne("GestionCommerciale.Models.Facture", "Facture")
+                        .WithMany("Reglements")
+                        .HasForeignKey("FactureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Facture");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.TauxChange", b =>
+                {
+                    b.HasOne("GestionCommerciale.Models.Devise", "Devise")
+                        .WithMany("TauxChanges")
+                        .HasForeignKey("DeviseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Devise");
+                });
+
             modelBuilder.Entity("GestionCommerciale.Models.Article", b =>
                 {
                     b.Navigation("Mouvements");
 
                     b.Navigation("TarifsFournisseurs");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.BonLivraison", b =>
+                {
+                    b.Navigation("Lignes");
                 });
 
             modelBuilder.Entity("GestionCommerciale.Models.BonReception", b =>
@@ -985,6 +1543,18 @@ namespace GestionCommerciale.Migrations
                     b.Navigation("BonsReception");
 
                     b.Navigation("LignesCommande");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.Devise", b =>
+                {
+                    b.Navigation("TauxChanges");
+                });
+
+            modelBuilder.Entity("GestionCommerciale.Models.Facture", b =>
+                {
+                    b.Navigation("Lignes");
+
+                    b.Navigation("Reglements");
                 });
 
             modelBuilder.Entity("GestionCommerciale.Models.Fournisseur", b =>

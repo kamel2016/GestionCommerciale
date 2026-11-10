@@ -98,6 +98,14 @@ namespace GestionCommerciale.Models
         [Display(Name = "Date de modification")]
         public DateTime? DateModification { get; set; }
 
+        [Display(Name = "Soumis à la retenue à la source")]
+        public bool SoumisRetenueSource { get; set; }
+
+        [Column(TypeName = "decimal(5,2)")]
+        [Display(Name = "Taux RS par défaut (%)")]
+        [Range(0, 100)]
+        public decimal TauxRetenueSource { get; set; } = 1.5m;
+
         // ============================================
         // NAVIGATION
         // ============================================

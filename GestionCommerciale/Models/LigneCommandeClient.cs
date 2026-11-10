@@ -33,5 +33,7 @@ namespace GestionCommerciale.Models
         // Navigation properties
         public virtual CommandeClient CommandeClient { get; set; } = null!;
         public virtual Article Article { get; set; } = null!;
+        public int QuantiteLivree { get; set; }
+        public int QuantiteRestante => Quantite - QuantiteLivree;
     }
 }

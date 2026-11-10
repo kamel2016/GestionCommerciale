@@ -3,6 +3,7 @@ using System.Text.Json;
 using GestionCommerciale.Data;
 using GestionCommerciale.Enums;
 using GestionCommerciale.Models;
+using GestionCommerciale.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -14,11 +15,14 @@ namespace GestionCommerciale.Pages.GoodsReceipt
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<CreateModel> _logger;
-
-        public CreateModel(ApplicationDbContext context, ILogger<CreateModel> logger)
+        private readonly IRetenueSourceService _retenueSource;
+        public CreateModel(ApplicationDbContext context,
+                           ILogger<CreateModel> logger,
+                           RetenueSourceService retenueSource)
         {
             _context = context;
             _logger = logger;
+            _retenueSource = retenueSource;
         }
 
         [BindProperty] public InputModel Input { get; set; } = new();
@@ -124,9 +128,9 @@ namespace GestionCommerciale.Pages.GoodsReceipt
             }
 
             // 5. Vérifier le fournisseur
-            var fournisseurExiste = await _context.Fournisseurs
-                .AnyAsync(f => f.Id == Input.FournisseurId && f.EstActif);
-            if (!fournisseurExiste)
+            var fournisseur = await _context.Fournisseurs
+                .FirstOrDefaultAsync(f => f.Id == Input.FournisseurId && f.EstActif);
+            if (fournisseur is null)
             {
                 ModelState.AddModelError("Input.FournisseurId", "Fournisseur invalide.");
                 return Page();
@@ -137,6 +141,7 @@ namespace GestionCommerciale.Pages.GoodsReceipt
             {
                 NumeroInterne = await GenererNumeroAsync(),
                 FournisseurId = Input.FournisseurId,
+                Fournisseur = fournisseur,
                 CommandeFournisseurId = Input.CommandeFournisseurId,
                 ReferenceFournisseur = Input.ReferenceFournisseur?.Trim(),
                 DateReception = Input.DateReception.Date,
@@ -173,7 +178,10 @@ namespace GestionCommerciale.Pages.GoodsReceipt
             bon.MontantTVA = totalTVA;
             bon.MontantTTC = totalHT + totalTVA;
 
-            // 7. Enregistrement
+            // 7. Retenue à la source (côté achat)
+            _retenueSource.AppliquerRetenueSource(bon);
+
+            // 8. Enregistrement
             try
             {
                 _context.BonsReception.Add(bon);

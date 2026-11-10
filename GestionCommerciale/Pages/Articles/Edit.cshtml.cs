@@ -1,4 +1,5 @@
 using GestionCommerciale.Data;
+using GestionCommerciale.Enums;
 using GestionCommerciale.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -47,12 +48,14 @@ public class EditModel : PageModel
 
     public class StockInput
     {
-        [Required] public string Type { get; set; } = "Entrée";
+        [Required]
+        public TypeMouvementStock Type { get; set; } = TypeMouvementStock.EntreeReception;
 
         [Range(1, 9999999, ErrorMessage = "Quantité invalide")]
         public int Quantite { get; set; }
 
-        [StringLength(250)] public string? Commentaire { get; set; }
+        [StringLength(250)]
+        public string? Commentaire { get; set; }
     }
 
     // ---------------- GET ----------------
@@ -207,16 +210,17 @@ public class EditModel : PageModel
         //    return RedirectToPage("./Edit", new { id = articleId });
         //}
 
-        if (string.IsNullOrEmpty(NewStock.Type) || NewStock.Quantite == 0)
+        if (!Enum.IsDefined(NewStock.Type) || NewStock.Quantite <= 0)
         {
             TempData["ErrorMessage"] = "Mouvement de stock invalide.";
             return RedirectToPage("./Edit", new { id = articleId });
         }
 
         var db = await _context.Articles.FirstOrDefaultAsync(a => a.ID == articleId);
+
         if (db == null) return NotFound();
 
-        var delta = NewStock.Type == "Sortie" ? -NewStock.Quantite : NewStock.Quantite;
+        var delta = NewStock.Type == TypeMouvementStock.EntreeReception ? -NewStock.Quantite : NewStock.Quantite;
 
         if (db.Quantite + delta < 0)
         {
@@ -232,7 +236,7 @@ public class EditModel : PageModel
             ArticleId = articleId,
             Type = NewStock.Type,
             Quantite = delta,
-            StockApres = db.Quantite,
+            QuantiteApres = db.Quantite,
             Commentaire = NewStock.Commentaire,
             Date = DateTime.Now
         });

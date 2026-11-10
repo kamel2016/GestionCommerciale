@@ -1,0 +1,133 @@
+﻿@page
+@model GestionCommerciale.Pages.Parametres.IndexModel
+@{
+    ViewData["Title"] = "Paramètres société";
+}
+
+<h2 class="mb-4">Paramètres de la société</h2>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+
+<form method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="card mb-4">
+        <div class="card-header">Identité</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Parametres.RaisonSociale" class="form-label"></label>
+                    <input asp-for="Parametres.RaisonSociale" class="form-control" />
+                    <span asp-validation-for="Parametres.RaisonSociale" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Parametres.MatriculeFiscale" class="form-label"></label>
+                    <input asp-for="Parametres.MatriculeFiscale" class="form-control" />
+                    <span asp-validation-for="Parametres.MatriculeFiscale" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Parametres.RegistreCommerce" class="form-label"></label>
+                    <input asp-for="Parametres.RegistreCommerce" class="form-control" />
+                    <span asp-validation-for="Parametres.RegistreCommerce" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Parametres.Adresse" class="form-label"></label>
+                    <input asp-for="Parametres.Adresse" class="form-control" />
+                    <span asp-validation-for="Parametres.Adresse" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Parametres.Telephone" class="form-label"></label>
+                    <input asp-for="Parametres.Telephone" class="form-control" />
+                    <span asp-validation-for="Parametres.Telephone" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Parametres.Email" class="form-label"></label>
+                    <input asp-for="Parametres.Email" class="form-control" />
+                    <span asp-validation-for="Parametres.Email" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Logo</div>
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(Model.Parametres.LogoPath))
+            {
+                <div class="mb-3">
+                    <img src="@Model.Parametres.LogoPath" alt="Logo" style="max-height:100px;" class="border rounded p-1" />
+                </div>
+                <div class="form-check mb-3">
+                    <input asp-for="SupprimerLogo" class="form-check-input" />
+                    <label asp-for="SupprimerLogo" class="form-check-label">Supprimer le logo actuel</label>
+                </div>
+            }
+            <input type="file" asp-for="LogoFile" class="form-control" accept=".png,.jpg,.jpeg" />
+            <div class="form-text">PNG ou JPG, 2 Mo maximum.</div>
+            <span asp-validation-for="LogoFile" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Fiscalité</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label asp-for="Parametres.TauxTVADefaut" class="form-label"></label>
+                    <div class="input-group">
+                        <input asp-for="Parametres.TauxTVADefaut" class="form-control" />
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <span asp-validation-for="Parametres.TauxTVADefaut" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Parametres.TauxFodec" class="form-label"></label>
+                    <div class="input-group">
+                        <input asp-for="Parametres.TauxFodec" class="form-control" />
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <span asp-validation-for="Parametres.TauxFodec" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Parametres.TauxRetenueSource" class="form-label"></label>
+                    <div class="input-group">
+                        <input asp-for="Parametres.TauxRetenueSource" class="form-control" />
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <span asp-validation-for="Parametres.TauxRetenueSource" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Parametres.TimbreFiscal" class="form-label"></label>
+                    <div class="input-group">
+                        <input asp-for="Parametres.TimbreFiscal" class="form-control" />
+                        <span class="input-group-text">DT</span>
+                    </div>
+                    <span asp-validation-for="Parametres.TimbreFiscal" class="text-danger"></span>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        <input asp-for="Parametres.RetenueActive" class="form-check-input" />
+                        <label asp-for="Parametres.RetenueActive" class="form-check-label"></label>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="Parametres.FodecDefaut" class="form-check-input" />
+                        <label asp-for="Parametres.FodecDefaut" class="form-check-label">
+                            Appliquer le FODEC par défaut sur les nouvelles factures
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Enregistrer</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

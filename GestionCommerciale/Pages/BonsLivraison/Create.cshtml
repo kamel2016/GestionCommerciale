@@ -1,0 +1,86 @@
+﻿@* Pages/BonsLivraison/Create.cshtml *@
+@page
+@model GestionCommerciale.Pages.BonsLivraison.CreateModel
+@{
+    ViewData["Title"] = "Nouveau bon de livraison";
+}
+
+<h2>Nouveau bon de livraison</h2>
+@if (Model.NumeroCommande != null)
+{
+    <p class="text-muted">Depuis la commande <strong>@Model.NumeroCommande</strong></p>
+}
+
+<form method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <input type="hidden" asp-for="CommandeClientId" />
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Client</label>
+            @if (Model.CommandeClientId.HasValue)
+            {
+                <input type="hidden" asp-for="ClientId" />
+                <select class="form-select" asp-items="Model.Clients" disabled></select>
+            }
+                else
+                {
+                    <select asp-for="ClientId" asp-items="Model.Clients" class="form-select">
+                        <option value="">-- Choisir --</option>
+                    </select>
+                }
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Date</label>
+            <input asp-for="Date" type="date" class="form-control" />
+        </div>
+    </div>
+
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Article</th>
+                <th class="text-end">Reste à livrer</th>
+                <th class="text-end">Stock</th>
+                <th style="width:140px">Qté à livrer</th>
+                <th class="text-end">Prix unitaire</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Lignes.Count; i++)
+            {
+                <tr>
+                    <td>
+                        @Model.Lignes[i].Designation
+                        <input type="hidden" asp-for="Lignes[i].ArticleId" />
+                        <input type="hidden" asp-for="Lignes[i].LigneCommandeClientId" />
+                        <input type="hidden" asp-for="Lignes[i].Designation" />
+                        <input type="hidden" asp-for="Lignes[i].PrixUnitaire" />
+                    </td>
+                    <td class="text-end">
+                        @Model.Lignes[i].QuantiteRestante
+                        <input type="hidden" asp-for="Lignes[i].QuantiteRestante" />
+                    </td>
+                    <td class="text-end @(Model.Lignes[i].Stock < Model.Lignes[i].QuantiteRestante ? "text-danger fw-bold" : "")">
+                        @Model.Lignes[i].Stock
+                        <input type="hidden" asp-for="Lignes[i].Stock" />
+                    </td>
+                    <td>
+                        <input asp-for="Lignes[i].Quantite" type="number" min="0"
+                               max="@Math.Min(Model.Lignes[i].QuantiteRestante, Model.Lignes[i].Stock)"
+                               class="form-control" />
+                    </td>
+                    <td class="text-end">@Model.Lignes[i].PrixUnitaire.ToString("N3")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="mb-3">
+        <label class="form-label">Commentaire</label>
+        <textarea asp-for="Commentaire" class="form-control" rows="2"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Enregistrer en brouillon</button>
+    <a asp-page="Index" class="btn btn-secondary">Annuler</a>
+</form>

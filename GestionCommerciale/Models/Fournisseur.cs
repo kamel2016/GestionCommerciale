@@ -89,6 +89,10 @@ namespace GestionCommerciale.Models
         [Display(Name = "Date de modification")]
         public DateTime? DateModification { get; set; }
 
+        // Retenue à la source
+        public bool SoumisRetenueSource { get; set; } = false;
+        public decimal? TauxRetenueSource { get; set; }   // ex : 1, 3, 5 (%)
+            
         // ============================================
         // NAVIGATION
         // ============================================

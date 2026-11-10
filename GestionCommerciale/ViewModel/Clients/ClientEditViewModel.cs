@@ -84,5 +84,9 @@ namespace GestionCommerciale.ViewModel
         public DateTime? DateModification { get; set; }
 
         public bool IsActive { get; set; } = true;
+        public bool SoumisRetenueSource { get; set; }
+
+        [Range(0, 100, ErrorMessage = "Le taux de retenue doit être compris entre 0 et 100%")]
+        public decimal? TauxRetenueSource { get; set; }
     }
 }

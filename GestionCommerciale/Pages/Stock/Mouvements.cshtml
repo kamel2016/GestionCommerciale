@@ -1,0 +1,53 @@
+﻿@page
+@model GestionCommerciale.Pages.Stock.MouvementsModel
+@{
+    ViewData["Title"] = "Historique du stock";
+}
+
+<h1>Historique du stock : @Model.Article?.Libelle</h1>
+
+<form method="get" class="row g-2 mb-3">
+    <input type="hidden" name="ArticleId" value="@Model.ArticleId" />
+    <div class="col-md-3">
+        <label class="form-label">Type</label>
+        <select name="Type" class="form-select" asp-for="Type"
+                asp-items="Html.GetEnumSelectList<TypeMouvementStock>()">
+            <option value="">Tous</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Du</label>
+        <input type="date" name="Du" class="form-control" value="@Model.Du?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Au</label>
+        <input type="date" name="Au" class="form-control" value="@Model.Au?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+    </div>
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th class="text-end">Quantité</th>
+            <th class="text-end">Stock après</th>
+            <th>Commentaire</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var m in Model.Mouvements)
+        {
+            <tr>
+                <td>@m.Date.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@m.Type</td>
+                <td class="text-end">@m.Quantite</td>
+                <td class="text-end">@m.QuantiteApres</td>
+                <td>@m.Commentaire</td>
+            </tr>
+        }
+    </tbody>
+</table>

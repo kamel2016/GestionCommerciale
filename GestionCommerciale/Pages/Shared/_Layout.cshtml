@@ -1,5 +1,12 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@{
+    // Page courante pour surligner le menu actif
+    var page = (ViewContext.RouteData.Values["page"]?.ToString() ?? "").ToLowerInvariant();
+
+    string ActiveGroup(params string[] prefixes) =>
+        prefixes.Any(p => page.StartsWith(p.ToLowerInvariant())) ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="fr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,58 +27,155 @@
     <link rel="stylesheet" href="~/css/fournisseur-index.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/fournisseur-form.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/goods-receipt-create.css" asp-append-version="true" />
-    <!-- Section CSS spécifique par page (Create, Index, etc.) -->
+    <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-lg navbar-dark app-navbar shadow-sm">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">GestionCommerciale</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-area="" asp-page="/Index">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    <span>GestionCommerciale</span>
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#mainNav" aria-controls="mainNav"
+                        aria-expanded="false" aria-label="Afficher le menu">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                        <!-- Accueil -->
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+                            <a class="nav-link @(page == "/index" ? "active" : "")" asp-area="" asp-page="/Index">
+                                <i class="fa-solid fa-house me-1"></i>Accueil
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Articles/Index">Articles</a>
+
+                        <!-- Référentiels -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle @ActiveGroup("/articles", "/categories", "/clients", "/fournisseurs")"
+                               href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-database me-1"></i>Référentiels
+                            </a>
+                            <ul class="dropdown-menu app-dropdown">
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-page="/Articles/Index">
+                                        <i class="fa-solid fa-box me-2"></i>Articles
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-page="/Categories/Index">
+                                        <i class="fa-solid fa-tags me-2"></i>Catégories
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-page="/Clients/Index">
+                                        <i class="fa-solid fa-users me-2"></i>Clients
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-page="/Fournisseurs/Index">
+                                        <i class="fa-solid fa-industry me-2"></i>Fournisseurs
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Categories/Index">Catégories</a>
+
+                        <!-- Ventes -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle @ActiveGroup("/commande_client", "/bonslivraison", "/factures")"
+                               href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-cart-shopping me-1"></i>Ventes
+                            </a>
+                            <ul class="dropdown-menu app-dropdown">
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-page="/Commande_Client/Index">
+                                        <i class="fa-solid fa-file-lines me-2"></i>Commandes clients
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-page="/BonsLivraison/Index">
+                                        <i class="fa-solid fa-truck me-2"></i>Bons de livraison
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-page="/Factures/Index">
+                                        <i class="fa-solid fa-file-invoice-dollar me-2"></i>Factures
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Clients/Index">Clients</a>
+
+                        <!-- Achats -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle @ActiveGroup("/commande_fournisseur", "/goodsreceipt")"
+                               href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-bag-shopping me-1"></i>Achats
+                            </a>
+                            <ul class="dropdown-menu app-dropdown">
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-page="/Commande_Fournisseur/Index">
+                                        <i class="fa-solid fa-file-signature me-2"></i>Commandes fournisseurs
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-page="/GoodsReceipt/Index">
+                                        <i class="fa-solid fa-dolly me-2"></i>Bons de réception
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Fournisseurs/Index">Fournisseur</a>
+
+                        <!-- Stock -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle @ActiveGroup("/stock")"
+                               href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-warehouse me-1"></i>Stock
+                            </a>
+                            <ul class="dropdown-menu app-dropdown">
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-page="/Stock/Reapprovisionnement">
+                                        <i class="fa-solid fa-triangle-exclamation me-2"></i>Articles à réapprovisionner
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Commande_Client/Index">Commande Client</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Commande_Fournisseur/Index">Commande Fournisseur</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/GoodsReceipt/Index">Bon Réception</a>
+
+                        <!-- Paramètres -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle @ActiveGroup("/parametres")"
+                               href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-gear me-1"></i>Paramètres
+                            </a>
+                            <ul class="dropdown-menu app-dropdown">
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-page="/Parametres/Index">
+                                        <i class="fa-solid fa-building me-2"></i>Paramètres Société
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+    <div class="container flex-grow-1">
+        <main role="main" class="py-4">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - GestionCommerciale - <a asp-area="" asp-page="/Privacy">Privacy</a>
+    <footer class="app-footer border-top text-muted">
+        <div class="container d-flex justify-content-between py-3 small">
+            <span>&copy; @DateTime.Now.Year - GestionCommerciale</span>
+            <a asp-area="" asp-page="/Privacy">Confidentialité</a>
         </div>
     </footer>
 
@@ -79,8 +183,6 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
-    <!-- Section Scripts spécifique par page -->
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

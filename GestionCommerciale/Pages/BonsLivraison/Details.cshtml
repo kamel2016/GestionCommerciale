@@ -1,0 +1,87 @@
+﻿@* Pages/BonsLivraison/Details.cshtml *@
+@page "{id:int}"
+@model GestionCommerciale.Pages.BonsLivraison.DetailsModel
+@using GestionCommerciale.Enums
+@{
+    ViewData["Title"] = "Bon de livraison " + Model.BonLivraison.Numero;
+    var bl = Model.BonLivraison;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Bon de livraison @bl.Numero</h2>
+    <span class="badge fs-6 @(bl.Statut == StatutBonLivraison.Valide ? "bg-success" :
+                              bl.Statut == StatutBonLivraison.Brouillon ? "bg-secondary" :
+                              bl.Statut == StatutBonLivraison.Facture ? "bg-primary" : "bg-danger")">
+        @bl.Statut
+    </span>
+</div>
+
+<dl class="row">
+    <dt class="col-sm-2">Date</dt>
+    <dd class="col-sm-4">@bl.Date.ToString("dd/MM/yyyy")</dd>
+    <dt class="col-sm-2">Client</dt>
+    <dd class="col-sm-4">@bl.Client?.Nom</dd>
+    <dt class="col-sm-2">Commande</dt>
+    <dd class="col-sm-4">@(bl.CommandeClient?.NumeroCommande ?? "-")</dd>
+    <dt class="col-sm-2">Commentaire</dt>
+    <dd class="col-sm-4">@bl.Commentaire</dd>
+</dl>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Article</th>
+            <th class="text-end">Quantité</th>
+            <th class="text-end">Prix unitaire</th>
+            <th class="text-end">Total HT</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var l in bl.Lignes)
+        {
+            <tr>
+                <td>@l.Article?.Libelle</td>
+                <td class="text-end">@l.Quantite</td>
+                <td class="text-end">@l.PrixUnitaire.ToString("N3")</td>
+                <td class="text-end">@l.TotalHT.ToString("N3")</td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th colspan="3" class="text-end">Total HT</th>
+            <th class="text-end">@bl.TotalHT.ToString("N3") DT</th>
+        </tr>
+    </tfoot>
+</table>
+
+<div class="d-flex gap-2">
+    @if (bl.Statut == StatutBonLivraison.Brouillon)
+    {
+        <form method="post" asp-page-handler="Valider" asp-route-id="@bl.ID">
+            <button class="btn btn-success"
+                    onclick="return confirm('Valider ce BL ? Le stock sera mis à jour.');">
+                Valider (sortie de stock)
+            </button>
+        </form>
+    }
+    @if (bl.Statut != StatutBonLivraison.Annule && bl.Statut != StatutBonLivraison.Facture)
+    {
+        <form method="post" asp-page-handler="Annuler" asp-route-id="@bl.ID">
+            <button class="btn btn-outline-danger"
+                    onclick="return confirm('Annuler ce BL ?');">
+                Annuler
+            </button>
+        </form>
+    }
+    <a asp-page="Index" class="btn btn-secondary">Retour</a>
+    <div class="d-flex gap-2 mt-3">
+        <a asp-page="Index" class="btn btn-outline-secondary">Retour à la liste</a>
+
+        @if (Model.BonLivraison.Statut == StatutBonLivraison.Valide)
+        {
+            <a asp-page="/Factures/Create" asp-route-blId="@Model.BonLivraison.ID"
+               class="btn btn-success">Facturer ce BL</a>
+        }
+    </div>
+</div>

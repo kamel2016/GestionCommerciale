@@ -49,6 +49,13 @@ namespace GestionCommerciale.Models
         public DateTime DateCreation { get; set; } = DateTime.Now;
         public DateTime? DateModification { get; set; }
 
+        // Retenue à la source (côté achat : c'est nous qui retenons)
+        public decimal TauxRetenueSource { get; set; }
+        public decimal MontantRetenueSource { get; set; }
+
+        // Montant réellement versé au fournisseur
+        public decimal NetAPayerFournisseur => MontantTTC - MontantRetenueSource;
+
         public virtual ICollection<LigneBonReception> Lignes { get; set; } = new List<LigneBonReception>();
     }
 }
