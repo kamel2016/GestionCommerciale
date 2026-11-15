@@ -12,15 +12,15 @@ namespace GestionCommerciale.Helpers
         // Matricule fiscal : validation SOUPLE (décision du 2026-11-16).
         // Chiffres, lettres et "/" seulement, 20 caractères maximum, sans contrôle de la clé.
         // À resserrer plus tard avec l'avis du comptable.
-        private static readonly Regex MatriculeRegex = new(@"^[A-Za-z0-9/]{1,20}$", RegexOptions.Compiled);
+        private static readonly Regex MatriculeRegex = new(@"^[A-Za-z0-9/]{1,20}\z", RegexOptions.Compiled);
 
         // Code postal tunisien : 4 chiffres.
-        private static readonly Regex CodePostalRegex = new(@"^\d{4}$", RegexOptions.Compiled);
+        private static readonly Regex CodePostalRegex = new(@"^[0-9]{4}\z", RegexOptions.Compiled);
 
         public static string? ValiderMatriculeFiscale(string? valeur)
         {
             if (string.IsNullOrWhiteSpace(valeur)) return null; // champ facultatif
-            return MatriculeRegex.IsMatch(valeur.Trim())
+            return MatriculeRegex.IsMatch(valeur.Trim(' '))
                 ? null
                 : "Le matricule fiscal ne peut contenir que des chiffres, des lettres et « / » (20 caractères maximum).";
         }
@@ -28,7 +28,7 @@ namespace GestionCommerciale.Helpers
         public static string? ValiderCodePostal(string? valeur)
         {
             if (string.IsNullOrWhiteSpace(valeur)) return null; // champ facultatif
-            return CodePostalRegex.IsMatch(valeur.Trim())
+            return CodePostalRegex.IsMatch(valeur.Trim(' '))
                 ? null
                 : "Le code postal doit contenir exactement 4 chiffres.";
         }

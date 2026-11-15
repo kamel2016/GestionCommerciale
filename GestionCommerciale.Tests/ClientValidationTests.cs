@@ -20,6 +20,7 @@ public class ClientValidationTests
     [InlineData("ABC 123")]
     [InlineData("12345678901234567890X")] // 21 caractères
     [InlineData("é123")]
+    [InlineData("1234567A\n")] // retour à la ligne final : refusé
     public void Matricule_invalide_est_refuse(string valeur)
         => Assert.NotNull(ClientValidation.ValiderMatriculeFiscale(valeur));
 
@@ -35,6 +36,8 @@ public class ClientValidationTests
     [InlineData("75001")]   // 5 chiffres (format français)
     [InlineData("100")]
     [InlineData("10A0")]
+    [InlineData("٣٠٠٠")]    // chiffres arabo-indiques : refusés (seulement 0-9)
+    [InlineData("1234\n")]  // retour à la ligne final : refusé
     public void Code_postal_invalide_est_refuse(string valeur)
         => Assert.NotNull(ClientValidation.ValiderCodePostal(valeur));
 
