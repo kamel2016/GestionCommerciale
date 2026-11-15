@@ -1,0 +1,194 @@
+# ROADMAP – GestionCommerciale
+
+Rapport d'audit en lecture seule du 2026-11-15 (branche `claude-audit`), suivi du découpage en sessions de travail.
+Effort : **S** = quelques heures, **M** = environ une session, **G** = plusieurs sessions.
+Règle CLAUDE.md : une session = un module, une branche dédiée, un commit par étape, `dotnet build` puis `dotnet test` avant de rendre la main, jamais de `dotnet ef database update` sans montrer le script et obtenir l'accord.
+
+## Décisions de l'utilisateur (2026-11-15)
+1. **Stock client** : le stock baisse uniquement à la validation du BL. La commande client ne touche plus au stock.
+2. **Pages/Supplier/** : à supprimer au profit de `Pages/Fournisseurs/`. La suppression se fait en S5, avec confirmation explicite à ce moment-là.
+3. **Devis** : le module est commité tel quel et conservé.
+
+Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la source, numérotation, exercice) est nécessaire avant S10.
+
+## Rapport d'audit
+
+### État global
+- Le build échoue (1 erreur) : `Pages/Clients/Create.cshtml:46`, `@using GestionCommerciale.Enums` manquant.
+- Il n'y a aucun projet de tests.
+- `Client.Code` (et son index unique) et `Client.ModeFacturation` ne figurent dans aucune migration ni dans le snapshot.
+- `InitialCreate` a été modifiée à la main. La migration `AjoutDevis` n'est pas commitée. 22 fichiers sont modifiés ou non suivis.
+- Aucune authentification, aucun rôle, aucun journal d'actions.
+
+### Par module
+| Module | Réel (enregistre en base) | Factice ou incomplet | Bugs et règles manquantes |
+|---|---|---|---|
+| Clients | Create, Index (activer, supprimer) | Edit (5 clients en dur, faux succès), ClientDetails, Delete, Details | Pas d'unicité email/matricule, pas de format matricule tunisien, code postal à 5 chiffres, plafond de crédit et délai jamais contrôlés, code client non protégé contre la concurrence |
+| Articles | Create, Edit, suppression via Index | Details (historique de stock inventé), Delete | Signe inversé des entrées de stock (`Articles/Edit.cshtml.cs:223`), CodeBarre non contrôlé, filtres faux, affichage en € |
+| Fournisseurs | Create, Edit, Index | Details, Delete (copies de pages Client), dossier doublon `Supplier/` | Include de collections entières dans Index, `supplier-form.js` inexistant, matricule non validé |
+| Commandes client | Create, Edit, suppression via Index | Page Delete | Double sortie de stock avec le BL, `TauxTVA` et `MontantLigne` jamais renseignés, remise globale jamais calculée, Edit calcule avec `PrixAchatHT` (`Edit.cshtml.cs:213`), Edit perd `QuantiteLivree`, plafond et délai ignorés, numéro sans verrou |
+| Commandes fournisseur | Create, Edit, Delete | – | TVA codée à 20 %, montants forgeables, aucun statut « livrée », pas de reliquat |
+| Bons de réception | Create (brouillon) | Details (données en dur) | Aucune validation donc aucune entrée de stock, prix pris sur l'article, injection de `RetenueSourceService` concret (`GoodsReceipt/Create.cshtml.cs:21`) qui peut faire planter la page |
+| Bons de livraison | Create, Valider, Annuler (transactions, sorties de stock) | Pas d'édition ni de suppression de brouillon | Statut de la commande jamais mis à jour, prix forgeable, annulation avec le mauvais type de mouvement, pas de concurrence |
+| Factures | Création depuis un BL, validation, annulation, règlements, PDF | Pas de facture directe, pas de facture mensuelle, pas d'avoirs, pas d'échéancier | Retenue à la source déduite plusieurs fois, numérotation fragile, pas de « 1 BL = 1 facture », FODEC et timbre systématiques, facture modifiable après validation |
+| Stock | Mouvements via BL et Edit article | `StockService` jamais enregistré ni utilisé | Signes incohérents, aucune entrée à la réception, pas de protection de concurrence |
+
+### Points transverses
+- **Migrations** : migration manquante, précisions decimal (18,2) contre 3 décimales utilisées, double configuration de `TauxTVA`, index manquants (dont `Facture.BonLivraisonId`), cascade Règlement vers Facture dangereuse, pas de `Migrate()` au démarrage.
+- **Validation** : peu de bornes, aucune règle tunisienne, entités complètes reçues du navigateur, quantités et prix non contrôlés côté serveur.
+- **Erreurs** : pas de gestion globale, messages d'exception affichés tels quels, concurrence jamais gérée, presque aucun log.
+- **Performance** : listes sans pagination (BL, commandes fournisseur), `Include` inutiles, `AsNoTracking` rare.
+- **Sécurité** : aucune authentification ni rôle, paramètres fiscaux et PDF accessibles à tous, seed factice à chaque démarrage, Dockerfile inexploitable.
+- **Nettoyage** : doublons (`Supplier/`, `Categorie`/`Category`), ViewModels et scripts orphelins, code commenté, encodage mixte, symbole € au lieu de DT.
+- **PDF** : en-tête en dur, paramètres société non lus, mentions légales incomplètes, PDF non figé.
+
+### Tableau priorisé
+**Bloquant**
+| Module | Problème | Fichier | Effort |
+|---|---|---|---|
+| Build | Erreur de compilation | `Pages/Clients/Create.cshtml:46` | S |
+| Migrations | `Client.Code`, `ModeFacturation`, index unique absents ; `InitialCreate` modifiée | `Migrations/`, `Models/Client.cs` | M |
+| Clients | Edit, Delete, Details factices | `Pages/Clients/*` | M |
+| Stock et commandes | Double sortie de stock | `Commande_Client/Create:145`, `BonLivraisonService:55` | M |
+| Stock | Signe inversé des entrées | `Articles/Edit.cshtml.cs:223` | S |
+| Réception | Aucune validation de BR, pas d'entrée de stock, Details factice | `Pages/GoodsReceipt/*` | G |
+| Réception | Service de retenue non injectable | `GoodsReceipt/Create:21` | S |
+| Commandes client | Edit avec `PrixAchatHT`, TVA historique non copiée | `Commande_Client/Edit:213`, `Create:137` | M |
+| Factures | Retenue à la source déduite plusieurs fois | `ReglementService:35,87-91`, `Facture.cs:46` | M |
+| Factures | Numérotation fragile, pas de « 1 BL = 1 facture » | `FactureService`, `SequenceService` | M |
+| Sécurité | Aucune authentification ni rôle | `Program.cs` | G |
+| Fiscalité | FODEC, timbre, retenue, numérotation non validés | `FactureService` | M plus avis du comptable |
+
+**Important**
+| Module | Problème | Fichier | Effort |
+|---|---|---|---|
+| Fournisseurs | Doublon `Supplier/`, Details et Delete factices | `Pages/Supplier`, `Pages/Fournisseurs` | M |
+| Articles | Details et Delete factices, filtres faux | `Pages/Articles/*` | M |
+| Commandes | Statut jamais mis à jour, transitions libres | `BonLivraisonService:71`, `Commande_Client/Edit` | M |
+| Commandes client | Plafond de crédit, délai de paiement, remise globale | `Commande_Client`, `Client.cs` | M |
+| Commandes fournisseur | TVA en dur, montants forgeables, pas de reliquat | `Commande_Fournisseur/Create:64` | M |
+| Factures | Facture directe, mensuelle, brouillon modifiable | `FactureService`, `Pages/Factures` | G |
+| Factures | Immuabilité après validation, règlement sur brouillon | `FactureService`, `ReglementService` | S |
+| Migrations | Précisions decimal, index, cascades | `ApplicationDbContext` | M |
+| PDF | Paramètres société, mentions légales, TVA par taux | `FacturePdfService` | M |
+| Stock | Convention de signe unique, `StockService` partout | `StockService`, BL, Articles | M |
+| Erreurs et logs | Gestion globale, concurrence, transactions | `Services/`, `Pages/` | M |
+| Validation | Règles tunisiennes, anti sur-binding, quantités | `Models/`, `Pages/` | M |
+| Tests | Aucun projet de tests | – | M |
+
+**Souhaitable**
+| Module | Problème | Fichier | Effort |
+|---|---|---|---|
+| Règlements | Échéancier, relances, multi-factures, trop-perçu | `ReglementService` | G |
+| Avoirs | Inexistants | – | G |
+| Audit | Journal des actions sensibles | – | M |
+| Import Excel | Articles, clients, fournisseurs | – | G |
+| Reporting | Balance âgée, ventes, stock, TVA, retenues | – | G |
+| Performance | Pagination BL et commandes fournisseur, projections | Pages Index | S à M |
+| Nettoyage | Doublons, code mort, encodage, € vers DT | divers | M |
+| Exploitation | Dockerfile, secrets, configuration par environnement | `Dockerfile` | M |
+
+---
+
+## Sessions de travail
+
+### S1 – Remise en état
+- **Objectif** : un build vert et un dépôt propre.
+- **À faire** : ajouter `@using GestionCommerciale.Enums` dans `Pages/Clients/Create.cshtml` ; commiter l'état actuel en étapes lisibles (Devis, ModeFacturation, numérotation) ; proposer de revenir sur la modification de `InitialCreate` (avec votre accord) ; créer un projet de tests et un premier test.
+- **Effort** : S à M.
+- **Test à la main** : `dotnet build` puis `dotnet test` passent ; l'application démarre.
+
+### S2 – Migration Client et précisions decimal
+- **Objectif** : aligner la base sur le modèle.
+- **À faire** : générer une migration (`Client.Code` unique, `ModeFacturation`, précisions decimal de `Facture`, `LigneFacture`, `BonReception`, `ParametresSociete`) ; supprimer la double configuration de `TauxTVA` ; montrer le script SQL.
+- **Garde-fou** : aucun `dotnet ef database update` sans votre accord, jamais sur une base de production. Prévoir une sauvegarde de la base de dev avant.
+- **Effort** : M.
+- **Test à la main** : après votre accord, créer un client et vérifier son code `CLI-00001`.
+
+### S3 – Clients
+- **Objectif** : un CRUD client qui enregistre vraiment.
+- **À faire** : réécrire Edit sur la base ; remplacer Delete et Details par de vraies pages ; supprimer ClientDetails et les ViewModels orphelins (avec votre accord) ; unicité de l'email et du matricule ; format du matricule fiscal tunisien ; code postal à 4 chiffres ; bornes sur remise, plafond de crédit et délai ; génération du code client sans concurrence.
+- **Effort** : M.
+- **Test à la main** : modifier un client, recharger la page, la modification reste ; supprimer un client sans commande ; refuser un doublon d'email.
+
+### S4 – Articles
+- **Objectif** : fiches article fiables et premier correctif de stock.
+- **À faire** : Details et Delete réels ; unicité de la référence et du code-barres ; filtres catégorie et rupture corrects ; corriger le signe inversé de `Articles/Edit.cshtml.cs:223` ; affichage en DT.
+- **Effort** : M.
+- **Test à la main** : ajouter une entrée de stock manuelle, la quantité augmente ; une sortie la diminue ; la fiche affiche le vrai historique.
+
+### S5 – Fournisseurs
+- **Objectif** : un seul module fournisseur.
+- **À faire** : supprimer `Pages/Supplier/` (décision 2, confirmation explicite au moment de la session) en reportant la requête allégée de son Index ; Details et Delete réels ; unicité du nom, de l'email et du matricule ; liste unique de gouvernorats ; script JS manquant ; pagination bornée.
+- **Effort** : M.
+- **Test à la main** : créer, modifier, supprimer un fournisseur ; refuser la suppression d'un fournisseur ayant des articles.
+
+### S6 – Stock (historique des mouvements)
+- **Objectif** : une seule règle pour tous les mouvements.
+- **À faire** : fixer la convention (quantité signée) ; enregistrer `StockService` dans `Program.cs` et l'utiliser partout ; type de mouvement correct à l'annulation d'un BL ; protection de concurrence sur `Article.Quantite` ; page d'historique réelle par article.
+- **Effort** : M.
+- **Test à la main** : valider puis annuler un BL, le stock revient et l'historique montre deux mouvements cohérents.
+
+### S7 – Commandes client
+- **Objectif** : commandes justes, sans toucher au stock (décision 1).
+- **À faire** : supprimer la sortie de stock à la création et à l'édition ; copier `TauxTVA` dans la ligne à sa création et renseigner `MontantLigne` ; remise globale ; corriger l'Edit (`PrixVenteHT`, conservation de `QuantiteLivree`) ; transitions de statut contrôlées ; plafond de crédit et délai pour les clients en compte ; numérotation sûre ; vraie page Delete.
+- **Effort** : M.
+- **Test à la main** : créer une commande, le stock ne bouge pas ; modifier une commande partiellement livrée sans perdre la livraison ; dépasser le plafond de crédit est signalé.
+
+### S8 – Commandes fournisseur et bons de réception
+- **Objectif** : la marchandise reçue entre en stock.
+- **À faire** : TVA par ligne issue de l'article ; prix recalculés côté serveur ; reliquat par ligne ; validation et annulation du BR avec entrée de stock ; statut de la commande mis à jour ; Details réel ; corriger l'injection de `IRetenueSourceService` ; numérotation sûre.
+- **Effort** : G.
+- **Test à la main** : créer puis valider un BR, la quantité de l'article augmente ; recevoir plus que le reliquat est refusé.
+
+### S9 – Bons de livraison
+- **Objectif** : BL complets et cohérents avec la commande.
+- **À faire** : statut de la commande après livraison (partielle ou totale) ; édition et suppression d'un brouillon ; prix et TVA figés sur la ligne du BL ; contrôle du client et de la commande au POST ; gestion d'erreurs et de concurrence sur Valider et Annuler.
+- **Effort** : M.
+- **Test à la main** : deux livraisons partielles d'une commande, puis annulation de l'une.
+
+### S10 – Facturation (après avis du comptable)
+- **Objectif** : factures conformes.
+- **Prérequis** : réponses du comptable sur FODEC, timbre, retenue à la source, numérotation et exercice. Aucune règle fiscale supposée.
+- **À faire** : une seule numérotation (`NumerotationService`) ; un BL ne donne qu'une facture non annulée (index unique filtré) ; prix du BL repris ; échéance selon `Client.DelaiPaiement` ; facture directe pour le client passager ; facture mensuelle depuis les BL du client en compte ; modification du brouillon ; facture figée après validation ; FODEC et timbre selon les règles validées.
+- **Effort** : G.
+- **Test à la main** : facturer un BL, tenter de le facturer à nouveau (refusé), générer la facture mensuelle d'un client.
+
+### S11 – Règlements puis échéanciers
+- **Objectif** : encaissements justes.
+- **À faire** : supprimer la triple déduction de la retenue à la source ; refuser un règlement sur brouillon ou facture annulée ; transaction et concurrence ; remplacer la cascade Règlement vers Facture ; échéancier et suivi des retards.
+- **Effort** : G.
+- **Test à la main** : deux règlements partiels puis solde ; un règlement supérieur au reste est refusé.
+
+### S12 – PDF et mentions légales
+- **Objectif** : facture imprimable et conforme.
+- **À faire** : lire les paramètres de la société (nom, matricule, adresse, logo) ; mentions légales validées par le comptable ; récapitulatif de TVA par taux ; FODEC ; montant en lettres ; « net à payer » correct ; archivage du PDF figé à la validation ; formats de nombres indépendants du serveur.
+- **Effort** : M.
+- **Test à la main** : comparer un PDF avec un exemple validé par le comptable.
+
+### S13 – Avoirs
+- **Objectif** : corriger une facture validée sans la modifier.
+- **À faire** : modèle, numérotation, lien avec la facture d'origine, retour de stock éventuel, impact sur le solde client, PDF.
+- **Prérequis** : règles d'avoir validées par le comptable.
+- **Effort** : G.
+
+### S14 – Sécurité
+- **Objectif** : accès contrôlé et traçable avant toute vraie donnée.
+- **À faire** : authentification, rôles, `[Authorize]` sur toutes les pages, protection des paramètres fiscaux et des PDF ; journal d'audit (qui, quand, quoi) sur validations, annulations, règlements et paramètres ; seed de paramètres factices retiré ; `Migrate()` et configuration par environnement.
+- **Effort** : G.
+
+### S15 – Import Excel
+- **Objectif** : reprendre les données existantes.
+- **À faire** : import des articles, clients et fournisseurs avec contrôle, rapport d'erreurs et mode simulation avant écriture.
+- **Effort** : G.
+
+### S16 – Reporting
+- **Objectif** : tableaux de bord utiles.
+- **À faire** : ventes, balance âgée, stock et valorisation, TVA, retenues à la source ; exports.
+- **Effort** : G.
+
+### S17 – Audit final et exploitation
+- **Objectif** : produit livrable.
+- **À faire** : audit de performance (pagination, projections, `AsNoTracking`), nettoyage du code mort et de l'encodage, `Dockerfile` et configuration, journalisation, revue de sécurité, tests de bout en bout.
+- **Rappel** : la sauvegarde SQL Server reste une tâche d'exploitation, hors développement.
+- **Effort** : M.
