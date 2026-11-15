@@ -2,6 +2,6 @@
 {
     public interface INumerotationService
     {
-        Task<string> ProchainNumeroBonLivraisonAsync();
+        Task<string> ProchainNumeroAsync(string typeDocument, DateTime date);
     }
 }

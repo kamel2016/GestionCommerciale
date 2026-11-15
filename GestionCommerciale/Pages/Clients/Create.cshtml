@@ -1,5 +1,6 @@
 ﻿@page "/clients/create"
 @model GestionCommerciale.Pages.Clients.CreateModel
+@using GestionCommerciale.Enums
 @using GestionCommerciale.Models
 @{
     ViewData["Title"] = "Nouveau client";
@@ -34,7 +35,20 @@
                 </select>
                 <span asp-validation-for="Client.TypeClient" class="clients-form-error"></span>
             </div>
+            <div class="clients-form-row">
+                <div class="clients-form-group">
+                    <label>Code client</label>
+                    <input type="text" value="Généré automatiquement" readonly disabled />
+                </div>
 
+                <div class="clients-form-group">
+                    <label asp-for="Client.ModeFacturation">Mode de facturation</label>
+                    <select asp-for="Client.ModeFacturation"
+                            asp-items="Html.GetEnumSelectList<ModeFacturation>()"
+                            class="form-select"></select>
+                    <span asp-validation-for="Client.ModeFacturation" class="clients-form-error"></span>
+                </div>
+            </div>
             <div class="clients-form-row">
                 <div class="clients-form-group">
                     <label asp-for="Client.Nom">Nom</label>

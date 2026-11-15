@@ -27,7 +27,9 @@ namespace GestionCommerciale.Data
         public DbSet<BonLivraison> BonsLivraison { get; set; }
         public DbSet<LigneBonLivraison> LignesBonLivraison { get; set; }
 
-        public DbSet<Facture> Factures { get; set; }
+        public DbSet<Devis> Devis { get; set; }
+         public DbSet<LigneDevis> LigneDevis { get; set; }
+       public DbSet<Facture> Factures { get; set; }
         public DbSet<LigneFacture> LignesFacture { get; set; }
         public DbSet<SequenceDocument> SequencesDocument { get; set; }
         public DbSet<TauxTva> TauxTva { get; set; }
@@ -43,6 +45,40 @@ namespace GestionCommerciale.Data
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+            modelBuilder.Entity<SequenceDocument>(e =>
+            {
+                e.ToTable("SequencesDocument");
+                e.Property(x => x.TypeDocument).HasMaxLength(10).IsRequired();
+                e.HasIndex(x => new { x.TypeDocument, x.Exercice }).IsUnique();
+            });
+
+            modelBuilder.Entity<Devis>(e =>
+            {
+                // Même numéro autorisé pour plusieurs versions, mais pas deux fois la même version
+                e.HasIndex(x => new { x.Numero, x.Version }).IsUnique();
+
+                e.HasOne(x => x.Client).WithMany()
+                    .HasForeignKey(x => x.ClientId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.DevisParent).WithMany()
+                    .HasForeignKey(x => x.DevisParentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.CommandeClient).WithMany()
+                    .HasForeignKey(x => x.CommandeClientId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasMany(x => x.Lignes).WithOne(l => l.Devis)
+                    .HasForeignKey(l => l.DevisId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<LigneDevis>()
+                .HasOne(l => l.Article).WithMany()
+                .HasForeignKey(l => l.ArticleId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // ── Category ─────────────────────────────────────
             modelBuilder.Entity<Category>(entity =>
@@ -142,6 +178,22 @@ namespace GestionCommerciale.Data
                 entity.Property(e => e.PlafondCredit).HasPrecision(18, 3);
                 entity.Property(e => e.RemiseDefaut).HasPrecision(5, 2);
             });
+
+            // ===== Client =====
+            modelBuilder.Entity<Client>()
+                .HasIndex(c => c.Code)
+                .IsUnique();
+
+            // ===== Commande client =====
+            modelBuilder.Entity<CommandeClient>()
+                .HasIndex(c => c.NumeroCommande)
+                .IsUnique();
+
+            modelBuilder.Entity<CommandeClient>()
+                .HasOne(c => c.Client)
+                .WithMany()
+                .HasForeignKey(c => c.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // ── Fournisseur ──────────────────────────────────
             modelBuilder.Entity<Fournisseur>(entity =>

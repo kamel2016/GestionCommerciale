@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using GestionCommerciale.Enums;
 
 namespace GestionCommerciale.Models
 {
@@ -13,6 +14,14 @@ namespace GestionCommerciale.Models
     {
         [Key]
         public int Id { get; set; }
+
+        [Required]
+        [StringLength(20)]
+        [Display(Name = "Code client")]
+        public string Code { get; set; } = string.Empty;
+
+        [Display(Name = "Mode de facturation")]
+        public ModeFacturation ModeFacturation { get; set; } = ModeFacturation.EnCompte;
 
         [Display(Name = "Type de client")]
         public TypeClient TypeClient { get; set; } = TypeClient.Particulier;

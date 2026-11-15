@@ -105,7 +105,7 @@ namespace GestionCommerciale.Pages.BonsLivraison
 
             var bl = new BonLivraison
             {
-                Numero = await _numerotation.ProchainNumeroBonLivraisonAsync(),
+                Numero = await _numerotation.ProchainNumeroAsync("BL", DateTime.Now),
                 Date = Date,
                 ClientId = ClientId,
                 CommandeClientId = CommandeClientId,
