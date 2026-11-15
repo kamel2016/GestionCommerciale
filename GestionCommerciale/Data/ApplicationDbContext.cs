@@ -191,7 +191,7 @@ namespace GestionCommerciale.Data
 
             modelBuilder.Entity<CommandeClient>()
                 .HasOne(c => c.Client)
-                .WithMany()
+                .WithMany(c => c.CommandesClient)
                 .HasForeignKey(c => c.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
 

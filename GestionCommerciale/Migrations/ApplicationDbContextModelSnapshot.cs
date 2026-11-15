@@ -378,6 +378,11 @@ namespace GestionCommerciale.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("CodePostal")
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
@@ -409,6 +414,9 @@ namespace GestionCommerciale.Migrations
                     b.Property<string>("Mobile")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("ModeFacturation")
+                        .HasColumnType("int");
 
                     b.Property<string>("Nom")
                         .IsRequired()
@@ -446,6 +454,9 @@ namespace GestionCommerciale.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Code")
+                        .IsUnique();
+
                     b.ToTable("Clients");
                 });
 
@@ -457,11 +468,10 @@ namespace GestionCommerciale.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ClientId")
+                    b.Property<int>("ClientId")
                         .HasColumnType("int");
 
                     b.Property<string>("Commentaire")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -481,6 +491,12 @@ namespace GestionCommerciale.Migrations
                         .HasPrecision(18, 3)
                         .HasColumnType("decimal(18,3)");
 
+                    b.Property<decimal>("MontantHTBrut")
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("MontantRemiseGlobale")
+                        .HasColumnType("decimal(18,3)");
+
                     b.Property<decimal>("MontantTTC")
                         .HasPrecision(18, 3)
                         .HasColumnType("decimal(18,3)");
@@ -491,14 +507,21 @@ namespace GestionCommerciale.Migrations
 
                     b.Property<string>("NumeroCommande")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int>("Statut")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("TauxRemiseGlobale")
+                        .HasColumnType("decimal(5,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId");
+
+                    b.HasIndex("NumeroCommande")
+                        .IsUnique();
 
                     b.ToTable("CommandesClient");
                 });
@@ -988,6 +1011,9 @@ namespace GestionCommerciale.Migrations
 
                     b.Property<int>("QuantiteLivree")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("TauxTVA")
+                        .HasColumnType("decimal(5,2)");
 
                     b.HasKey("Id");
 
@@ -1505,7 +1531,9 @@ namespace GestionCommerciale.Migrations
                 {
                     b.HasOne("GestionCommerciale.Models.Client", "Client")
                         .WithMany("CommandesClient")
-                        .HasForeignKey("ClientId");
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Client");
                 });

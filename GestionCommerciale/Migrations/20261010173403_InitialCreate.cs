@@ -70,11 +70,6 @@ namespace GestionCommerciale.Migrations
                     table.PrimaryKey("PK_Clients", x => x.Id);
                 });
 
-            migrationBuilder.Sql(@"
-                        UPDATE Clients
-                        SET Code = 'CLI-' + RIGHT('00000' + CAST(Id AS VARCHAR(5)), 5)
-                        WHERE Code = '' OR Code IS NULL;");
-
             migrationBuilder.CreateTable(
                 name: "Fournisseurs",
                 columns: table => new
