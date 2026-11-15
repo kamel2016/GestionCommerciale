@@ -24,13 +24,7 @@ namespace GestionCommerciale.Services
         {
             Normaliser(client);
 
-            var resultat = new ResultatClient();
-
-            foreach (var (champ, message) in ClientValidation.Valider(client))
-                resultat.Erreurs.Add((champ, message));
-
-            var unicite = await VerifierUniciteAsync(client, null, cancellationToken);
-            resultat.Erreurs.AddRange(unicite.Erreurs);
+            var resultat = await ControlerAsync(client, null, cancellationToken);
 
             if (!resultat.Succes)
                 return resultat;
@@ -60,6 +54,87 @@ namespace GestionCommerciale.Services
 
             resultat.Erreurs.Add((string.Empty,
                 "Impossible de générer un code client unique après plusieurs essais. Veuillez réessayer."));
+            return resultat;
+        }
+
+        public async Task<Client?> ObtenirAsync(int id, CancellationToken cancellationToken = default)
+            => await _context.Clients.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+        public async Task<ResultatClient> ModifierAsync(int id, Client saisie, CancellationToken cancellationToken = default)
+        {
+            var existant = await _context.Clients.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+            if (existant == null)
+            {
+                var introuvable = new ResultatClient { Introuvable = true };
+                introuvable.Erreurs.Add((string.Empty, "Client introuvable."));
+                return introuvable;
+            }
+
+            Normaliser(saisie);
+
+            var resultat = await ControlerAsync(saisie, id, cancellationToken);
+
+            // Le mode de facturation est verrouillé dès que le client a un document.
+            if (saisie.ModeFacturation != existant.ModeFacturation
+                && await ADesDocumentsAsync(id, cancellationToken))
+            {
+                resultat.Erreurs.Add((nameof(Client.ModeFacturation), MessageModeFacturationVerrouille));
+            }
+
+            if (!resultat.Succes)
+                return resultat;
+
+            // Copie champ par champ : Id, Code et DateCreation ne sont JAMAIS repris de la saisie.
+            existant.TypeClient = saisie.TypeClient;
+            existant.ModeFacturation = saisie.ModeFacturation;
+            existant.Nom = saisie.Nom;
+            existant.Prenom = saisie.TypeClient == TypeClient.Societe ? null : saisie.Prenom;
+            existant.MatriculeFiscale = saisie.MatriculeFiscale;
+            existant.Email = saisie.Email;
+            existant.Telephone = saisie.Telephone;
+            existant.Mobile = saisie.Mobile;
+            existant.Adresse = saisie.Adresse;
+            existant.Ville = saisie.Ville;
+            existant.CodePostal = saisie.CodePostal;
+            existant.Gouvernorat = saisie.Gouvernorat;
+            existant.PlafondCredit = saisie.PlafondCredit;
+            existant.DelaiPaiement = saisie.DelaiPaiement;
+            existant.RemiseDefaut = saisie.RemiseDefaut;
+            existant.EstActif = saisie.EstActif;
+            existant.SoumisRetenueSource = saisie.SoumisRetenueSource;
+            existant.TauxRetenueSource = saisie.TauxRetenueSource;
+            existant.DateModification = DateTime.Now;
+
+            await _context.SaveChangesAsync(cancellationToken);
+            return resultat;
+        }
+
+        public const string MessageModeFacturationVerrouille =
+            "Le mode de facturation ne peut plus être modifié : ce client a déjà des documents "
+            + "(commandes, devis, bons de livraison ou factures).";
+
+        public async Task<bool> ADesDocumentsAsync(int clientId, CancellationToken cancellationToken = default)
+        {
+            return await _context.CommandesClient.AsNoTracking().AnyAsync(d => d.ClientId == clientId, cancellationToken)
+                || await _context.Devis.AsNoTracking().AnyAsync(d => d.ClientId == clientId, cancellationToken)
+                || await _context.BonsLivraison.AsNoTracking().AnyAsync(d => d.ClientId == clientId, cancellationToken)
+                || await _context.Factures.AsNoTracking().AnyAsync(d => d.ClientId == clientId, cancellationToken);
+        }
+
+        /// <summary>Contrôles communs à la création et à la modification.</summary>
+        private async Task<ResultatClient> ControlerAsync(Client client, int? idExclu, CancellationToken cancellationToken)
+        {
+            var resultat = new ResultatClient();
+
+            if (string.IsNullOrEmpty(client.Nom))
+                resultat.Erreurs.Add((nameof(Client.Nom), "Le nom est obligatoire."));
+
+            foreach (var (champ, message) in ClientValidation.Valider(client))
+                resultat.Erreurs.Add((champ, message));
+
+            var unicite = await VerifierUniciteAsync(client, idExclu, cancellationToken);
+            resultat.Erreurs.AddRange(unicite.Erreurs);
+
             return resultat;
         }
 
