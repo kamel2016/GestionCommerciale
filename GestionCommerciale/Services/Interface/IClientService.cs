@@ -14,8 +14,26 @@ namespace GestionCommerciale.Services.Interface
         public List<(string Champ, string Message)> Erreurs { get; } = new();
     }
 
+    /// <summary>Résumé d'une commande, pour la fiche client.</summary>
+    public record CommandeResume(int Id, string Numero, DateTime Date, Enums.StatutCommande Statut, decimal MontantTTC);
+
+    /// <summary>Contenu de la fiche client (page Détails).</summary>
+    public class FicheClient
+    {
+        public Client Client { get; init; } = null!;
+        public int NombreCommandes { get; init; }
+        public IReadOnlyList<CommandeResume> DernieresCommandes { get; init; } = Array.Empty<CommandeResume>();
+        public bool ModeFacturationVerrouille { get; init; }
+    }
+
     public interface IClientService
     {
+        /// <summary>
+        /// Charge le client, le nombre de ses commandes et ses 5 dernières commandes.
+        /// Null si le client n'existe pas. Pas d'encours ni de solde : règles de calcul à définir plus tard.
+        /// </summary>
+        Task<FicheClient?> ObtenirFicheAsync(int id, CancellationToken cancellationToken = default);
+
         /// <summary>
         /// Nettoie (trim), valide, vérifie l'unicité, génère le code client puis enregistre.
         /// </summary>

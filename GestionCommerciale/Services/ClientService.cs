@@ -57,6 +57,32 @@ namespace GestionCommerciale.Services
             return resultat;
         }
 
+        public async Task<FicheClient?> ObtenirFicheAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var client = await ObtenirAsync(id, cancellationToken);
+            if (client == null)
+                return null;
+
+            var commandes = _context.CommandesClient.AsNoTracking().Where(c => c.ClientId == id);
+
+            int nombre = await commandes.CountAsync(cancellationToken);
+
+            var dernieres = await commandes
+                .OrderByDescending(c => c.DateCommande)
+                .ThenByDescending(c => c.Id)
+                .Take(5)
+                .Select(c => new CommandeResume(c.Id, c.NumeroCommande, c.DateCommande, c.Statut, c.MontantTTC))
+                .ToListAsync(cancellationToken);
+
+            return new FicheClient
+            {
+                Client = client,
+                NombreCommandes = nombre,
+                DernieresCommandes = dernieres,
+                ModeFacturationVerrouille = await ADesDocumentsAsync(id, cancellationToken)
+            };
+        }
+
         public async Task<Client?> ObtenirAsync(int id, CancellationToken cancellationToken = default)
             => await _context.Clients.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
