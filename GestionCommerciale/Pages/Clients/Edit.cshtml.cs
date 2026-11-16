@@ -94,7 +94,8 @@ namespace GestionCommerciale.Pages.Clients
                     return Page();
                 }
 
-                TempData["SuccessMessage"] = $"Client « {Client.NomComplet} » modifié avec succès.";
+                // Même clé TempData et même redirection que la création : la liste affiche le message en vert.
+                TempData["SuccessMessage"] = $"Client {CodeClient} modifié avec succès.";
                 return RedirectToPage("./Index");
             }
             catch (Exception ex)
