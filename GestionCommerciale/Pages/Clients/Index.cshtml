@@ -196,12 +196,10 @@
                                             <i class="fas fa-power-off"></i>
                                         </button>
                                     </form>
-                                    <form method="post" asp-page-handler="Delete" asp-route-id="@client.Id"
-                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce client ?');">
-                                        <button type="submit" class="clients-icon-btn delete" title="Supprimer">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </form>
+                                    @* La suppression passe par une page de confirmation (contrôle refait par le service). *@
+                                    <a asp-page="./Delete" asp-route-id="@client.Id" class="clients-icon-btn delete" title="Supprimer">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
                                 </div>
                             </td>
                         </tr>

@@ -7,8 +7,11 @@ namespace GestionCommerciale.Services.Interface
     {
         public bool Succes => Erreurs.Count == 0;
 
-        /// <summary>Vrai si le client demandé n'existe pas (modification).</summary>
+        /// <summary>Vrai si le client demandé n'existe pas (modification, suppression).</summary>
         public bool Introuvable { get; set; }
+
+        /// <summary>Code du client concerné (renseigné par la suppression, pour les messages).</summary>
+        public string? Code { get; set; }
 
         /// <summary>Couples (nom du champ, message). Champ vide = erreur générale.</summary>
         public List<(string Champ, string Message)> Erreurs { get; } = new();
@@ -38,6 +41,13 @@ namespace GestionCommerciale.Services.Interface
         /// Nettoie (trim), valide, vérifie l'unicité, génère le code client puis enregistre.
         /// </summary>
         Task<ResultatClient> CreerAsync(Client client, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Supprime physiquement un client, seulement s'il n'a aucune commande ni aucun document.
+        /// Le contrôle est refait ICI, au moment de la suppression, quoi que la page ait affiché avant.
+        /// En cas de refus, rien n'est supprimé et le résultat contient un message explicite.
+        /// </summary>
+        Task<ResultatClient> SupprimerAsync(int id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Vrai si le client a au moins un document : commande, devis, bon de livraison ou facture.

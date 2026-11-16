@@ -139,7 +139,66 @@ namespace GestionCommerciale.Services
             "Le mode de facturation ne peut plus être modifié : ce client a déjà des documents "
             + "(commandes, devis, bons de livraison ou factures).";
 
-        public async Task<bool> ADesDocumentsAsync(int clientId, CancellationToken cancellationToken = default)
+        public static string MessageSuppressionRefusee(string code) =>
+            $"Impossible de supprimer le client {code} : il a des documents "
+            + "(commandes, devis, bons de livraison ou factures). Vous pouvez le désactiver à la place.";
+
+        public async Task<ResultatClient> SupprimerAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var resultat = new ResultatClient();
+
+            var client = await _context.Clients.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+            if (client == null)
+            {
+                resultat.Introuvable = true;
+                resultat.Erreurs.Add((string.Empty, "Client introuvable."));
+                return resultat;
+            }
+
+            resultat.Code = client.Code;
+
+            // Contrôle refait au moment de la suppression.
+            if (await ADesDocumentsAsync(id, cancellationToken))
+            {
+                resultat.Erreurs.Add((string.Empty, MessageSuppressionRefusee(client.Code)));
+                return resultat;
+            }
+
+            try
+            {
+                _context.Clients.Remove(client);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (EstViolationCleEtrangere(ex))
+            {
+                // Un document a été créé entre le contrôle et la suppression : la base refuse, rien n'est supprimé.
+                _context.Entry(client).State = EntityState.Unchanged;
+                resultat.Erreurs.Add((string.Empty, MessageSuppressionRefusee(client.Code)));
+            }
+            // Toute autre DbUpdateException remonte telle quelle.
+
+            return resultat;
+        }
+
+        /// <summary>
+        /// Vrai seulement si l'erreur vient d'une clé étrangère
+        /// (SQL Server : erreur 547 ; SQLite des tests : FOREIGN KEY constraint failed).
+        /// </summary>
+        public static bool EstViolationCleEtrangere(DbUpdateException exception)
+        {
+            for (Exception? e = exception; e != null; e = e.InnerException)
+            {
+                if (e is SqlException sql && sql.Number == 547)
+                    return true;
+
+                if (e.GetType().Name == "SqliteException"
+                    && e.Message.Contains("FOREIGN KEY constraint failed", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
+        public virtual async Task<bool> ADesDocumentsAsync(int clientId, CancellationToken cancellationToken = default)
         {
             return await _context.CommandesClient.AsNoTracking().AnyAsync(d => d.ClientId == clientId, cancellationToken)
                 || await _context.Devis.AsNoTracking().AnyAsync(d => d.ClientId == clientId, cancellationToken)
