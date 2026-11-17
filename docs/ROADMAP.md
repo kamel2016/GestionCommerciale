@@ -92,18 +92,45 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
 
 ## Sessions de travail
 
-### S1 – Remise en état
+### S1 – Remise en état (réalisée, sauf le découpage de l'historique)
 - **Objectif** : un build vert et un dépôt propre.
-- **À faire** : ajouter `@using GestionCommerciale.Enums` dans `Pages/Clients/Create.cshtml` ; commiter l'état actuel en étapes lisibles (Devis, ModeFacturation, numérotation) ; proposer de revenir sur la modification de `InitialCreate` (avec votre accord) ; créer un projet de tests et un premier test.
-- **Effort** : S à M.
-- **Test à la main** : `dotnet build` puis `dotnet test` passent ; l'application démarre.
 
-### S2 – Migration Client et précisions decimal
+**Réalisé** (preuve entre parenthèses, vérifiée le 2026-11-17)
+- **Erreur de build corrigée** : `@using GestionCommerciale.Enums` est en ligne 3 de `Pages/Clients/Create.cshtml` (commit `5ed700a` « Build corrigé »).
+- **Projet de tests créé avec un premier test** : `GestionCommerciale.Tests` et `ClientCodeTests.cs` (commit `3819ba1`). La solution compte aujourd'hui 89 tests.
+- **SQL fautif retiré de `InitialCreate`** (5 lignes, avec votre accord) : commit `639c304`, fichier `Migrations/20261010173403_InitialCreate.cs`.
+- **État de travail commité** : oui, mais en **un seul commit** (`5ed700a`, 22 fichiers, +3013 / −52).
+- **`dotnet build` et `dotnet test` passent** : 0 erreur de compilation, 89 tests réussis (exécutés le 2026-11-17).
+- **L'application démarre** : démarrage local vérifié le 2026-11-17, pages clients répondant 200. Aucune trace dans le dépôt.
+
+**Reste à faire**
+- **Découper l'état commité en étapes lisibles** (Devis, ModeFacturation, numérotation) : **non fait**. Tout est dans `5ed700a`, qui mélange les lots. Je recommandais de ne pas réécrire l'historique ; vous ne vous êtes pas prononcé explicitement.
+
+- **Effort** : S à M.
+
+### S2 – Migration Client et précisions decimal (partielle)
 - **Objectif** : aligner la base sur le modèle.
-- **À faire** : générer une migration (`Client.Code` unique, `ModeFacturation`, précisions decimal de `Facture`, `LigneFacture`, `BonReception`, `ParametresSociete`) ; supprimer la double configuration de `TauxTVA` ; montrer le script SQL.
-- **Garde-fou** : aucun `dotnet ef database update` sans votre accord, jamais sur une base de production. Prévoir une sauvegarde de la base de dev avant.
+
+**Réalisé** (preuve entre parenthèses, vérifiée le 2026-11-17)
+- **Migration du code client et du mode de facturation** : `Migrations/20261115223951_AjoutCodeClientEtModeFacturation.cs` (+ `.Designer.cs` et snapshot), commit `639c304`. Elle ajoute `Clients.Code` (nvarchar(20)) et l'index unique `IX_Clients_Code`, remplit les codes **avant** l'index, et ajoute `Clients.ModeFacturation`.
+- **Contenu supplémentaire de la même migration** : `LignesCommandeClient.TauxTVA`, la remise globale de `CommandesClient` (`TauxRemiseGlobale`, `MontantHTBrut`, `MontantRemiseGlobale`), `NumeroCommande` en nvarchar(20) avec index unique, `ClientId` non nul, `Commentaire` nullable.
+- **Relation `CommandeClient`–`Client` corrigée** (`.WithMany(c => c.CommandesClient)` dans `Data/ApplicationDbContext.cs`), ce qui évite la colonne parasite `ClientId1` : commit `639c304`.
+- **Script SQL montré avant application** : oui, le 2026-11-15, en session. Il n'est pas conservé dans le dépôt.
+- **Garde-fou** : sauvegarde de la base de dev déclarée faite par vous avant application ; aucun `dotnet ef database update` sans votre accord explicite.
+- **Appliquée à la base de dev** : le 2026-11-15 (`dotnet ef database update` terminé sans erreur, inscription dans `__EFMigrationsHistory`). L'application lit ensuite `Clients.Code` en base : la liste affiche `CLI-00001`.
+- **Modèle et migrations alignés** : `dotnet ef migrations has-pending-model-changes` répond « No changes have been made to the model since the last migration » (2026-11-17).
+
+**Reste à faire**
+- **Précisions decimal : non faites, migration à part.** Dans le snapshot, ces colonnes sont toujours en `decimal(18,2)`, c'est-à-dire sans précision explicite :
+  - `Facture` : `TotalHt`, `TotalTva`, `TotalTtc`, `TimbreFiscal`, `MontantFodec`, `NetAPayer`, `MontantRetenueSource` ;
+  - `LigneFacture` : `PrixUnitaireHt`, `RemisePourcent`, `TauxTva` ;
+  - `ParametresSociete` : `TauxFodec`, `TauxRetenueSource` ;
+  - `BonReception` : `TauxRetenueSource` et `MontantRetenueSource`.
+  Cette liste est à confirmer, propriété par propriété, avant d'écrire la migration. Les arrondis du code sont à 3 décimales alors que ces colonnes n'en gardent que 2.
+- **Double configuration de `TauxTVA` : non supprimée.** `Infrastructure/ArticleConfiguration.cs:23` donne `HasPrecision(18, 3)` et `Data/ApplicationDbContext.cs:105` donne `HasPrecision(5, 2)`. La colonne `Articles.TauxTVA` est bien en `decimal(5,2)` (le DbContext l'emporte), mais une des deux configurations reste à retirer.
+- **Test à la main : « créer un client et vérifier son code `CLI-00001` »** : non prouvé dans l'historique. La génération du code est couverte par le test `ClientServiceTests.Les_codes_sont_generes_dans_l_ordre` (sous SQLite). Le client existant de la base de dev porte `CLI-00001` parce que la migration l'a rempli. La création d'un nouveau client sur la base de dev est à confirmer par vous.
+
 - **Effort** : M.
-- **Test à la main** : après votre accord, créer un client et vérifier son code `CLI-00001`.
 
 ### S3 – Clients (terminée le 2026-11-17, branche `s3-clients`, non fusionnée)
 - **Objectif** : un CRUD client qui enregistre vraiment.
