@@ -7,14 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Pages\Clients\Details.cshtml.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Remove="Pages\Clients\Details.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="Pages\Fournisseurs\" />
     <Folder Include="ViewModel\Suppliers\" />
   </ItemGroup>
