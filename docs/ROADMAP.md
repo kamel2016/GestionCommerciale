@@ -105,11 +105,46 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
 - **Effort** : M.
 - **Test à la main** : après votre accord, créer un client et vérifier son code `CLI-00001`.
 
-### S3 – Clients
+### S3 – Clients (terminée le 2026-11-17, branche `s3-clients`, non fusionnée)
 - **Objectif** : un CRUD client qui enregistre vraiment.
-- **À faire** : réécrire Edit sur la base ; remplacer Delete et Details par de vraies pages ; supprimer ClientDetails et les ViewModels orphelins (avec votre accord) ; unicité de l'email et du matricule ; format du matricule fiscal tunisien ; code postal à 4 chiffres ; bornes sur remise, plafond de crédit et délai ; génération du code client sans concurrence.
-- **Effort** : M.
-- **Test à la main** : modifier un client, recharger la page, la modification reste ; supprimer un client sans commande ; refuser un doublon d'email.
+- **Résultat** : `dotnet build` 0 erreur (45 avertissements, aucun nouveau) ; `dotnet test` **89 tests réussis**, sous SQLite en mémoire. Branche à 11 commits de code après `claude-audit` (la mise à jour de cette feuille de route vient en plus), rien de poussé.
+- **Décisions prises pendant la session** : matricule fiscal validé de façon souple (chiffres, lettres, `/`, 20 caractères maximum, sans contrôle de la clé) ; code postal à 4 chiffres ; unicité de l'email et du matricule contrôlée par l'application seulement, sans index en base ; nettoyage des champs par un `Trim()` complet avant validation ; mode de facturation verrouillé dès que le client a un document (commande, devis, bon de livraison ou facture) ; Edit redirige vers la liste avec le message vert ; suppression physique seulement sans aucun document.
+
+**Réalisé, étape par étape**
+
+| Étape | Contenu | Commit |
+|---|---|---|
+| 1 | Projet de tests `GestionCommerciale.Tests` (xUnit + SQLite en mémoire) | `3819ba1` |
+| 2 | `ClientValidation` : matricule, code postal, remise, plafond, délai | `b284959` |
+| 2 bis | Regex stricts (`[0-9]`, `\z`), tests chiffres arabes et retour à la ligne | `80938ec` |
+| 3 | Création via `ClientService` : validation, unicité, code `CLI-00001` en un seul endroit, 3 essais maximum, seulement sur l'index `IX_Clients_Code` | `d2ba1c4` |
+| 4 | Modification réelle (`EditModel`, `ModifierAsync`), code et date de création intouchables, verrou du mode de facturation | `9f1adc6` |
+| 5 | Fiche client réelle (`ClientDetails`, `ObtenirFicheAsync`, 5 dernières commandes) | `076eb7b` |
+| 5 bis | Edit redirige vers la liste avec « Client CLI-… modifié avec succès. » + tests de la page | `b6bf026` |
+| 6 | Suppression sûre : page de confirmation, contrôle refait dans le service, filet de la clé étrangère | `0d4b76e` |
+| 7 | Liste : liens Détails et Modifier, code affiché | `3ffd73a` |
+| 8 | Suppression des pages et ViewModels factices (`Details.*`, 6 ViewModels, exclusions du `.csproj`) | `591dac5` |
+| 8 bis | Suppression de `PaginationViewModel` (inutilisé) | `16c97f4` |
+| 9 | Compte rendu final (aucun fichier modifié) | – |
+
+La migration `AjoutCodeClientEtModeFacturation` (`639c304`, commitée avant S3) est appliquée à la base de dev.
+
+**Ce qui reste du module Clients**
+1. **Formulaire de création incomplet** : il n'a ni mobile, ni ville, ni code postal, ni retenue à la source, ni plafond de crédit, ni délai de paiement, ni remise. Ces champs ne se saisissent que dans l'Edit.
+2. **Plafond de crédit et délai de paiement non appliqués** : enregistrés, validés et affichés, mais aucune règle ne les applique aux commandes. Prévu en **S7**.
+3. **Encours et solde client** : absents, faute de règle de calcul validée.
+4. **Liste non migrée vers le service** : l'activation et la désactivation (`ToggleStatus`) écrivent toujours directement dans la base. `Index.cshtml.cs` est resté en Windows-1252 et son champ `_logger` n'est plus utilisé.
+5. **Symbole € dans les autres modules** (Articles, commandes, réceptions, fournisseurs) : à traiter dans leurs sessions.
+
+**Risques connus**
+- Tout est testé sous SQLite. Les détections propres à SQL Server n'ont jamais été exécutées : doublon de code (erreurs 2601 et 2627 sur `IX_Clients_Code`) et refus de suppression par clé étrangère (erreur 547).
+- Clients existants dont le code postal n'a pas 4 chiffres : refusés à la modification tant qu'ils ne sont pas corrigés (requête de contrôle : `SELECT Id, CodePostal FROM Clients WHERE CodePostal IS NOT NULL AND LEN(CodePostal) <> 4`).
+- Matricule fiscal très souple : à resserrer avec l'avis du comptable.
+- Le verrou du mode de facturation couvre 4 types de documents : un nouveau type de document devra être ajouté à `ADesDocumentsAsync`.
+- Encodages mixtes dans le projet (UTF-8 avec BOM, sans BOM, Windows-1252) et avertissements de fins de ligne LF/CRLF de Git.
+
+- **Effort réalisé** : M à G.
+- **Test à la main** : créer un client sans email puis avec le même email en changeant la casse (refus) ; saisir le matricule `12-34` (refus) ; modifier un client, vérifier le bandeau vert et recharger ; essayer le code postal `75001` (refus) ; sur un client qui a un document, vérifier le mode de facturation grisé avec cadenas ; supprimer un client d'essai (message vert) et essayer d'en supprimer un qui a une commande (refus sur la page) ; ouvrir la fiche d'un client avec et sans commande.
 
 ### S4 – Articles
 - **Objectif** : fiches article fiables et premier correctif de stock.
