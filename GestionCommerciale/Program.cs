@@ -30,6 +30,7 @@ builder.Services.AddScoped<IRetenueSourceService, RetenueSourceService>();
 builder.Services.AddScoped<INumerotationService, NumerotationService>();
 
 builder.Services.AddScoped<IDevisService, DevisService>();
+builder.Services.AddScoped<IClientService, ClientService>();
 
 // avant builder.Build()
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;

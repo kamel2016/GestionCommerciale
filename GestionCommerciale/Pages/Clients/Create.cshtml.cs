@@ -1,19 +1,18 @@
-﻿using GestionCommerciale.Data;
-using GestionCommerciale.Models;
+﻿using GestionCommerciale.Models;
+using GestionCommerciale.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 
 namespace GestionCommerciale.Pages.Clients
 {
     public class CreateModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IClientService _clientService;
         private readonly ILogger<CreateModel> _logger;
 
-        public CreateModel(ApplicationDbContext context, ILogger<CreateModel> logger)
+        public CreateModel(IClientService clientService, ILogger<CreateModel> logger)
         {
-            _context = context;
+            _clientService = clientService;
             _logger = logger;
         }
 
@@ -32,40 +31,16 @@ namespace GestionCommerciale.Pages.Clients
 
         public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
         {
-            // ===== Génération automatique du code client (CLI-00001, CLI-00002, ...) =====
-            // Le code n'est pas saisi dans le formulaire : on retire l'erreur "champ obligatoire"
+            // Le code est généré par le service : il ne vient pas du formulaire.
             ModelState.Remove("Client.Code");
+            // Collection de navigation : ne doit pas être validée.
+            ModelState.Remove("Client.CommandesClient");
 
-            var dernierCode = await _context.Clients
-                .Where(c => c.Code.StartsWith("CLI-"))
-                .OrderByDescending(c => c.Code)
-                .Select(c => c.Code)
-                .FirstOrDefaultAsync();
-
-            int prochainNumero = dernierCode == null
-                ? 1
-                : int.Parse(dernierCode.Substring(4)) + 1;
-
-            Client.Code = $"CLI-{prochainNumero:D5}";
-
-            // Le prénom n'a de sens que pour un particulier
+            // Le prénom n'a de sens que pour un particulier.
             if (Client.TypeClient == TypeClient.Societe)
             {
                 Client.Prenom = null;
                 ModelState.Remove("Client.Prenom");
-            }
-
-            // Collection de navigation : ne doit pas être validée
-            ModelState.Remove("Client.CommandesClient");
-            // Le code est généré automatiquement : il ne vient pas du formulaire
-            ModelState.Remove("Client.Code");
-
-            if (!string.IsNullOrWhiteSpace(Client.Email))
-            {
-                var emailExiste = await _context.Clients
-                    .AnyAsync(c => c.Email == Client.Email, cancellationToken);
-                if (emailExiste)
-                    ModelState.AddModelError("Client.Email", "Un client avec cet email existe déjà.");
             }
 
             if (!ModelState.IsValid)
@@ -73,27 +48,19 @@ namespace GestionCommerciale.Pages.Clients
 
             try
             {
-                Client.DateCreation = DateTime.Now;
-                Client.DateModification = null;
-                Client.EstActif = true;
+                var resultat = await _clientService.CreerAsync(Client, cancellationToken);
 
-                // Génération du code client : CLI-00001, CLI-00002...
-                var codes = await _context.Clients
-                    .Where(c => c.Code.StartsWith("CLI-"))
-                    .Select(c => c.Code)
-                    .ToListAsync(cancellationToken);
+                if (!resultat.Succes)
+                {
+                    foreach (var (champ, message) in resultat.Erreurs)
+                    {
+                        ModelState.AddModelError(
+                            string.IsNullOrEmpty(champ) ? string.Empty : $"Client.{champ}", message);
+                    }
+                    return Page();
+                }
 
-                var dernierNumero = codes
-                    .Select(c => int.TryParse(c.Substring(4), out var n) ? n : 0)
-                    .DefaultIfEmpty(0)
-                    .Max();
-
-                Client.Code = $"CLI-{dernierNumero + 1:D5}";
-
-                _context.Clients.Add(Client);
-                await _context.SaveChangesAsync(cancellationToken);
-
-                TempData["SuccessMessage"] = $"Client « {Client.NomComplet} » créé avec succès.";
+                TempData["SuccessMessage"] = $"Client « {Client.NomComplet} » créé avec succès (code {Client.Code}).";
                 return RedirectToPage("./Index");
             }
             catch (Exception ex)

@@ -114,26 +114,5 @@ public class IndexModel : PageModel
         return RedirectToPage("./Index", BuildRouteValues());
     }
 
-    public async Task<IActionResult> OnPostDeleteAsync(int id, CancellationToken cancellationToken)
-    {
-        var client = await _context.Clients.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
-        if (client == null) TempData["ErrorMessage"] = "Client introuvable.";
-        else
-        {
-            try
-            {
-                _context.Clients.Remove(client);
-                await _context.SaveChangesAsync(cancellationToken);
-                TempData["SuccessMessage"] = "Client supprimé avec succès.";
-            }
-            catch (DbUpdateException exception)
-            {
-                _logger.LogWarning(exception, "Suppression impossible du client {ClientId}", id);
-                TempData["ErrorMessage"] = "Suppression impossible : ce client est probablement utilisé par une commande.";
-            }
-        }
-        return RedirectToPage("./Index", BuildRouteValues());
-    }
-
     private object BuildRouteValues() => new { SearchTerm, FilterStatus, FilterType, FilterVille, SortBy, PageSize, CurrentPage = 1 };
 }

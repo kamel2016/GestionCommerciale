@@ -92,28 +92,92 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
 
 ## Sessions de travail
 
-### S1 – Remise en état
+### S1 – Remise en état (réalisée ; découpage de l'historique abandonné)
 - **Objectif** : un build vert et un dépôt propre.
-- **À faire** : ajouter `@using GestionCommerciale.Enums` dans `Pages/Clients/Create.cshtml` ; commiter l'état actuel en étapes lisibles (Devis, ModeFacturation, numérotation) ; proposer de revenir sur la modification de `InitialCreate` (avec votre accord) ; créer un projet de tests et un premier test.
+
+**Réalisé** (preuve entre parenthèses, vérifiée le 2026-11-17)
+- **Erreur de build corrigée** : `@using GestionCommerciale.Enums` est en ligne 3 de `Pages/Clients/Create.cshtml` (commit `5ed700a` « Build corrigé »).
+- **Projet de tests créé avec un premier test** : `GestionCommerciale.Tests` et `ClientCodeTests.cs` (commit `3819ba1`). La solution compte aujourd'hui 89 tests.
+- **SQL fautif retiré de `InitialCreate`** (5 lignes, avec votre accord) : commit `639c304`, fichier `Migrations/20261010173403_InitialCreate.cs`.
+- **État de travail commité** : oui, mais en **un seul commit** (`5ed700a`, 22 fichiers, +3013 / −52).
+- **`dotnet build` et `dotnet test` passent** : 0 erreur de compilation, 89 tests réussis (exécutés le 2026-11-17).
+- **L'application démarre** : démarrage local vérifié le 2026-11-17, pages clients répondant 200. Aucune trace dans le dépôt.
+
+**Reste à faire** : rien.
+
+**Abandonné**
+- **Découper l'état commité en étapes lisibles** (Devis, ModeFacturation, numérotation) : **abandonné (décision : historique conservé)**, décision du 2026-11-17. Tout reste dans le commit `5ed700a`, qui mélange les lots ; l'historique n'est pas réécrit.
+
 - **Effort** : S à M.
-- **Test à la main** : `dotnet build` puis `dotnet test` passent ; l'application démarre.
 
-### S2 – Migration Client et précisions decimal
+### S2 – Migration Client et précisions decimal (partielle)
 - **Objectif** : aligner la base sur le modèle.
-- **À faire** : générer une migration (`Client.Code` unique, `ModeFacturation`, précisions decimal de `Facture`, `LigneFacture`, `BonReception`, `ParametresSociete`) ; supprimer la double configuration de `TauxTVA` ; montrer le script SQL.
-- **Garde-fou** : aucun `dotnet ef database update` sans votre accord, jamais sur une base de production. Prévoir une sauvegarde de la base de dev avant.
-- **Effort** : M.
-- **Test à la main** : après votre accord, créer un client et vérifier son code `CLI-00001`.
 
-### S3 – Clients
-- **Objectif** : un CRUD client qui enregistre vraiment.
-- **À faire** : réécrire Edit sur la base ; remplacer Delete et Details par de vraies pages ; supprimer ClientDetails et les ViewModels orphelins (avec votre accord) ; unicité de l'email et du matricule ; format du matricule fiscal tunisien ; code postal à 4 chiffres ; bornes sur remise, plafond de crédit et délai ; génération du code client sans concurrence.
+**Réalisé** (preuve entre parenthèses, vérifiée le 2026-11-17)
+- **Migration du code client et du mode de facturation** : `Migrations/20261115223951_AjoutCodeClientEtModeFacturation.cs` (+ `.Designer.cs` et snapshot), commit `639c304`. Elle ajoute `Clients.Code` (nvarchar(20)) et l'index unique `IX_Clients_Code`, remplit les codes **avant** l'index, et ajoute `Clients.ModeFacturation`.
+- **Contenu supplémentaire de la même migration** : `LignesCommandeClient.TauxTVA`, la remise globale de `CommandesClient` (`TauxRemiseGlobale`, `MontantHTBrut`, `MontantRemiseGlobale`), `NumeroCommande` en nvarchar(20) avec index unique, `ClientId` non nul, `Commentaire` nullable.
+- **Relation `CommandeClient`–`Client` corrigée** (`.WithMany(c => c.CommandesClient)` dans `Data/ApplicationDbContext.cs`), ce qui évite la colonne parasite `ClientId1` : commit `639c304`.
+- **Script SQL montré avant application** : oui, le 2026-11-15, en session. Il n'est pas conservé dans le dépôt.
+- **Garde-fou** : sauvegarde de la base de dev déclarée faite par vous avant application ; aucun `dotnet ef database update` sans votre accord explicite.
+- **Appliquée à la base de dev** : le 2026-11-15 (`dotnet ef database update` terminé sans erreur, inscription dans `__EFMigrationsHistory`). L'application lit ensuite `Clients.Code` en base : la liste affiche `CLI-00001`.
+- **Modèle et migrations alignés** : `dotnet ef migrations has-pending-model-changes` répond « No changes have been made to the model since the last migration » (2026-11-17).
+
+**Reste à faire**
+- **Précisions decimal : non faites, migration à part, à planifier** (aucune session n'est encore fixée). Dans le snapshot, ces colonnes sont toujours en `decimal(18,2)`, c'est-à-dire sans précision explicite :
+  - `Facture` : `TotalHt`, `TotalTva`, `TotalTtc`, `TimbreFiscal`, `MontantFodec`, `NetAPayer`, `MontantRetenueSource` ;
+  - `LigneFacture` : `PrixUnitaireHt`, `RemisePourcent`, `TauxTva` ;
+  - `ParametresSociete` : `TauxFodec`, `TauxRetenueSource` ;
+  - `BonReception` : `TauxRetenueSource` et `MontantRetenueSource`.
+  Cette liste est à confirmer, propriété par propriété, avant d'écrire la migration. Les arrondis du code sont à 3 décimales alors que ces colonnes n'en gardent que 2.
+- **Double configuration de `TauxTVA` : déplacée vers S4** (décision du 2026-11-17), car elle concerne les Articles. Elle n'est pas faite ; voir S4.
+- **Test à la main : « créer un client et vérifier son code `CLI-00001` »** : non prouvé dans l'historique. La génération du code est couverte par le test `ClientServiceTests.Les_codes_sont_generes_dans_l_ordre` (sous SQLite). Le client existant de la base de dev porte `CLI-00001` parce que la migration l'a rempli. La création d'un nouveau client sur la base de dev est à confirmer par vous.
+
 - **Effort** : M.
-- **Test à la main** : modifier un client, recharger la page, la modification reste ; supprimer un client sans commande ; refuser un doublon d'email.
+
+### S3 – Clients (terminée le 2026-11-17, branche `s3-clients`, non fusionnée)
+- **Objectif** : un CRUD client qui enregistre vraiment.
+- **Résultat** : `dotnet build` 0 erreur (45 avertissements, aucun nouveau) ; `dotnet test` **89 tests réussis**, sous SQLite en mémoire. Branche à 11 commits de code après `claude-audit` (la mise à jour de cette feuille de route vient en plus), rien de poussé.
+- **Décisions prises pendant la session** : matricule fiscal validé de façon souple (chiffres, lettres, `/`, 20 caractères maximum, sans contrôle de la clé) ; code postal à 4 chiffres ; unicité de l'email et du matricule contrôlée par l'application seulement, sans index en base ; nettoyage des champs par un `Trim()` complet avant validation ; mode de facturation verrouillé dès que le client a un document (commande, devis, bon de livraison ou facture) ; Edit redirige vers la liste avec le message vert ; suppression physique seulement sans aucun document.
+
+**Réalisé, étape par étape**
+
+| Étape | Contenu | Commit |
+|---|---|---|
+| 1 | Projet de tests `GestionCommerciale.Tests` (xUnit + SQLite en mémoire) | `3819ba1` |
+| 2 | `ClientValidation` : matricule, code postal, remise, plafond, délai | `b284959` |
+| 2 bis | Regex stricts (`[0-9]`, `\z`), tests chiffres arabes et retour à la ligne | `80938ec` |
+| 3 | Création via `ClientService` : validation, unicité, code `CLI-00001` en un seul endroit, 3 essais maximum, seulement sur l'index `IX_Clients_Code` | `d2ba1c4` |
+| 4 | Modification réelle (`EditModel`, `ModifierAsync`), code et date de création intouchables, verrou du mode de facturation | `9f1adc6` |
+| 5 | Fiche client réelle (`ClientDetails`, `ObtenirFicheAsync`, 5 dernières commandes) | `076eb7b` |
+| 5 bis | Edit redirige vers la liste avec « Client CLI-… modifié avec succès. » + tests de la page | `b6bf026` |
+| 6 | Suppression sûre : page de confirmation, contrôle refait dans le service, filet de la clé étrangère | `0d4b76e` |
+| 7 | Liste : liens Détails et Modifier, code affiché | `3ffd73a` |
+| 8 | Suppression des pages et ViewModels factices (`Details.*`, 6 ViewModels, exclusions du `.csproj`) | `591dac5` |
+| 8 bis | Suppression de `PaginationViewModel` (inutilisé) | `16c97f4` |
+| 9 | Compte rendu final (aucun fichier modifié) | – |
+
+La migration `AjoutCodeClientEtModeFacturation` (`639c304`, commitée avant S3) est appliquée à la base de dev.
+
+**Ce qui reste du module Clients**
+1. **Formulaire de création incomplet** : il n'a ni mobile, ni ville, ni code postal, ni retenue à la source, ni plafond de crédit, ni délai de paiement, ni remise. Ces champs ne se saisissent que dans l'Edit.
+2. **Plafond de crédit et délai de paiement non appliqués** : enregistrés, validés et affichés, mais aucune règle ne les applique aux commandes. Prévu en **S7**.
+3. **Encours et solde client** : absents, faute de règle de calcul validée.
+4. **Liste non migrée vers le service** : l'activation et la désactivation (`ToggleStatus`) écrivent toujours directement dans la base. `Index.cshtml.cs` est resté en Windows-1252 et son champ `_logger` n'est plus utilisé.
+5. **Symbole € dans les autres modules** (Articles, commandes, réceptions, fournisseurs) : à traiter dans leurs sessions.
+
+**Risques connus**
+- Tout est testé sous SQLite. Les détections propres à SQL Server n'ont jamais été exécutées : doublon de code (erreurs 2601 et 2627 sur `IX_Clients_Code`) et refus de suppression par clé étrangère (erreur 547).
+- Clients existants dont le code postal n'a pas 4 chiffres : refusés à la modification tant qu'ils ne sont pas corrigés (requête de contrôle : `SELECT Id, CodePostal FROM Clients WHERE CodePostal IS NOT NULL AND LEN(CodePostal) <> 4`).
+- Matricule fiscal très souple : à resserrer avec l'avis du comptable.
+- Le verrou du mode de facturation couvre 4 types de documents : un nouveau type de document devra être ajouté à `ADesDocumentsAsync`.
+- Encodages mixtes dans le projet (UTF-8 avec BOM, sans BOM, Windows-1252) et avertissements de fins de ligne LF/CRLF de Git.
+
+- **Effort réalisé** : M à G.
+- **Test à la main** : créer un client sans email puis avec le même email en changeant la casse (refus) ; saisir le matricule `12-34` (refus) ; modifier un client, vérifier le bandeau vert et recharger ; essayer le code postal `75001` (refus) ; sur un client qui a un document, vérifier le mode de facturation grisé avec cadenas ; supprimer un client d'essai (message vert) et essayer d'en supprimer un qui a une commande (refus sur la page) ; ouvrir la fiche d'un client avec et sans commande.
 
 ### S4 – Articles
 - **Objectif** : fiches article fiables et premier correctif de stock.
-- **À faire** : Details et Delete réels ; unicité de la référence et du code-barres ; filtres catégorie et rupture corrects ; corriger le signe inversé de `Articles/Edit.cshtml.cs:223` ; affichage en DT.
+- **À faire** : Details et Delete réels ; unicité de la référence et du code-barres ; filtres catégorie et rupture corrects ; corriger le signe inversé de `Articles/Edit.cshtml.cs:223` ; affichage en DT ; **supprimer la double configuration de `TauxTVA`** (déplacée depuis S2) : `Infrastructure/ArticleConfiguration.cs:23` donne `HasPrecision(18, 3)` et `Data/ApplicationDbContext.cs:105` donne `HasPrecision(5, 2)` ; la colonne `Articles.TauxTVA` est déjà en `decimal(5,2)` dans le snapshot (le DbContext l'emporte), donc il reste à retirer une des deux configurations (probablement celle de `ArticleConfiguration`) et à vérifier avec `dotnet ef migrations has-pending-model-changes` qu'aucune migration n'est nécessaire.
 - **Effort** : M.
 - **Test à la main** : ajouter une entrée de stock manuelle, la quantité augmente ; une sortie la diminue ; la fiche affiche le vrai historique.
 

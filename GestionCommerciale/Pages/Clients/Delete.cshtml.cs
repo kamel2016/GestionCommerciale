@@ -1,82 +1,80 @@
-using GestionCommerciale.Models;
+using GestionCommerciale.Services;
+using GestionCommerciale.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 
 namespace GestionCommerciale.Pages.Clients
 {
+    /// <summary>Page de confirmation avant la suppression d'un client.</summary>
     public class DeleteModel : PageModel
     {
-        //private readonly ApplicationDbContext _context;
+        private readonly IClientService _clientService;
+        private readonly ILogger<DeleteModel> _logger;
 
-        //public DeleteModel(ApplicationDbContext context)
-        //{
-        //    _context = context;
-        //}
-
-        public DeleteModel()
+        public DeleteModel(IClientService clientService, ILogger<DeleteModel> logger)
         {
-            
+            _clientService = clientService;
+            _logger = logger;
         }
 
-        [BindProperty]
-        public Client Client { get; set; } = default!;
+        [BindProperty(SupportsGet = true)]
+        public int Id { get; set; }
 
-        public async Task<IActionResult> OnGetAsync(int? id)
+        public FicheClient Fiche { get; private set; } = null!;
+
+        /// <summary>Indication affichée seulement : le vrai contrôle est refait par le service à la suppression.</summary>
+        public bool SuppressionImpossible { get; private set; }
+
+        public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-
-            Client = new Client
-            {
-                Id = 6,
-                Nom = "Petit",
-                Prenom = "Antoine",
-                Email = "antoine.petit@example.com",
-                Telephone = "0644556677",
-                Adresse = "17 Rue Sainte-Catherine, 33000 Bordeaux",
-                DateCreation = DateTime.Now.AddDays(-5)
-            };
-
-            //Client = await _context.Clients
-            //    .Include(c => c.CommandesClient)
-            //    .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (Client == null)
-            {
-                return NotFound();
-            }
-
-            return Page();
+            return await ChargerAsync(cancellationToken) ?? Page();
         }
 
-        public async Task<IActionResult> OnPostAsync(int? id)
+        public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
         {
-            if (id == null)
+            try
             {
-                return NotFound();
+                var resultat = await _clientService.SupprimerAsync(Id, cancellationToken);
+
+                if (resultat.Introuvable)
+                {
+                    TempData["ErrorMessage"] = "Client introuvable.";
+                    return RedirectToPage("./Index");
+                }
+
+                if (!resultat.Succes)
+                {
+                    // Refus : on reste sur la page, avec le message explicite. Rien n'a été supprimé.
+                    foreach (var (_, message) in resultat.Erreurs)
+                        ModelState.AddModelError(string.Empty, message);
+
+                    return await ChargerAsync(cancellationToken) ?? Page();
+                }
+
+                TempData["SuccessMessage"] = $"Client {resultat.Code} supprimé.";
+                return RedirectToPage("./Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la suppression du client {ClientId}", Id);
+                ModelState.AddModelError(string.Empty, "Une erreur est survenue lors de la suppression.");
+                return await ChargerAsync(cancellationToken) ?? Page();
+            }
+        }
+
+        /// <summary>Charge la fiche à afficher. Renvoie une redirection si le client n'existe pas, sinon null.</summary>
+        private async Task<IActionResult?> ChargerAsync(CancellationToken cancellationToken)
+        {
+            var fiche = await _clientService.ObtenirFicheAsync(Id, cancellationToken);
+            if (fiche == null)
+            {
+                TempData["ErrorMessage"] = "Client introuvable.";
+                return RedirectToPage("./Index");
             }
 
-            //Client = await _context.Clients
-            //    .Include(c => c.CommandesClient)
-            //    .FirstOrDefaultAsync(m => m.Id == id);
-
-            //if (Client != null)
-            //{
-            //    if (Client.CommandesClient.Any())
-            //    {
-            //        ModelState.AddModelError("", "Impossible de supprimer un client qui a des commandes.");
-            //        return Page();
-            //    }
-
-            //    //_context.Clients.Remove(Client);
-            //    //await _context.SaveChangesAsync();
-            //}
-
-            return RedirectToPage("./Index");
+            Fiche = fiche;
+            SuppressionImpossible = await _clientService.ADesDocumentsAsync(Id, cancellationToken);
+            return null;
         }
     }
 }

@@ -1,49 +1,73 @@
 ﻿@page "{id:int}"
 @model GestionCommerciale.Pages.Clients.DeleteModel
-
+@using GestionCommerciale.Models
+@using GestionCommerciale.Services
 @{
+    var c = Model.Fiche.Client;
     ViewData["Title"] = "Supprimer le client";
 }
 
-<h1>Supprimer le client</h1>
+<link href="~/css/client-form.css" rel="stylesheet" asp-append-version="true" />
 
-<h3>Êtes-vous sûr de vouloir supprimer ce client ?</h3>
-<div>
-    
-    <hr />
-  
-    <div class="container fade-in">
-        <div class="details-container">
-            <div class="details-row">
-                <div class="details-label">@Html.DisplayNameFor(model => model.Client.Nom)</div>
-                <div class="details-value">@Html.DisplayFor(model => model.Client.Nom)</div>
-            </div>
-
-            <div class="details-row">
-                <div class="details-label">@Html.DisplayNameFor(model => model.Client.Prenom)</div>
-                <div class="details-value">@Html.DisplayFor(model => model.Client.Prenom)</div>
-            </div>
-
-            <div class="details-row">
-                <div class="details-label">@Html.DisplayNameFor(model => model.Client.Email)</div>
-                <div class="details-value">@Html.DisplayFor(model => model.Client.Email)</div>
-            </div>
-
-            <div class="details-row">
-                <div class="details-label">@Html.DisplayNameFor(model => model.Client.Telephone)</div>
-                <div class="details-value">@Html.DisplayFor(model => model.Client.Telephone)</div>
-            </div>
-
-            <div class="details-row">
-                <div class="details-label">@Html.DisplayNameFor(model => model.Client.Adresse)</div>
-                <div class="details-value">@Html.DisplayFor(model => model.Client.Adresse)</div>
-            </div>
-        </div>
+<div class="clients-form-container">
+    <div class="clients-form-header">
+        <h1 class="clients-form-title">
+            <i class="fas fa-trash-alt"></i> Supprimer le client
+        </h1>
     </div>
 
-    <form method="post">
-        <input type="hidden" asp-for="Client.Id" />
-        <input type="submit" value="Supprimer" class="btn btn-danger" /> |
-        <a asp-page="./Index">Retour à la liste</a>
+    <form method="post" class="clients-form">
+        <div asp-validation-summary="ModelOnly" class="clients-alert danger"></div>
+
+        <div class="clients-form-divider">
+            <h3><i class="fas fa-user"></i> @c.NomComplet</h3>
+            <div class="clients-form-row">
+                <div class="clients-form-group">
+                    <label>Code client</label>
+                    <input type="text" value="@c.Code" readonly disabled />
+                </div>
+                <div class="clients-form-group">
+                    <label>Type</label>
+                    <input type="text" value="@(c.TypeClient == TypeClient.Societe ? "Société" : "Particulier")" readonly disabled />
+                </div>
+                <div class="clients-form-group">
+                    <label>Commandes</label>
+                    <input type="text" value="@Model.Fiche.NombreCommandes" readonly disabled />
+                </div>
+            </div>
+        </div>
+
+        @if (Model.SuppressionImpossible)
+        {
+            <div class="clients-alert danger">
+                <i class="fas fa-exclamation-circle"></i>
+                @ClientService.MessageSuppressionRefusee(c.Code)
+            </div>
+
+            <div class="clients-form-actions">
+                <a asp-page="./Edit" asp-route-id="@c.Id" class="clients-btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-edit"></i> Modifier le client
+                </a>
+                <a href="/clients" class="clients-btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="clients-alert danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                Voulez-vous vraiment supprimer le client @c.Code (@c.NomComplet) ? Cette action est définitive.
+            </div>
+
+            <div class="clients-form-actions">
+                <button type="submit" class="clients-btn-primary">
+                    <i class="fas fa-trash-alt"></i> Supprimer définitivement
+                </button>
+                <a href="/clients" class="clients-btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
+        }
     </form>
 </div>

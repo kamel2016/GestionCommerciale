@@ -293,6 +293,32 @@
     cursor: pointer;
 }
 
+/* Les actions Détails / Modifier / Supprimer sont des liens : même apparence que les boutons. */
+a.clients-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+    .clients-icon-btn.view {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .clients-icon-btn.edit {
+        background: #fff8e1;
+        color: #f57c00;
+    }
+
+.clients-name-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+    .clients-name-link:hover {
+        text-decoration: underline;
+    }
+
     .clients-icon-btn.toggle {
         background: #e3f2fd;
         color: #1976d2;
