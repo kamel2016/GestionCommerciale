@@ -92,7 +92,7 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
 
 ## Sessions de travail
 
-### S1 – Remise en état (réalisée, sauf le découpage de l'historique)
+### S1 – Remise en état (réalisée ; découpage de l'historique abandonné)
 - **Objectif** : un build vert et un dépôt propre.
 
 **Réalisé** (preuve entre parenthèses, vérifiée le 2026-11-17)
@@ -103,8 +103,10 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
 - **`dotnet build` et `dotnet test` passent** : 0 erreur de compilation, 89 tests réussis (exécutés le 2026-11-17).
 - **L'application démarre** : démarrage local vérifié le 2026-11-17, pages clients répondant 200. Aucune trace dans le dépôt.
 
-**Reste à faire**
-- **Découper l'état commité en étapes lisibles** (Devis, ModeFacturation, numérotation) : **non fait**. Tout est dans `5ed700a`, qui mélange les lots. Je recommandais de ne pas réécrire l'historique ; vous ne vous êtes pas prononcé explicitement.
+**Reste à faire** : rien.
+
+**Abandonné**
+- **Découper l'état commité en étapes lisibles** (Devis, ModeFacturation, numérotation) : **abandonné (décision : historique conservé)**, décision du 2026-11-17. Tout reste dans le commit `5ed700a`, qui mélange les lots ; l'historique n'est pas réécrit.
 
 - **Effort** : S à M.
 
@@ -121,13 +123,13 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
 - **Modèle et migrations alignés** : `dotnet ef migrations has-pending-model-changes` répond « No changes have been made to the model since the last migration » (2026-11-17).
 
 **Reste à faire**
-- **Précisions decimal : non faites, migration à part.** Dans le snapshot, ces colonnes sont toujours en `decimal(18,2)`, c'est-à-dire sans précision explicite :
+- **Précisions decimal : non faites, migration à part, à planifier** (aucune session n'est encore fixée). Dans le snapshot, ces colonnes sont toujours en `decimal(18,2)`, c'est-à-dire sans précision explicite :
   - `Facture` : `TotalHt`, `TotalTva`, `TotalTtc`, `TimbreFiscal`, `MontantFodec`, `NetAPayer`, `MontantRetenueSource` ;
   - `LigneFacture` : `PrixUnitaireHt`, `RemisePourcent`, `TauxTva` ;
   - `ParametresSociete` : `TauxFodec`, `TauxRetenueSource` ;
   - `BonReception` : `TauxRetenueSource` et `MontantRetenueSource`.
   Cette liste est à confirmer, propriété par propriété, avant d'écrire la migration. Les arrondis du code sont à 3 décimales alors que ces colonnes n'en gardent que 2.
-- **Double configuration de `TauxTVA` : non supprimée.** `Infrastructure/ArticleConfiguration.cs:23` donne `HasPrecision(18, 3)` et `Data/ApplicationDbContext.cs:105` donne `HasPrecision(5, 2)`. La colonne `Articles.TauxTVA` est bien en `decimal(5,2)` (le DbContext l'emporte), mais une des deux configurations reste à retirer.
+- **Double configuration de `TauxTVA` : déplacée vers S4** (décision du 2026-11-17), car elle concerne les Articles. Elle n'est pas faite ; voir S4.
 - **Test à la main : « créer un client et vérifier son code `CLI-00001` »** : non prouvé dans l'historique. La génération du code est couverte par le test `ClientServiceTests.Les_codes_sont_generes_dans_l_ordre` (sous SQLite). Le client existant de la base de dev porte `CLI-00001` parce que la migration l'a rempli. La création d'un nouveau client sur la base de dev est à confirmer par vous.
 
 - **Effort** : M.
@@ -175,7 +177,7 @@ La migration `AjoutCodeClientEtModeFacturation` (`639c304`, commitée avant S3) 
 
 ### S4 – Articles
 - **Objectif** : fiches article fiables et premier correctif de stock.
-- **À faire** : Details et Delete réels ; unicité de la référence et du code-barres ; filtres catégorie et rupture corrects ; corriger le signe inversé de `Articles/Edit.cshtml.cs:223` ; affichage en DT.
+- **À faire** : Details et Delete réels ; unicité de la référence et du code-barres ; filtres catégorie et rupture corrects ; corriger le signe inversé de `Articles/Edit.cshtml.cs:223` ; affichage en DT ; **supprimer la double configuration de `TauxTVA`** (déplacée depuis S2) : `Infrastructure/ArticleConfiguration.cs:23` donne `HasPrecision(18, 3)` et `Data/ApplicationDbContext.cs:105` donne `HasPrecision(5, 2)` ; la colonne `Articles.TauxTVA` est déjà en `decimal(5,2)` dans le snapshot (le DbContext l'emporte), donc il reste à retirer une des deux configurations (probablement celle de `ArticleConfiguration`) et à vérifier avec `dotnet ef migrations has-pending-model-changes` qu'aucune migration n'est nécessaire.
 - **Effort** : M.
 - **Test à la main** : ajouter une entrée de stock manuelle, la quantité augmente ; une sortie la diminue ; la fiche affiche le vrai historique.
 
