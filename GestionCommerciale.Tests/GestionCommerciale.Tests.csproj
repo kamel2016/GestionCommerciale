@@ -22,6 +22,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Copie les vues des articles à côté des tests : ArticleVuesErreursTests vérifie que chaque champ validé a un emplacement d'erreur. -->
+    <None Include="..\GestionCommerciale\Pages\Articles\*.cshtml" Link="Pages\Articles\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Nécessaire pour tester les pages Razor (PageModel, TempData, résultats de redirection). -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
