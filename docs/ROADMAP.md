@@ -181,6 +181,9 @@ La migration `AjoutCodeClientEtModeFacturation` (`639c304`, commitée avant S3) 
 - **Effort** : M.
 - **Test à la main** : ajouter une entrée de stock manuelle, la quantité augmente ; un retour fournisseur ou un ajustement négatif la diminue ; la fiche affiche le vrai historique.
 - **Limite connue (étape 2, mouvements manuels)** : les erreurs de saisie de la fenêtre « Nouveau mouvement de stock » (motif manquant, stock insuffisant, quantité nulle…) ne sont pas affichées dans la fenêtre elle-même : elles passent par le message d'erreur en haut de la page Edit, après rechargement. À améliorer plus tard (affichage dans la fenêtre).
+- **Suppression sûre d'un article (étape 5)** : un article n'est supprimable que s'il n'apparaît dans aucune des 8 tables qui le référencent (`MouvementsStock`, `LignesBonLivraison`, `LignesFacture`, `LignesBonReception`, `LignesCommandeFournisseur`, `LignesCommandeClient`, `LigneDevis`, `ArticleFournisseurs`) **et** si son stock est à 0 (message : « Stock non nul (N unités) : ajustez le stock à 0 ou désactivez l'article »). Le contrôle est dans `ArticleService.SupprimerAsync`, refait à la suppression ; Index, Edit et la page Delete passent par lui.
+- **Limite de test (étape 5)** : les tests de suppression tournent sur SQLite avec les clés étrangères désactivées (`Foreign Keys=False`) pour créer une ligne qui référence l'article sans fabriquer tout le document parent. Le contrôle applicatif est donc validé, mais le repli sur une violation de clé étrangère de SQL Server (ligne créée entre le contrôle et la suppression) n'est pas testé.
+- **Dette (étape 5)** : `ArticleService` réutilise `ClientService.EstViolationCleEtrangere` ; à déplacer dans un helper commun (par ex. `Helpers/`) lors d'une session qui touche aussi le module Clients.
 
 ### S5 – Fournisseurs
 - **Objectif** : un seul module fournisseur.

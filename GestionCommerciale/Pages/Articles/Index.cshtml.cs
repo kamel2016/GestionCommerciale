@@ -1,6 +1,7 @@
-using GestionCommerciale.Data;
+ï»¿using GestionCommerciale.Data;
 using GestionCommerciale.Infrastructure.Persistence;
 using GestionCommerciale.Models;
+using GestionCommerciale.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -8,9 +9,10 @@ using System;
 
 namespace GestionCommerciale.Pages.Articles;
 
-public sealed class IndexModel(ApplicationDbContext db, ILogger<IndexModel> logger) : PageModel
+public sealed class IndexModel(ApplicationDbContext db, IArticleService articleService, ILogger<IndexModel> logger) : PageModel
 {
     private readonly ApplicationDbContext _db = db;
+    private readonly IArticleService _articleService = articleService;
     private readonly ILogger<IndexModel> _logger = logger;
 
     [BindProperty(SupportsGet = true)] public string? SearchTerm { get; set; }
@@ -22,7 +24,7 @@ public sealed class IndexModel(ApplicationDbContext db, ILogger<IndexModel> logg
     [BindProperty(SupportsGet = true)] public int PageSize { get; set; } = 25;
 
     public List<ArticleListDto> Articles { get; private set; } = new();
-    // Conservé pour le contrat de la vue. Remplacer par une requête Categories lorsque l'entité est disponible.
+    // ConservÃ© pour le contrat de la vue. Remplacer par une requÃªte Categories lorsque l'entitÃ© est disponible.
     public List<string> Categories { get; private set; } = new() { "Informatique", "Bureautique", "Fournitures", "Mobilier", "Outils", "Services" };
     public int CurrentPage { get; private set; }
     public int TotalPages { get; private set; }
@@ -92,9 +94,11 @@ public sealed class IndexModel(ApplicationDbContext db, ILogger<IndexModel> logg
     {
         try
         {
-            var article = await _db.Articles.FindAsync(new object?[] { articleId }, cancellationToken);
-            if (article is null) TempData["ErrorMessage"] = "Article introuvable.";
-            else { _db.Articles.Remove(article); await _db.SaveChangesAsync(cancellationToken); TempData["SuccessMessage"] = "L'article a été supprimé avec succès."; }
+            // Le contrÃ´le (article utilisÃ© ou non) est fait par le service, au moment de la suppression.
+            var resultat = await _articleService.SupprimerAsync(articleId, cancellationToken);
+            if (resultat.Introuvable) TempData["ErrorMessage"] = "Article introuvable.";
+            else if (!resultat.Succes) TempData["ErrorMessage"] = resultat.Erreurs[0].Message;
+            else TempData["SuccessMessage"] = $"Article {resultat.Reference} supprimÃ©.";
         }
         catch (Exception ex) { _logger.LogError(ex, "Erreur lors de la suppression de l'article {ArticleId}", articleId); TempData["ErrorMessage"] = "Erreur lors de la suppression de l'article."; }
         return RedirectToPage("./Index");

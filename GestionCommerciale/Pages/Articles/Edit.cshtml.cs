@@ -1,6 +1,7 @@
 ﻿using GestionCommerciale.Data;
 using GestionCommerciale.Enums;
 using GestionCommerciale.Models;
+using GestionCommerciale.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -13,12 +14,14 @@ public class EditModel : PageModel
 {
     private readonly ApplicationDbContext _context;
     private readonly IStockService _stock;
+    private readonly IArticleService _articleService;
     private readonly ILogger<EditModel> _logger;
 
-    public EditModel(ApplicationDbContext context, IStockService stock, ILogger<EditModel> logger)
+    public EditModel(ApplicationDbContext context, IStockService stock, IArticleService articleService, ILogger<EditModel> logger)
     {
         _context = context;
         _stock = stock;
+        _articleService = articleService;
         _logger = logger;
     }
 
@@ -129,20 +132,26 @@ public class EditModel : PageModel
     // ---------------- Suppression ----------------
     public async Task<IActionResult> OnPostDeleteAsync()
     {
-        var db = await _context.Articles.FindAsync(Article.ID);
-        if (db == null) return NotFound();
-
         try
         {
-            _context.Articles.Remove(db);
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Article supprimé.";
+            // Le contrôle (article utilisé ou non) est fait par le service, au moment de la suppression.
+            var resultat = await _articleService.SupprimerAsync(Article.ID);
+
+            if (resultat.Introuvable) return NotFound();
+
+            if (!resultat.Succes)
+            {
+                TempData["ErrorMessage"] = resultat.Erreurs[0].Message;
+                return RedirectToPage("./Edit", new { id = Article.ID });
+            }
+
+            TempData["SuccessMessage"] = $"Article {resultat.Reference} supprimé.";
             return RedirectToPage("./Index");
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Suppression impossible article {Id}", Article.ID);
-            TempData["ErrorMessage"] = "Suppression impossible : l'article est utilisé ailleurs.";
+            TempData["ErrorMessage"] = "Suppression impossible : une erreur est survenue lors de l'enregistrement.";
             return RedirectToPage("./Edit", new { id = Article.ID });
         }
     }
@@ -269,4 +278,4 @@ public class EditModel : PageModel
             .Take(50)
             .ToListAsync();
     }
-}
+}

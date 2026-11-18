@@ -1,47 +1,92 @@
+Ôªøusing GestionCommerciale.Models;
+using GestionCommerciale.Services;
+using GestionCommerciale.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using GestionCommerciale.Models;
+using Microsoft.EntityFrameworkCore;
+using GestionCommerciale.Data;
 
 namespace GestionCommerciale.Pages.Articles
 {
+    /// <summary>Page de confirmation avant la suppression d'un article. Le vrai contr√¥le est refait par le service.</summary>
     public class DeleteModel : PageModel
     {
-        [BindProperty]
-        public Article Article { get; set; } = new Article();
+        private readonly ApplicationDbContext _context;
+        private readonly IArticleService _articleService;
+        private readonly ILogger<DeleteModel> _logger;
 
-        public IActionResult OnGet(int id)
+        public DeleteModel(ApplicationDbContext context, IArticleService articleService, ILogger<DeleteModel> logger)
         {
-            // DonnÈes d'exemple - en production, vous utiliseriez une base de donnÈes
-            var articles = GetArticles();
-            Article = articles.FirstOrDefault(a => a.ID == id);
+            _context = context;
+            _articleService = articleService;
+            _logger = logger;
+        }
 
-            if (Article == null)
+        [BindProperty(SupportsGet = true)]
+        public int Id { get; set; }
+
+        public Article Article { get; private set; } = null!;
+
+        public UtilisationArticle Utilisation { get; private set; } = new();
+
+        /// <summary>Indication affich√©e seulement : le vrai contr√¥le est refait par le service √† la suppression.</summary>
+        public bool SuppressionImpossible => Utilisation.SuppressionImpossible;
+
+        /// <summary>Message de refus √† afficher (vide si l'article est supprimable).</summary>
+        public string MessageRefus => SuppressionImpossible
+            ? ArticleService.MessageSuppressionRefusee(Article.Reference, Utilisation)
+            : string.Empty;
+
+        public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
+        {
+            return await ChargerAsync(cancellationToken) ?? Page();
+        }
+
+        public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
+        {
+            try
             {
-                return NotFound();
+                var resultat = await _articleService.SupprimerAsync(Id, cancellationToken);
+
+                if (resultat.Introuvable)
+                {
+                    TempData["ErrorMessage"] = "Article introuvable.";
+                    return RedirectToPage("./Index");
+                }
+
+                if (!resultat.Succes)
+                {
+                    // Refus : on reste sur la page, avec le message explicite. Rien n'a √©t√© supprim√©.
+                    foreach (var (_, message) in resultat.Erreurs)
+                        ModelState.AddModelError(string.Empty, message);
+
+                    return await ChargerAsync(cancellationToken) ?? Page();
+                }
+
+                TempData["SuccessMessage"] = $"Article {resultat.Reference} supprim√©.";
+                return RedirectToPage("./Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la suppression de l'article {ArticleId}", Id);
+                ModelState.AddModelError(string.Empty, "Une erreur est survenue lors de la suppression.");
+                return await ChargerAsync(cancellationToken) ?? Page();
+            }
+        }
+
+        /// <summary>Charge l'article √† afficher. Renvoie une redirection s'il n'existe pas, sinon null.</summary>
+        private async Task<IActionResult?> ChargerAsync(CancellationToken cancellationToken)
+        {
+            var article = await _context.Articles.AsNoTracking().FirstOrDefaultAsync(a => a.ID == Id, cancellationToken);
+            if (article == null)
+            {
+                TempData["ErrorMessage"] = "Article introuvable.";
+                return RedirectToPage("./Index");
             }
 
-            return Page();
-        }
-
-        public IActionResult OnPost(int id)
-        {
-            // Ici vous feriez la suppression en base de donnÈes
-            // Pour l'exemple, on simule juste une suppression rÈussie
-
-            // Redirection vers la liste aprËs suppression
-            return RedirectToPage("./Index");
-        }
-
-        private List<Article> GetArticles()
-        {
-            return new List<Article>
-            {
-                new Article { ID = 1, Reference = "ART001", Libelle = "Ordinateur portable", CodeBarre = "123456789", Quantite = 10, PrixVenteHT = 800.00m, PrixVenteTTC = 960.00m },
-                new Article { ID = 2, Reference = "ART002", Libelle = "Souris sans fil", CodeBarre = "987654321", Quantite = 25, PrixVenteHT = 25.00m, PrixVenteTTC = 30.00m },
-                new Article { ID = 3, Reference = "ART003", Libelle = "Clavier mÈcanique", CodeBarre = "456789123", Quantite = 15, PrixVenteHT = 120.00m, PrixVenteTTC = 144.00m },
-                new Article { ID = 4, Reference = "ART004", Libelle = "…cran 24 pouces", CodeBarre = "789123456", Quantite = 8, PrixVenteHT = 200.00m, PrixVenteTTC = 240.00m },
-                new Article { ID = 5, Reference = "ART005", Libelle = "Imprimante laser", CodeBarre = "321654987", Quantite = 5, PrixVenteHT = 300.00m, PrixVenteTTC = 360.00m }
-            };
+            Article = article;
+            Utilisation = await _articleService.ObtenirUtilisationAsync(Id, cancellationToken);
+            return null;
         }
     }
 }

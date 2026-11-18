@@ -1,5 +1,6 @@
 using GestionCommerciale.Data;
 using GestionCommerciale.Models;
+using GestionCommerciale.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -62,7 +63,7 @@ public class ArticleStockPageTests : IDisposable
         var httpContext = new DefaultHttpContext();
         var actionContext = new ActionContext(httpContext, new RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
 
-        return new EditArticleModel(_db, new StockService(_db), NullLogger<EditArticleModel>.Instance)
+        return new EditArticleModel(_db, new StockService(_db), new ArticleService(_db), NullLogger<EditArticleModel>.Instance)
         {
             PageContext = new PageContext(actionContext),
             TempData = new TempDataDictionary(httpContext, new FauxTempData()),

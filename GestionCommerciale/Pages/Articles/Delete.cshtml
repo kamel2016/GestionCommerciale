@@ -6,48 +6,66 @@
 
 <h1>Supprimer l'article</h1>
 
-<h3>Êtes-vous sûr de vouloir supprimer cet article ?</h3>
 <div>
-    
     <hr />
-  
+
     <div class="container fade-in">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
         <div class="details-container">
             <div class="details-row">
                 <div class="details-label">@Html.DisplayNameFor(model => model.Article.Reference)</div>
-                <div class="details-value">@Html.DisplayFor(model => model.Article.Reference)</div>
+                <div class="details-value">@Model.Article.Reference</div>
             </div>
 
             <div class="details-row">
                 <div class="details-label">@Html.DisplayNameFor(model => model.Article.Libelle)</div>
-                <div class="details-value">@Html.DisplayFor(model => model.Article.Libelle)</div>
+                <div class="details-value">@Model.Article.Libelle</div>
             </div>
 
             <div class="details-row">
                 <div class="details-label">@Html.DisplayNameFor(model => model.Article.CodeBarre)</div>
-                <div class="details-value">@Html.DisplayFor(model => model.Article.CodeBarre)</div>
+                <div class="details-value">@Model.Article.CodeBarre</div>
             </div>
 
             <div class="details-row">
                 <div class="details-label">@Html.DisplayNameFor(model => model.Article.Quantite)</div>
-                <div class="details-value">@Html.DisplayFor(model => model.Article.Quantite)</div>
+                <div class="details-value">@Model.Article.Quantite</div>
             </div>
 
             <div class="details-row">
                 <div class="details-label">@Html.DisplayNameFor(model => model.Article.PrixVenteHT)</div>
-                <div class="details-value">@Html.DisplayFor(model => model.Article.PrixVenteHT) €</div>
+                <div class="details-value">@Model.Article.PrixVenteHT.ToString("N3") DT</div>
             </div>
 
             <div class="details-row">
                 <div class="details-label">@Html.DisplayNameFor(model => model.Article.PrixVenteTTC)</div>
-                <div class="details-value">@Html.DisplayFor(model => model.Article.PrixVenteTTC) €</div>
+                <div class="details-value">@Model.Article.PrixVenteTTC.ToString("N3") DT</div>
             </div>
         </div>
     </div>
 
-    <form method="post">
-        <input type="hidden" asp-for="Article.ID" />
-        <input type="submit" value="Supprimer" class="btn btn-danger" /> |
+    @if (Model.SuppressionImpossible)
+    {
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            @Model.MessageRefus
+        </div>
+
+        <a asp-page="./Edit" asp-route-id="@Model.Article.ID" class="btn btn-primary">Modifier l'article</a>
+        <span>|</span>
         <a asp-page="./Index">Retour à la liste</a>
-    </form>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            Voulez-vous vraiment supprimer l'article @Model.Article.Reference (@Model.Article.Libelle) ? Cette action est définitive.
+        </div>
+
+        <form method="post">
+            <input type="submit" value="Supprimer définitivement" class="btn btn-danger" /> |
+            <a asp-page="./Index">Annuler</a>
+        </form>
+    }
 </div>
