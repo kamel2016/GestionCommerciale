@@ -204,15 +204,20 @@ namespace GestionCommerciale.Services
         }
 
         /// <summary>
-        /// Course : un doublon de référence (index unique) ou une catégorie supprimée (clé étrangère) survenu entre nos
-        /// contrôles et l'enregistrement. Ajoute l'erreur au résultat et renvoie vrai ; toute autre erreur de base remonte telle quelle.
+        /// Course : un doublon (index unique de la référence ou du code-barres) ou une catégorie supprimée (clé étrangère)
+        /// survenu entre nos contrôles et l'enregistrement. Ajoute l'erreur au résultat, sur le BON champ, et renvoie vrai ;
+        /// toute autre erreur de base remonte telle quelle.
         /// </summary>
         private static bool TraduireErreurDeBase(DbUpdateException exception, ResultatArticle resultat)
         {
-            if (EstViolationIndexReference(exception))
+            switch (ChampEnViolationIndexUnique(exception))
             {
-                resultat.Erreurs.Add((nameof(Article.Reference), "Cette référence existe déjà."));
-                return true;
+                case nameof(Article.Reference):
+                    resultat.Erreurs.Add((nameof(Article.Reference), "Cette référence existe déjà."));
+                    return true;
+                case nameof(Article.CodeBarre):
+                    resultat.Erreurs.Add((nameof(Article.CodeBarre), "Ce code-barres existe déjà."));
+                    return true;
             }
 
             if (ClientService.EstViolationCleEtrangere(exception))   // dette connue : à déplacer dans un helper commun
@@ -225,26 +230,42 @@ namespace GestionCommerciale.Services
         }
 
         public const string NomIndexReference = "IX_Articles_Reference";
+        public const string NomIndexCodeBarre = "IX_Articles_CodeBarre";
 
         /// <summary>
-        /// Vrai seulement si l'erreur vient de l'index unique de la référence
-        /// (SQL Server : erreur 2601 ou 2627 + nom de l'index ; SQLite des tests : UNIQUE constraint failed: Articles.Reference).
+        /// Champ concerné quand l'erreur vient d'un index unique de la table Articles : « Reference » ou « CodeBarre » ;
+        /// null pour toute autre erreur (clé primaire, clé étrangère, autre index...).
+        /// SQL Server : erreur 2601 (index unique) ou 2627 (contrainte unique) ET nom de l'index dans le message.
+        /// SQLite des tests : « UNIQUE constraint failed: Articles.Reference » ou « ...Articles.CodeBarre ».
         /// </summary>
-        public static bool EstViolationIndexReference(DbUpdateException exception)
+        public static string? ChampEnViolationIndexUnique(DbUpdateException exception)
         {
             for (Exception? e = exception; e != null; e = e.InnerException)
             {
-                if (e is SqlException sql
-                    && (sql.Number == 2601 || sql.Number == 2627)
-                    && sql.Message.Contains(NomIndexReference, StringComparison.OrdinalIgnoreCase))
-                    return true;
+                if (e is SqlException sql && (sql.Number == 2601 || sql.Number == 2627))
+                {
+                    if (sql.Message.Contains(NomIndexReference, StringComparison.OrdinalIgnoreCase))
+                        return nameof(Article.Reference);
+                    if (sql.Message.Contains(NomIndexCodeBarre, StringComparison.OrdinalIgnoreCase))
+                        return nameof(Article.CodeBarre);
+                }
 
-                if (e.GetType().Name == "SqliteException"
-                    && e.Message.Contains("UNIQUE constraint failed: Articles.Reference", StringComparison.OrdinalIgnoreCase))
-                    return true;
+                if (e.GetType().Name == "SqliteException")
+                {
+                    if (e.Message.Contains("UNIQUE constraint failed: Articles.Reference", StringComparison.OrdinalIgnoreCase))
+                        return nameof(Article.Reference);
+                    if (e.Message.Contains("UNIQUE constraint failed: Articles.CodeBarre", StringComparison.OrdinalIgnoreCase))
+                        return nameof(Article.CodeBarre);
+                }
             }
-            return false;
+            return null;
         }
+
+        public static bool EstViolationIndexReference(DbUpdateException exception)
+            => ChampEnViolationIndexUnique(exception) == nameof(Article.Reference);
+
+        public static bool EstViolationIndexCodeBarre(DbUpdateException exception)
+            => ChampEnViolationIndexUnique(exception) == nameof(Article.CodeBarre);
 
         public async Task<ResultatArticle> SupprimerAsync(int id, CancellationToken cancellationToken = default)
         {

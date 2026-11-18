@@ -118,6 +118,7 @@ public class SqlServerSondesTests : IClassFixture<BaseJetableFixture>
         Assert.Equal(2601, sql.Number);
         Assert.Contains("IX_Articles_Reference", sql.Message);
         Assert.True(ArticleService.EstViolationIndexReference(exception));
+        Assert.Equal("Reference", ArticleService.ChampEnViolationIndexUnique(exception));
     }
 
     [SqlServerFact]
@@ -166,6 +167,7 @@ public class SqlServerSondesTests : IClassFixture<BaseJetableFixture>
             Assert.Equal(2627, sql.Number);
             Assert.Contains("PK_Articles", sql.Message);
             Assert.False(ArticleService.EstViolationIndexReference(exception));   // le nom de l'index de référence n'y figure pas
+            Assert.Null(ArticleService.ChampEnViolationIndexUnique(exception));    // ni celui du code-barres : aucun index unique en cause
             Assert.False(ClientService.EstViolationIndexCode(exception));
         }
         finally

@@ -140,7 +140,9 @@ namespace GestionCommerciale.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("CodeBarre");
+                    b.HasIndex("CodeBarre")
+                        .IsUnique()
+                        .HasFilter("[CodeBarre] IS NOT NULL");
 
                     b.HasIndex("DeviseAchatId");
 

@@ -24,7 +24,9 @@ public sealed class ArticleConfiguration : IEntityTypeConfiguration<Article>
 
         builder.Property(x => x.DateCreation).HasDefaultValueSql("SYSUTCDATETIME()");
         builder.HasIndex(x => x.Reference).IsUnique();
-        builder.HasIndex(x => x.CodeBarre);
+        // Unique sauf pour les articles SANS code-barres (NULL) : plusieurs articles sans code-barres restent possibles.
+        // Filtre écrit explicitement (n'est pas laissé à la convention du fournisseur) pour rester lisible et portable.
+        builder.HasIndex(x => x.CodeBarre).IsUnique().HasFilter("[CodeBarre] IS NOT NULL");
         builder.HasIndex(x => x.EstActif);
 
         // Les entités Category et Fournisseur existent déjà dans le modèle fourni.
