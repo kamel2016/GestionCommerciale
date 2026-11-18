@@ -1,6 +1,6 @@
-using GestionCommerciale.Data;
-using GestionCommerciale.Infrastructure.Persistence;
+ï»¿using GestionCommerciale.Data;
 using GestionCommerciale.Models;
+using GestionCommerciale.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -11,11 +11,13 @@ namespace GestionCommerciale.Pages.Articles;
 public class CreateModel : PageModel
 {
     private readonly ApplicationDbContext _db;
+    private readonly IArticleService _articleService;
     private readonly ILogger<CreateModel> _logger;
 
-    public CreateModel(ApplicationDbContext db, ILogger<CreateModel> logger)
+    public CreateModel(ApplicationDbContext db, IArticleService articleService, ILogger<CreateModel> logger)
     {
         _db = db;
+        _articleService = articleService;
         _logger = logger;
     }
 
@@ -27,7 +29,7 @@ public class CreateModel : PageModel
 
     public async Task OnGetAsync()
     {
-        Article = new Article { EstActif = true, TauxTVA = 19m, Unite = "Pièce" };
+        Article = new Article { EstActif = true, TauxTVA = 19m, Unite = "PiÃ¨ce" };
         await InitializeSelectListsAsync();
     }
 
@@ -41,16 +43,25 @@ public class CreateModel : PageModel
 
         try
         {
-            Article.DateCreation = DateTime.Now;
-            _db.Articles.Add(Article);
-            await _db.SaveChangesAsync();
-            TempData["SuccessMessage"] = $"L'article {Article.Libelle} a été créé avec succès.";
+            // Toutes les rÃ¨gles (nettoyage, validation, unicitÃ©, catÃ©gorie, valeurs imposÃ©es) sont dans ArticleService.
+            var resultat = await _articleService.CreerAsync(Article);
+
+            if (!resultat.Succes)
+            {
+                foreach (var (champ, message) in resultat.Erreurs)
+                    ModelState.AddModelError(string.IsNullOrEmpty(champ) ? string.Empty : "Article." + champ, message);
+
+                await InitializeSelectListsAsync();
+                return Page();
+            }
+
+            TempData["SuccessMessage"] = $"L'article {Article.Libelle} a Ã©tÃ© crÃ©Ã© avec succÃ¨s.";
             return RedirectToPage("./Index");
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Erreur EF Core lors de la création de l'article");
-            ModelState.AddModelError(string.Empty, "L'article n'a pas pu être enregistré.");
+            _logger.LogError(ex, "Erreur EF Core lors de la crÃ©ation de l'article");
+            ModelState.AddModelError(string.Empty, "L'article n'a pas pu Ãªtre enregistrÃ©.");
             await InitializeSelectListsAsync();
             return Page();
         }
@@ -59,25 +70,25 @@ public class CreateModel : PageModel
     private async Task InitializeSelectListsAsync()
     {
         var categories = await _db.Categories
-            .OrderBy(c => c.Name)          // adapte le nom de la propriété
+            .OrderBy(c => c.Name)
             .ToListAsync();
 
         Categories = categories
             .Select(c => new SelectListItem
             {
-                Value = c.Id.ToString(),  // la valeur envoyée au serveur
-                Text = c.Name             // le libellé affiché
+                Value = c.Id.ToString(),
+                Text = c.Name
             })
             .ToList();
 
         Units = new List<SelectListItem>
-    {
-        new("Pièce(s)", "Pièce"),
-        new("Kilogramme(s)", "Kg"),
-        new("Litre(s)", "L"),
-        new("Mètre(s)", "M"),
-        new("Boîte(s)", "Boîte"),
-        new("Paquet(s)", "Paquet")
-    };
+        {
+            new("PiÃ¨ce(s)", "PiÃ¨ce"),
+            new("Kilogramme(s)", "Kg"),
+            new("Litre(s)", "L"),
+            new("MÃ¨tre(s)", "M"),
+            new("BoÃ®te(s)", "BoÃ®te"),
+            new("Paquet(s)", "Paquet")
+        };
     }
 }

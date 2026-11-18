@@ -86,47 +86,27 @@ public class EditModel : PageModel
         ModelState.Remove("Article.Category");
         ModelState.Remove("Article.Fournisseur");
 
-        if (await _context.Articles.AnyAsync(a => a.Reference == Article.Reference && a.ID != Article.ID))
-            ModelState.AddModelError("Article.Reference", "Cette référence existe déjà.");
-
-        if (Article.StockMax.HasValue && Article.StockMax < Article.StockMin)
-            ModelState.AddModelError("Article.StockMax", "Le stock maximum doit être supérieur au stock minimum.");
-
-        if (!ModelState.IsValid)
+        // Les règles métier (nettoyage, unicité, stocks, TVA, catégorie, champs protégés dont la quantité) sont dans
+        // ArticleService. Une erreur de liaison déjà présente dans le ModelState empêche l'appel (rien n'est enregistré).
+        if (ModelState.IsValid)
         {
-            await LoadListsAsync();
-            await LoadRelatedAsync(Article.ID);
-            return Page();
+            var resultat = await _articleService.ModifierAsync(Article.ID, Article);
+
+            if (resultat.Introuvable) return NotFound();
+
+            foreach (var (champ, message) in resultat.Erreurs)
+                ModelState.AddModelError(string.IsNullOrEmpty(champ) ? string.Empty : "Article." + champ, message);
+
+            if (resultat.Succes)
+            {
+                TempData["SuccessMessage"] = "Article enregistré avec succès.";
+                return RedirectToPage("./Edit", new { id = Article.ID });
+            }
         }
 
-        var db = await _context.Articles.FirstOrDefaultAsync(a => a.ID == Article.ID);
-        if (db == null) return NotFound();
-
-        db.Reference = Article.Reference;
-        db.CodeBarre = Article.CodeBarre;
-        db.Libelle = Article.Libelle;
-        db.CategoryId = Article.CategoryId;
-        db.Unite = Article.Unite;
-        db.PrixAchatHT = Article.PrixAchatHT;
-        db.PrixVenteHT = Article.PrixVenteHT;
-        db.PrixVenteTTC = Article.PrixVenteTTC;
-        db.TauxTVA = Article.TauxTVA;
-        db.Fodec = Article.Fodec;
-        db.StockMin = Article.StockMin;
-        db.StockMax = Article.StockMax;
-        db.EstActif = Article.EstActif;
-        db.Description = Article.Description;
-        db.Marque = Article.Marque;
-        db.Modele = Article.Modele;
-        db.Couleur = Article.Couleur;
-        db.Taille = Article.Taille;
-        db.Poids = Article.Poids;
-        db.DateModification = DateTime.Now;
-        // Quantite n'est PAS modifiée ici : uniquement via les mouvements de stock
-
-        await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Article enregistré avec succès.";
-        return RedirectToPage("./Edit", new { id = db.ID });
+        await LoadListsAsync();
+        await LoadRelatedAsync(Article.ID);
+        return Page();
     }
 
     // ---------------- Suppression ----------------
