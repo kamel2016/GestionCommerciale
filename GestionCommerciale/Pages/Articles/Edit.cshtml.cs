@@ -208,6 +208,11 @@ public class EditModel : PageModel
             await _context.SaveChangesAsync();
             TempData["SuccessMessage"] = "Fournisseur retiré.";
         }
+        else
+        {
+            // Lien introuvable (déjà retiré, autre article, identifiant absent) : on le dit au lieu de ne rien afficher.
+            TempData["ErrorMessage"] = "Ce fournisseur n'est plus lié à l'article.";
+        }
         return RedirectToPage("./Edit", new { id = articleId });
     }
 

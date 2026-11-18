@@ -138,6 +138,47 @@ public class ArticleEditHandlersTests : IDisposable
         Assert.Empty(await _db.ArticleFournisseurs.Where(af => af.ArticleId == article.ID).ToListAsync());
     }
 
+    [Theory]
+    [InlineData(1)]   // fournisseur qui existe mais n'est pas (ou plus) lié à l'article
+    [InlineData(999)] // fournisseur inconnu
+    [InlineData(0)]   // supplierId absent de la requête : le paramètre vaut 0
+    public async Task Retrait_d_un_fournisseur_non_lie_affiche_un_message_d_erreur_au_lieu_de_ne_rien_dire(int supplierId)
+    {
+        var article = await CreerArticleAsync("NONLIE");
+        _db.Fournisseurs.Add(new Fournisseur { Nom = "F" });
+        await _db.SaveChangesAsync();
+        _db.ChangeTracker.Clear();
+
+        var page = CreerPage(new Article { ID = article.ID }, out var tempData);
+
+        var resultat = await page.OnPostRemoveSupplierAsync(supplierId);
+
+        Assert.Equal("./Edit", Assert.IsType<RedirectToPageResult>(resultat).PageName);
+        Assert.Equal("Ce fournisseur n'est plus lié à l'article.", tempData["ErrorMessage"]); // avant correction : null (silence)
+        Assert.Null(tempData["SuccessMessage"]);
+    }
+
+    [Fact]
+    public async Task Retrait_d_un_fournisseur_lie_a_un_AUTRE_article_ne_le_retire_pas_et_affiche_une_erreur()
+    {
+        var article = await CreerArticleAsync("A1");
+        var autre = await CreerArticleAsync("A2");
+        var fournisseur = new Fournisseur { Nom = "F" };
+        _db.Fournisseurs.Add(fournisseur);
+        await _db.SaveChangesAsync();
+        _db.ArticleFournisseurs.Add(new ArticleFournisseur { ArticleId = autre.ID, FournisseurId = fournisseur.Id });
+        await _db.SaveChangesAsync();
+        _db.ChangeTracker.Clear();
+
+        var page = CreerPage(new Article { ID = article.ID }, out var tempData);
+
+        await page.OnPostRemoveSupplierAsync(fournisseur.Id);
+
+        Assert.Equal("Ce fournisseur n'est plus lié à l'article.", tempData["ErrorMessage"]);
+        _db.ChangeTracker.Clear();
+        Assert.Single(await _db.ArticleFournisseurs.Where(af => af.ArticleId == autre.ID).ToListAsync()); // le lien de l'autre article est intact
+    }
+
     [Fact]
     public async Task Suppression_n_est_pas_bloquee_par_les_erreurs_Article()
     {
