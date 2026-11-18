@@ -1,5 +1,8 @@
 using GestionCommerciale.Data;
+using GestionCommerciale.Helpers;
+using GestionCommerciale.Models;
 using GestionCommerciale.Services.Interface;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestionCommerciale.Services
@@ -59,6 +62,188 @@ namespace GestionCommerciale.Services
                 .Select(a => a.Quantite).FirstOrDefaultAsync(cancellationToken);
 
             return new UtilisationArticle { Elements = comptes.Where(c => c.Nombre > 0).ToList(), Stock = stock };
+        }
+
+        // ------------------------------------------------------------------ création et modification (S4 étape 3)
+
+        public async Task<ResultatArticle> CreerAsync(Article article, CancellationToken cancellationToken = default)
+        {
+            ArticleValidation.Normaliser(article);
+            var resultat = new ResultatArticle { Reference = article.Reference };
+
+            await ControlerAsync(article, idExclu: null, resultat, cancellationToken);
+            if (!resultat.Succes)
+                return resultat;
+
+            // Nouvel objet : seuls les champs du formulaire sont repris. Le stock (0), le CMUP (0), l'Id, la version
+            // et la date de création ne viennent JAMAIS de la saisie (valeurs par défaut du modèle / date du jour).
+            var nouveau = new Article
+            {
+                Reference = article.Reference,
+                CodeBarre = article.CodeBarre,
+                Libelle = article.Libelle,
+                CategoryId = article.CategoryId,
+                Unite = article.Unite,
+                PrixAchatHT = article.PrixAchatHT,
+                PrixVenteHT = article.PrixVenteHT,
+                PrixVenteTTC = article.PrixVenteTTC,   // libre : aucun calcul (décision C)
+                TauxTVA = article.TauxTVA,
+                Fodec = article.Fodec,
+                StockMin = article.StockMin,
+                StockMax = article.StockMax,
+                EstActif = article.EstActif,
+                Description = article.Description,
+                Marque = article.Marque,
+                Modele = article.Modele,
+                Couleur = article.Couleur,
+                Taille = article.Taille,
+                Poids = article.Poids,
+                DateCreation = DateTime.Now
+            };
+
+            try
+            {
+                _context.Articles.Add(nouveau);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (TraduireErreurDeBase(ex, resultat))
+            {
+                _context.Entry(nouveau).State = EntityState.Detached;
+                return resultat;
+            }
+
+            article.ID = nouveau.ID;
+            return resultat;
+        }
+
+        public async Task<ResultatArticle> ModifierAsync(int id, Article saisie, CancellationToken cancellationToken = default)
+        {
+            ArticleValidation.Normaliser(saisie);
+            var resultat = new ResultatArticle { Reference = saisie.Reference };
+
+            var article = await _context.Articles.FirstOrDefaultAsync(a => a.ID == id, cancellationToken);
+            if (article == null)
+            {
+                resultat.Introuvable = true;
+                resultat.Erreurs.Add((string.Empty, "Article introuvable."));
+                return resultat;
+            }
+
+            await ControlerAsync(saisie, idExclu: id, resultat, cancellationToken);
+            if (!resultat.Succes)
+                return resultat;
+
+            // Seuls les champs du formulaire sont copiés : stock, CMUP, fournisseur principal, devise, n° de série,
+            // version et date de création ne changent jamais, quoi que contienne la saisie.
+            article.Reference = saisie.Reference;
+            article.CodeBarre = saisie.CodeBarre;
+            article.Libelle = saisie.Libelle;
+            article.CategoryId = saisie.CategoryId;
+            article.Unite = saisie.Unite;
+            article.PrixAchatHT = saisie.PrixAchatHT;
+            article.PrixVenteHT = saisie.PrixVenteHT;
+            article.PrixVenteTTC = saisie.PrixVenteTTC;   // libre : aucun calcul (décision C)
+            article.TauxTVA = saisie.TauxTVA;
+            article.Fodec = saisie.Fodec;
+            article.StockMin = saisie.StockMin;
+            article.StockMax = saisie.StockMax;
+            article.EstActif = saisie.EstActif;
+            article.Description = saisie.Description;
+            article.Marque = saisie.Marque;
+            article.Modele = saisie.Modele;
+            article.Couleur = saisie.Couleur;
+            article.Taille = saisie.Taille;
+            article.Poids = saisie.Poids;
+            article.DateModification = DateTime.Now;
+
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (TraduireErreurDeBase(ex, resultat))
+            {
+                // Course : la base a refusé après nos contrôles. On abandonne la modification en mémoire.
+                _context.Entry(article).State = EntityState.Detached;
+                return resultat;
+            }
+
+            return resultat;
+        }
+
+        /// <summary>Règles sans base (ArticleValidation), puis unicité de la référence et du code-barres, puis existence de la catégorie.</summary>
+        private async Task ControlerAsync(Article article, int? idExclu, ResultatArticle resultat, CancellationToken cancellationToken)
+        {
+            resultat.Erreurs.AddRange(ArticleValidation.Valider(article));
+
+            if (article.Reference.Length > 0
+                && await UnAutreArticleALaReferenceAsync(article.Reference, idExclu, cancellationToken))
+                resultat.Erreurs.Add((nameof(Article.Reference), "Cette référence existe déjà."));
+
+            if (article.CodeBarre != null
+                && await UnAutreArticleALeCodeBarreAsync(article.CodeBarre, idExclu, cancellationToken))
+                resultat.Erreurs.Add((nameof(Article.CodeBarre), "Ce code-barres existe déjà."));
+
+            if (article.CategoryId.HasValue
+                && !await _context.Categories.AnyAsync(c => c.Id == article.CategoryId.Value, cancellationToken))
+                resultat.Erreurs.Add((nameof(Article.CategoryId), "Catégorie introuvable."));
+        }
+
+        // Insensible à la casse et aux espaces en début/fin (même résultat que la collation de SQL Server, mais explicite).
+        private Task<bool> UnAutreArticleALaReferenceAsync(string reference, int? idExclu, CancellationToken cancellationToken)
+        {
+            var cle = reference.Trim().ToLower();
+            return _context.Articles.AnyAsync(
+                a => a.Reference.Trim().ToLower() == cle && (idExclu == null || a.ID != idExclu), cancellationToken);
+        }
+
+        private Task<bool> UnAutreArticleALeCodeBarreAsync(string codeBarre, int? idExclu, CancellationToken cancellationToken)
+        {
+            var cle = codeBarre.Trim().ToLower();
+            return _context.Articles.AnyAsync(
+                a => a.CodeBarre != null && a.CodeBarre.Trim().ToLower() == cle && (idExclu == null || a.ID != idExclu), cancellationToken);
+        }
+
+        /// <summary>
+        /// Course : un doublon de référence (index unique) ou une catégorie supprimée (clé étrangère) survenu entre nos
+        /// contrôles et l'enregistrement. Ajoute l'erreur au résultat et renvoie vrai ; toute autre erreur de base remonte telle quelle.
+        /// </summary>
+        private static bool TraduireErreurDeBase(DbUpdateException exception, ResultatArticle resultat)
+        {
+            if (EstViolationIndexReference(exception))
+            {
+                resultat.Erreurs.Add((nameof(Article.Reference), "Cette référence existe déjà."));
+                return true;
+            }
+
+            if (ClientService.EstViolationCleEtrangere(exception))   // dette connue : à déplacer dans un helper commun
+            {
+                resultat.Erreurs.Add((nameof(Article.CategoryId), "Catégorie introuvable."));
+                return true;
+            }
+
+            return false;
+        }
+
+        public const string NomIndexReference = "IX_Articles_Reference";
+
+        /// <summary>
+        /// Vrai seulement si l'erreur vient de l'index unique de la référence
+        /// (SQL Server : erreur 2601 ou 2627 + nom de l'index ; SQLite des tests : UNIQUE constraint failed: Articles.Reference).
+        /// </summary>
+        public static bool EstViolationIndexReference(DbUpdateException exception)
+        {
+            for (Exception? e = exception; e != null; e = e.InnerException)
+            {
+                if (e is SqlException sql
+                    && (sql.Number == 2601 || sql.Number == 2627)
+                    && sql.Message.Contains(NomIndexReference, StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                if (e.GetType().Name == "SqliteException"
+                    && e.Message.Contains("UNIQUE constraint failed: Articles.Reference", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
 
         public async Task<ResultatArticle> SupprimerAsync(int id, CancellationToken cancellationToken = default)

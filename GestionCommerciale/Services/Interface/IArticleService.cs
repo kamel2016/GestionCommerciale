@@ -58,6 +58,24 @@ namespace GestionCommerciale.Services.Interface
         /// </summary>
         Task<ResultatArticle> SupprimerAsync(int id, CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// Nettoie (espaces retirés, facultatifs vides = NULL), valide, vérifie l'unicité (référence et code-barres)
+        /// et la catégorie, puis enregistre un NOUVEL article. Seuls les champs du formulaire sont repris : le stock
+        /// démarre à 0, le CMUP à 0, l'Id, la version et la date de création ne viennent jamais de la saisie.
+        /// Le prix TTC est libre : aucun calcul, aucune cohérence imposée avec le HT ou la TVA.
+        /// En cas d'erreur (y compris doublon ou catégorie supprimée entre le contrôle et l'enregistrement),
+        /// rien n'est enregistré et le résultat contient un message par champ ; la méthode ne lève pas d'exception pour ces cas.
+        /// </summary>
+        Task<ResultatArticle> CreerAsync(Models.Article article, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Modifie un article existant. Seuls les champs modifiables de la fiche sont copiés : le stock, le CMUP,
+        /// le fournisseur principal, la devise, le n° de série, la version et la date de création ne changent jamais,
+        /// quoi que contienne <paramref name="saisie"/>. Mêmes règles que <see cref="CreerAsync"/> ; l'article lui-même
+        /// est exclu des contrôles d'unicité. Introuvable = résultat avec <c>Introuvable</c>.
+        /// </summary>
+        Task<ResultatArticle> ModifierAsync(int id, Models.Article saisie, CancellationToken cancellationToken = default);
+
         /// <summary>Compte où l'article est utilisé (pour la page de confirmation et pour les messages de refus).</summary>
         Task<UtilisationArticle> ObtenirUtilisationAsync(int articleId, CancellationToken cancellationToken = default);
     }
