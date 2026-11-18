@@ -179,7 +179,8 @@ La migration `AjoutCodeClientEtModeFacturation` (`639c304`, commitée avant S3) 
 - **Objectif** : fiches article fiables et premier correctif de stock.
 - **À faire** : Details et Delete réels ; unicité de la référence et du code-barres ; filtres catégorie et rupture corrects ; corriger le signe inversé de `Articles/Edit.cshtml.cs:223` ; affichage en DT ; **supprimer la double configuration de `TauxTVA`** (déplacée depuis S2) : `Infrastructure/ArticleConfiguration.cs:23` donne `HasPrecision(18, 3)` et `Data/ApplicationDbContext.cs:105` donne `HasPrecision(5, 2)` ; la colonne `Articles.TauxTVA` est déjà en `decimal(5,2)` dans le snapshot (le DbContext l'emporte), donc il reste à retirer une des deux configurations (probablement celle de `ArticleConfiguration`) et à vérifier avec `dotnet ef migrations has-pending-model-changes` qu'aucune migration n'est nécessaire.
 - **Effort** : M.
-- **Test à la main** : ajouter une entrée de stock manuelle, la quantité augmente ; une sortie la diminue ; la fiche affiche le vrai historique.
+- **Test à la main** : ajouter une entrée de stock manuelle, la quantité augmente ; un retour fournisseur ou un ajustement négatif la diminue ; la fiche affiche le vrai historique.
+- **Limite connue (étape 2, mouvements manuels)** : les erreurs de saisie de la fenêtre « Nouveau mouvement de stock » (motif manquant, stock insuffisant, quantité nulle…) ne sont pas affichées dans la fenêtre elle-même : elles passent par le message d'erreur en haut de la page Edit, après rechargement. À améliorer plus tard (affichage dans la fenêtre).
 
 ### S5 – Fournisseurs
 - **Objectif** : un seul module fournisseur.
@@ -190,6 +191,8 @@ La migration `AjoutCodeClientEtModeFacturation` (`639c304`, commitée avant S3) 
 ### S6 – Stock (historique des mouvements)
 - **Objectif** : une seule règle pour tous les mouvements.
 - **À faire** : fixer la convention (quantité signée) ; enregistrer `StockService` dans `Program.cs` et l'utiliser partout ; type de mouvement correct à l'annulation d'un BL ; protection de concurrence sur `Article.Quantite` ; page d'historique réelle par article.
+- **Changement de contrat de `StockService` (fait en S4 étape 2, à connaître)** : `StockService` est maintenant enregistré dans `Program.cs`. `EnregistrerMouvementAsync` lève `NotSupportedException` pour `AjustementInventaire` (un ajustement est signé : utiliser `EnregistrerMouvementManuelAsync`, qui exige un motif et refuse un stock négatif) ; `RetourFournisseur` y est géré en sortie ; `QuantiteAvant` y est renseignée. Aucun code n'appelait cette méthode avant S4 (recherche sur `.cs` et `.cshtml`), donc rien n'était cassé. **`BonLivraisonService` ne l'utilise toujours pas** : il modifie `Article.Quantite` directement (`BonLivraisonService.cs:55` et `:109`), enregistre les sorties en quantité positive (`:62`), enregistre l'annulation d'un BL avec le type `EntreeReception` (`:115`) et ne renseigne pas `QuantiteAvant`. À reprendre ici en S6.
+- **Limite de test (S4 étape 2)** : le `catch (DbUpdateConcurrencyException)` de `Articles/Edit.OnPostAddStockMovementAsync` n'est couvert par aucun test (SQLite ne reproduit pas `rowversion`). À vérifier sur SQL Server lors de la protection de concurrence de `Article.Quantite`.
 - **Effort** : M.
 - **Test à la main** : valider puis annuler un BL, le stock revient et l'historique montre deux mouvements cohérents.
 

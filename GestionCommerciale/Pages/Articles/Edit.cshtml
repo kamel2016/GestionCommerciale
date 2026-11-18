@@ -363,18 +363,23 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label>Type</label>
+                    @* Valeurs = noms de l'énumération TypeMouvementStock. La sortie livraison est réservée aux BL. *@
                     <select asp-for="NewStock.Type" class="form-control">
-                        <option value="Entrée">Entrée</option>
-                        <option value="Sortie">Sortie</option>
+                        <option value="EntreeReception">Entrée réception</option>
+                        <option value="RetourClient">Retour client</option>
+                        <option value="AjustementInventaire">Ajustement d'inventaire (+ ou -)</option>
+                        <option value="RetourFournisseur">Retour fournisseur</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Quantité</label>
-                    <input asp-for="NewStock.Quantite" type="number" step="1" min="1" class="form-control" required />
+                    <input asp-for="NewStock.Quantite" type="number" step="1" class="form-control" required />
+                    <small class="form-text">Nombre positif. Pour un ajustement : positif pour ajouter, négatif pour retirer (ex. -3).</small>
                 </div>
                 <div class="form-group">
-                    <label>Commentaire</label>
+                    <label>Motif / commentaire</label>
                     <input asp-for="NewStock.Commentaire" class="form-control" maxlength="250" />
+                    <small class="form-text">Obligatoire pour un ajustement d'inventaire.</small>
                 </div>
             </div>
             <div class="modal-footer">

@@ -1,4 +1,4 @@
-using GestionCommerciale.Data;
+Ôªøusing GestionCommerciale.Data;
 using GestionCommerciale.Enums;
 using GestionCommerciale.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +12,13 @@ namespace GestionCommerciale.Pages.Articles;
 public class EditModel : PageModel
 {
     private readonly ApplicationDbContext _context;
+    private readonly IStockService _stock;
     private readonly ILogger<EditModel> _logger;
 
-    public EditModel(ApplicationDbContext context, ILogger<EditModel> logger)
+    public EditModel(ApplicationDbContext context, IStockService stock, ILogger<EditModel> logger)
     {
         _context = context;
+        _stock = stock;
         _logger = logger;
     }
 
@@ -37,7 +39,7 @@ public class EditModel : PageModel
 
     public class SupplierInput
     {
-        [Required(ErrorMessage = "SÈlectionnez un fournisseur")]
+        [Required(ErrorMessage = "S√©lectionnez un fournisseur")]
         public int FournisseurId { get; set; }
 
         [Range(0, 9999999)] public decimal PrixGrosHT { get; set; }
@@ -51,9 +53,13 @@ public class EditModel : PageModel
         [Required]
         public TypeMouvementStock Type { get; set; } = TypeMouvementStock.EntreeReception;
 
-        [Range(1, 9999999, ErrorMessage = "QuantitÈ invalide")]
+        /// <summary>
+        /// Positive pour une entr√©e, un retour client ou un retour fournisseur (le signe r√©el est calcul√© par StockService).
+        /// Pour un ajustement d'inventaire : sign√©e (+ ajoute, - retire).
+        /// </summary>
         public int Quantite { get; set; }
 
+        /// <summary>Motif (obligatoire pour un ajustement). Enregistr√© dans le commentaire du mouvement.</summary>
         [StringLength(250)]
         public string? Commentaire { get; set; }
     }
@@ -78,10 +84,10 @@ public class EditModel : PageModel
         ModelState.Remove("Article.Fournisseur");
 
         if (await _context.Articles.AnyAsync(a => a.Reference == Article.Reference && a.ID != Article.ID))
-            ModelState.AddModelError("Article.Reference", "Cette rÈfÈrence existe dÈj‡.");
+            ModelState.AddModelError("Article.Reference", "Cette r√©f√©rence existe d√©j√†.");
 
         if (Article.StockMax.HasValue && Article.StockMax < Article.StockMin)
-            ModelState.AddModelError("Article.StockMax", "Le stock maximum doit Ítre supÈrieur au stock minimum.");
+            ModelState.AddModelError("Article.StockMax", "Le stock maximum doit √™tre sup√©rieur au stock minimum.");
 
         if (!ModelState.IsValid)
         {
@@ -113,10 +119,10 @@ public class EditModel : PageModel
         db.Taille = Article.Taille;
         db.Poids = Article.Poids;
         db.DateModification = DateTime.Now;
-        // Quantite n'est PAS modifiÈe ici : uniquement via les mouvements de stock
+        // Quantite n'est PAS modifi√©e ici : uniquement via les mouvements de stock
 
         await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Article enregistrÈ avec succËs.";
+        TempData["SuccessMessage"] = "Article enregistr√© avec succ√®s.";
         return RedirectToPage("./Edit", new { id = db.ID });
     }
 
@@ -130,13 +136,13 @@ public class EditModel : PageModel
         {
             _context.Articles.Remove(db);
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Article supprimÈ.";
+            TempData["SuccessMessage"] = "Article supprim√©.";
             return RedirectToPage("./Index");
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Suppression impossible article {Id}", Article.ID);
-            TempData["ErrorMessage"] = "Suppression impossible : l'article est utilisÈ ailleurs.";
+            TempData["ErrorMessage"] = "Suppression impossible : l'article est utilis√© ailleurs.";
             return RedirectToPage("./Edit", new { id = Article.ID });
         }
     }
@@ -148,14 +154,14 @@ public class EditModel : PageModel
 
         if (!TryValidateModel(NewSupplier, nameof(NewSupplier)))
         {
-            TempData["ErrorMessage"] = "DonnÈes fournisseur invalides.";
+            TempData["ErrorMessage"] = "Donn√©es fournisseur invalides.";
             return RedirectToPage("./Edit", new { id = articleId });
         }
 
         if (await _context.ArticleFournisseurs.AnyAsync(af =>
                 af.ArticleId == articleId && af.FournisseurId == NewSupplier.FournisseurId))
         {
-            TempData["ErrorMessage"] = "Ce fournisseur est dÈj‡ associÈ ‡ l'article.";
+            TempData["ErrorMessage"] = "Ce fournisseur est d√©j√† associ√© √† l'article.";
             return RedirectToPage("./Edit", new { id = articleId });
         }
 
@@ -170,7 +176,7 @@ public class EditModel : PageModel
         });
         await _context.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = "Fournisseur ajoutÈ.";
+        TempData["SuccessMessage"] = "Fournisseur ajout√©.";
         return RedirectToPage("./Edit", new { id = articleId });
     }
 
@@ -184,7 +190,7 @@ public class EditModel : PageModel
         {
             _context.ArticleFournisseurs.Remove(link);
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Fournisseur retirÈ.";
+            TempData["SuccessMessage"] = "Fournisseur retir√©.";
         }
         return RedirectToPage("./Edit", new { id = articleId });
     }
@@ -194,55 +200,31 @@ public class EditModel : PageModel
     {
         var articleId = Article.ID;
 
-        //if (!TryValidateModel(NewStock, nameof(NewStock)))
-        //{
-        //    foreach (var entry in ModelState)
-        //    {
-        //        foreach (var error in entry.Value.Errors)
-        //        {
-        //            // entry.Key = nom du champ (ex: "NewStock.Quantite")
-        //            // error.ErrorMessage = message dÈfini dans [Required], [Range], etc.
-        //            Console.WriteLine($"{entry.Key} : {error.ErrorMessage}");
-        //        }
-        //    }
+        // La page ne fait que transmettre type, quantit√© et motif : le signe, le contr√¥le du stock
+        // et l'historique (QuantiteAvant / QuantiteApres) sont g√©r√©s par StockService.
+        var resultat = await _stock.EnregistrerMouvementManuelAsync(
+            articleId, NewStock.Type, NewStock.Quantite, NewStock.Commentaire);
 
-        //    TempData["ErrorMessage"] = "Mouvement de stock invalide.";
-        //    return RedirectToPage("./Edit", new { id = articleId });
-        //}
+        if (resultat.Introuvable) return NotFound();
 
-        if (!Enum.IsDefined(NewStock.Type) || NewStock.Quantite <= 0)
+        if (!resultat.Succes)
         {
-            TempData["ErrorMessage"] = "Mouvement de stock invalide.";
+            TempData["ErrorMessage"] = resultat.Message;
             return RedirectToPage("./Edit", new { id = articleId });
         }
 
-        var db = await _context.Articles.FirstOrDefaultAsync(a => a.ID == articleId);
-
-        if (db == null) return NotFound();
-
-        var delta = NewStock.Type == TypeMouvementStock.EntreeReception ? -NewStock.Quantite : NewStock.Quantite;
-
-        if (db.Quantite + delta < 0)
+        try
         {
-            TempData["ErrorMessage"] = "Stock insuffisant pour cette sortie.";
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Quelqu'un d'autre a modifi√© le stock entre la lecture et l'enregistrement (RowVersion).
+            TempData["ErrorMessage"] = "Le stock a √©t√© modifi√© par une autre op√©ration. Rien n'a √©t√© enregistr√© : v√©rifiez le stock puis recommencez.";
             return RedirectToPage("./Edit", new { id = articleId });
         }
 
-        db.Quantite += delta;
-        db.DateModification = DateTime.Now;
-
-        _context.MouvementsStock.Add(new MouvementStock
-        {
-            ArticleId = articleId,
-            Type = NewStock.Type,
-            Quantite = delta,
-            QuantiteApres = db.Quantite,
-            Commentaire = NewStock.Commentaire,
-            Date = DateTime.Now
-        });
-
-        await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Mouvement de stock enregistrÈ.";
+        TempData["SuccessMessage"] = "Mouvement de stock enregistr√©.";
         return RedirectToPage("./Edit", new { id = articleId });
     }
 
@@ -261,9 +243,9 @@ public class EditModel : PageModel
             .OrderBy(c => c.Name)
             .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
             .ToListAsync();
-        Categories.Insert(0, new SelectListItem("-- SÈlectionner une catÈgorie --", ""));
+        Categories.Insert(0, new SelectListItem("-- S√©lectionner une cat√©gorie --", ""));
 
-        Units = new[] { "PiËce", "Kg", "L", "M", "BoÓte", "Paquet" }
+        Units = new[] { "Pi√®ce", "Kg", "L", "M", "Bo√Æte", "Paquet" }
             .Select(u => new SelectListItem(u, u)).ToList();
     }
 
@@ -287,4 +269,4 @@ public class EditModel : PageModel
             .Take(50)
             .ToListAsync();
     }
-}
+}
