@@ -8,7 +8,6 @@
     document.addEventListener('DOMContentLoaded', function () {
         initializeTabs();
         initializeFormValidation();
-        initializePriceCalculation();
         initializeAlerts();
         initializeUnsavedWarning();
         restoreSavedTab();
@@ -110,34 +109,6 @@
         }
         showAlert('danger', message);
         return false;
-    }
-
-    // ============================================
-    // CALCUL AUTOMATIQUE DU PRIX TTC
-    // ============================================
-    function initializePriceCalculation() {
-        const ht = document.querySelector('[name="Article.PrixVenteHT"]');
-        const ttc = document.querySelector('[name="Article.PrixVenteTTC"]');
-        const tva = document.querySelector('[name="Article.TauxTVA"]');
-        if (!ht || !ttc || !tva) return;
-
-        function recalcTTC() {
-            const h = parseFloat(ht.value);
-            const t = parseFloat(tva.value);
-            if (isNaN(h) || isNaN(t)) return;
-            ttc.value = (h * (1 + t / 100)).toFixed(3);
-        }
-
-        function recalcHT() {
-            const c = parseFloat(ttc.value);
-            const t = parseFloat(tva.value);
-            if (isNaN(c) || isNaN(t)) return;
-            ht.value = (c / (1 + t / 100)).toFixed(3);
-        }
-
-        ht.addEventListener('input', recalcTTC);
-        tva.addEventListener('input', recalcTTC);
-        ttc.addEventListener('input', recalcHT);
     }
 
     // ============================================
