@@ -161,7 +161,14 @@ public class EditModel : PageModel
     {
         var articleId = Article.ID;
 
-        if (!TryValidateModel(NewSupplier, nameof(NewSupplier)))
+        // La fenêtre n'envoie que Article.ID et NewSupplier.* ; MVC valide pourtant l'objet Article lié
+        // (Libelle et Reference vides => erreurs), et TryValidateModel renvoie faux dès que le ModelState
+        // contient UNE erreur. On écarte donc les erreurs des autres objets liés avant de valider le fournisseur.
+        RetirerErreursDesAutresObjets();
+
+        // FournisseurId <= 0 : champ absent de la requête ([Required] ne protège pas un int non nul). Sans ce garde,
+        // l'enregistrement échouait sur la clé étrangère (erreur 500) au lieu d'un refus propre.
+        if (NewSupplier.FournisseurId <= 0 || !TryValidateModel(NewSupplier, nameof(NewSupplier)))
         {
             TempData["ErrorMessage"] = "Données fournisseur invalides.";
             return RedirectToPage("./Edit", new { id = articleId });
@@ -238,6 +245,20 @@ public class EditModel : PageModel
     }
 
     // ---------------- Utilitaires ----------------
+
+    /// <summary>
+    /// Retire du ModelState les entrées dont la clé commence par « Article. » ou « NewStock. » (autres objets liés).
+    /// Les clés « NewSupplier.* », la clé vide et les erreurs d'infrastructure sont conservées.
+    /// </summary>
+    private void RetirerErreursDesAutresObjets()
+    {
+        foreach (var cle in ModelState.Keys
+                     .Where(k => k.StartsWith("Article.", StringComparison.Ordinal)
+                              || k.StartsWith("NewStock.", StringComparison.Ordinal))
+                     .ToList())
+            ModelState.Remove(cle);
+    }
+
     private void ClearModalState()
     {
         foreach (var k in ModelState.Keys
