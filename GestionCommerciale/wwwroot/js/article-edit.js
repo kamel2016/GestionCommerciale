@@ -7,7 +7,6 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         initializeTabs();
-        initializeSupplierActions();
         initializeFormValidation();
         initializePriceCalculation();
         initializeAlerts();
@@ -54,48 +53,6 @@
             const parent = firstError.closest('.tab-content');
             if (parent) activateTab(parent.id);
         }
-    }
-
-    // ============================================
-    // FOURNISSEURS (formulaires cachés avec jeton)
-    // ============================================
-    function getAntiForgeryToken() {
-        const input = document.querySelector('input[name="__RequestVerificationToken"]');
-        return input ? input.value : '';
-    }
-
-    function postHandler(handler, fields) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = window.location.pathname + '?handler=' + encodeURIComponent(handler);
-
-        const all = Object.assign({ __RequestVerificationToken: getAntiForgeryToken() }, fields);
-        Object.keys(all).forEach(name => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = name;
-            input.value = all[name];
-            form.appendChild(input);
-        });
-
-        document.body.appendChild(form);
-        formChanged = false;
-        form.submit();
-    }
-
-    function initializeSupplierActions() {
-        // Retrait d'un fournisseur
-        document.querySelectorAll('.btn-remove').forEach(btn => {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                const tarifId = this.getAttribute('data-tarif-id') || this.getAttribute('data-supplier-id');
-                if (!tarifId) return;
-
-                if (confirm('Êtes-vous sûr de vouloir retirer ce fournisseur ?')) {
-                    postHandler('RemoveSupplier', { tarifId: tarifId });
-                }
-            });
-        });
     }
 
     // ============================================
