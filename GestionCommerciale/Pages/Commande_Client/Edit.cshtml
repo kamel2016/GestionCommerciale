@@ -92,17 +92,17 @@
                                         <tfoot>
                                             <tr class="table-info">
                                                 <th colspan="3">Total HT</th>
-                                                <th class="text-end" id="montant-ht">0,00 DT</th>
+                                                <th class="text-end" id="montant-ht">0,000 DT</th>
                                                 <th></th>
                                             </tr>
                                             <tr class="table-info">
                                                 <th colspan="3">TVA</th>
-                                                <th class="text-end" id="montant-tva">0,00 DT</th>
+                                                <th class="text-end" id="montant-tva">0,000 DT</th>
                                                 <th></th>
                                             </tr>
                                             <tr class="table-success">
                                                 <th colspan="3">Total TTC</th>
-                                                <th class="text-end" id="montant-ttc">0,00 DT</th>
+                                                <th class="text-end" id="montant-ttc">0,000 DT</th>
                                                 <th></th>
                                             </tr>
                                         </tfoot>
@@ -189,7 +189,7 @@
                     </div>
                 </div>
                 <div class="alert alert-info mb-0">
-                    <strong>Montant ligne HT :</strong> <span id="montant-ligne-preview">0,00 DT</span>
+                    <strong>Montant ligne HT :</strong> <span id="montant-ligne-preview">0,000 DT</span>
                 </div>
             </div>
             <div class="modal-footer">
@@ -218,7 +218,26 @@
             const form = document.getElementById('commandeForm');
             const hiddenJson = document.getElementById('lignesJsonInput');
 
-            const fmt = (n) => n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DT';
+            const fmt = (n) => n.toLocaleString('fr-FR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' DT';
+
+            // Même règle que le serveur (Helpers/CalculTotaux) : calcul en MILLIMES ENTIERS (pas de virgule flottante), TVA par taux sur la
+            // somme des lignes de ce taux, arrondie au millime, demi arrondi vers le haut. Affichage indicatif : le serveur recalcule tout.
+            // (Entiers exacts jusqu'à environ 900 millions de DT par taux ; au-delà, l'affichage peut différer du serveur.)
+            function calculerTotauxMillimes(lignes) {
+                const bases = {};   // taux en centièmes de % -> base HT en millimes
+                let brut = 0;
+                lignes.forEach(l => {
+                    const ligne = Math.round(l.prix * 1000) * l.quantite;
+                    const centiemes = Math.round(l.tva * 100);
+                    bases[centiemes] = (bases[centiemes] || 0) + ligne;
+                    brut += ligne;
+                });
+                let tva = 0;
+                Object.keys(bases).forEach(c => {
+                    tva += Math.floor((bases[c] * Number(c) + 5000) / 10000);   // base x taux / 100, arrondi au millime vers le haut
+                });
+                return { ht: brut / 1000, tva: tva / 1000, ttc: (brut + tva) / 1000 };
+            }
 
             // ----- Modal -----
             window.openArticleModal = function () {
@@ -304,7 +323,7 @@
                     const nom = l.ArticleNom ?? l.articleNom;
                     const qte = l.Quantite ?? l.quantite;
                     const prix = l.PrixUnitaire ?? l.prixUnitaire;
-                    const montant = l.MontantLigne ?? l.montantLigne;
+                    const montant = Math.round(prix * 1000) * qte / 1000;
 
                     tbody.insertAdjacentHTML('beforeend', `
                         <tr>
@@ -325,11 +344,14 @@
             }
 
             function updateTotaux() {
-                const ht = lignes.reduce((s, l) => s + (l.MontantLigne ?? l.montantLigne), 0);
-                const tva = lignes.reduce((s, l) => s + (l.MontantLigne ?? l.montantLigne) * ((l.TauxTVA ?? 0) / 100), 0);
-                document.getElementById('montant-ht').textContent = fmt(ht);
-                document.getElementById('montant-tva').textContent = fmt(tva);
-                document.getElementById('montant-ttc').textContent = fmt(ht + tva);
+                const totaux = calculerTotauxMillimes(lignes.map(l => ({
+                    quantite: l.Quantite ?? l.quantite,
+                    prix: l.PrixUnitaire ?? l.prixUnitaire,
+                    tva: l.TauxTVA ?? l.tauxTVA ?? 0
+                })));
+                document.getElementById('montant-ht').textContent = fmt(totaux.ht);
+                document.getElementById('montant-tva').textContent = fmt(totaux.tva);
+                document.getElementById('montant-ttc').textContent = fmt(totaux.ttc);
             }
 
             function escapeHtml(str) {

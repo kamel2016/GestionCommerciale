@@ -114,7 +114,7 @@ namespace GestionCommerciale.Pages.Commande_Client
                 ArticleNom = l.Article?.Libelle ?? string.Empty,
                 Quantite = l.Quantite,
                 PrixUnitaire = l.PrixUnitaire,
-                TauxTVA = l.Article?.TauxTVA ?? 0,
+                TauxTVA = l.TauxTVA,   // taux figé sur la ligne (et non le taux actuel de l'article)
                 MontantLigne = l.PrixUnitaire * l.Quantite
             }).ToList();
 
@@ -205,28 +205,27 @@ namespace GestionCommerciale.Pages.Commande_Client
                 if (lignesModifiees)
                 {
                     _context.LignesCommandeClient.RemoveRange(anciennesLignes);
-
-                    decimal totalHT = 0;
-                    decimal totalTVA = 0;
+                    foreach (var ancienne in anciennesLignes)
+                        commande.LignesCommande.Remove(ancienne);   // les totaux ne portent que sur les nouvelles lignes
 
                     foreach (var l in lignes)
                     {
                         var article = articles[l.ArticleId];
-                        var montantLigneHT = article.PrixAchatHT * l.Quantite;
-                        totalHT += montantLigneHT;
-                        totalTVA += montantLigneHT * (article.TauxTVA / 100m);
 
+                        // Prix et TVA figés : un article déjà présent dans la commande garde le prix de vente et le taux d'origine ;
+                        // un article nouveau prend le prix de vente et le taux ACTUELS de l'article (jamais PrixAchatHT).
+                        var existante = anciennesLignes.FirstOrDefault(x => x.ArticleId == article.ID);
                         commande.LignesCommande.Add(new LigneCommandeClient
                         {
                             ArticleId = article.ID,
                             Quantite = l.Quantite,
-                            PrixUnitaire = article.PrixVenteHT
+                            PrixUnitaire = existante?.PrixUnitaire ?? article.PrixVenteHT,
+                            TauxTVA = existante?.TauxTVA ?? article.TauxTVA
                         });
                     }
 
-                    commande.MontantHT = Math.Round(totalHT, 2);
-                    commande.MontantTVA = Math.Round(totalTVA, 2);
-                    commande.MontantTTC = Math.Round(totalHT + totalTVA, 2);
+                    // Règle de calcul unique (Helpers/CalculTotaux) : MontantLigne de chaque ligne, puis totaux au millime.
+                    commande.RecalculerTotaux();
                 }
 
                 // 4. Mettre à jour l'entête

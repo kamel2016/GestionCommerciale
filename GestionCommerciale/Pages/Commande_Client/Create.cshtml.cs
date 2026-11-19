@@ -123,31 +123,23 @@ namespace GestionCommerciale.Pages.Commande_Client
                     DateCreation = DateTime.Now
                 };
 
-                decimal totalHT = 0;
-                decimal totalTVA = 0;
-
                 foreach (var ligne in lignes)
                 {
                     var article = articles[ligne.ArticleId];
-                    var prix = article.PrixVenteHT;
-                    var montantLigneHT = Math.Round(prix * ligne.Quantite, 2);
-                    var montantLigneTVA = Math.Round(montantLigneHT * (article.TauxTVA / 100m), 2);
 
-                    totalHT += montantLigneHT;
-                    totalTVA += montantLigneTVA;
-
+                    // Prix de vente et taux de TVA de l'article COPIÉS sur la ligne : ils sont figés (le prix posté par le navigateur est ignoré).
                     commande.LignesCommande.Add(new LigneCommandeClient
                     {
                         ArticleId = article.ID,
                         Quantite = ligne.Quantite,
-                        PrixUnitaire = prix
+                        PrixUnitaire = article.PrixVenteHT,
+                        TauxTVA = article.TauxTVA
                     });
                     // Aucune écriture sur le stock : seul le bon de livraison validé fait sortir le stock (S7).
                 }
 
-                commande.MontantHT = Math.Round(totalHT, 2);
-                commande.MontantTVA = Math.Round(totalTVA, 2);
-                commande.MontantTTC = Math.Round(totalHT + totalTVA, 2);
+                // Règle de calcul unique (Helpers/CalculTotaux) : MontantLigne de chaque ligne, puis totaux au millime.
+                commande.RecalculerTotaux();
 
                 _context.CommandesClient.Add(commande);
                 await _context.SaveChangesAsync();

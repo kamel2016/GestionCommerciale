@@ -1,7 +1,26 @@
 ﻿// wwwroot/js/commande-create.js
 
 (function () {
-    const fmt = (n) => n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DT';
+    const fmt = (n) => n.toLocaleString('fr-FR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' DT';
+
+    // Même règle que le serveur (Helpers/CalculTotaux) : calcul en MILLIMES ENTIERS (pas de virgule flottante), TVA par taux sur la
+    // somme des lignes de ce taux, arrondie au millime, demi arrondi vers le haut. Affichage indicatif : le serveur recalcule tout.
+    // (Entiers exacts jusqu'à environ 900 millions de DT par taux ; au-delà, l'affichage peut différer du serveur.)
+    function calculerTotauxMillimes(lignes) {
+        const bases = {};   // taux en centièmes de % -> base HT en millimes
+        let brut = 0;
+        lignes.forEach(l => {
+            const ligne = Math.round(l.prix * 1000) * l.quantite;
+            const centiemes = Math.round(l.tva * 100);
+            bases[centiemes] = (bases[centiemes] || 0) + ligne;
+            brut += ligne;
+        });
+        let tva = 0;
+        Object.keys(bases).forEach(c => {
+            tva += Math.floor((bases[c] * Number(c) + 5000) / 10000);   // base x taux / 100, arrondi au millime vers le haut
+        });
+        return { ht: brut / 1000, tva: tva / 1000, ttc: (brut + tva) / 1000 };
+    }
 
     let commandeArticles = []; // { articleId, nom, prix, tva, quantite, stock }
 
@@ -112,7 +131,7 @@
                 <td>${escapeHtml(a.nom)}</td>
                 <td class="text-end">${fmt(a.prix)}</td>
                 <td class="text-center">${a.quantite}</td>
-                <td class="text-end">${fmt(a.prix * a.quantite)}</td>
+                <td class="text-end">${fmt(Math.round(a.prix * 1000) * a.quantite / 1000)}</td>
                 <td class="text-center">
                     <button type="button" class="btn btn-sm btn-outline-danger" data-index="${index}">
                         <i class="fas fa-trash"></i>
@@ -139,15 +158,10 @@
     }
 
     function updateTotaux() {
-        let ht = 0, tva = 0;
-        commandeArticles.forEach(a => {
-            const montant = a.prix * a.quantite;
-            ht += montant;
-            tva += montant * (a.tva / 100);
-        });
-        document.getElementById('montant-ht').textContent = fmt(ht);
-        document.getElementById('montant-tva').textContent = fmt(tva);
-        document.getElementById('montant-ttc').textContent = fmt(ht + tva);
+        const totaux = calculerTotauxMillimes(commandeArticles);
+        document.getElementById('montant-ht').textContent = fmt(totaux.ht);
+        document.getElementById('montant-tva').textContent = fmt(totaux.tva);
+        document.getElementById('montant-ttc').textContent = fmt(totaux.ttc);
     }
 
     // Empêche la soumission sans article
