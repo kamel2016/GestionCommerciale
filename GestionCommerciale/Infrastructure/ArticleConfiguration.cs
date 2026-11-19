@@ -20,7 +20,6 @@ public sealed class ArticleConfiguration : IEntityTypeConfiguration<Article>
         builder.Property(x => x.PrixAchatHT).HasPrecision(18, 3);
         builder.Property(x => x.PrixVenteHT).HasPrecision(18, 3);
         builder.Property(x => x.PrixVenteTTC).HasPrecision(18, 3);
-        builder.Property(x => x.TauxTVA).HasPrecision(18, 3);
 
         builder.Property(x => x.DateCreation).HasDefaultValueSql("SYSUTCDATETIME()");
         builder.HasIndex(x => x.Reference).IsUnique();
