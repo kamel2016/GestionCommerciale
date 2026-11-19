@@ -32,10 +32,17 @@ namespace GestionCommerciale.Models
         public TypeMouvementStock Type { get; set; } = TypeMouvementStock.EntreeReception;
 
         /// <summary>
-        /// Quantité du mouvement (signe géré selon le type :
-        /// valeurs positives pour les entrées, négatives pour les sorties).
+        /// Quantité du mouvement : TOUJOURS positive. Le sens (entrée ou sortie) est porté par le type
+        /// (voir <see cref="TypeMouvementStockExtensions.Sens"/>), jamais par le signe.
         /// </summary>
         public int Quantite { get; set; }
+
+        /// <summary>
+        /// Quantité avec son sens, pour l'affichage : positive pour une entrée, négative pour une sortie, déduite du type.
+        /// Calculée (non enregistrée en base). 0 pour un type sans sens défini.
+        /// </summary>
+        [NotMapped]
+        public int QuantiteSignee => Type.Sens() * Quantite;
 
         /// <summary>Quantité de l'article AVANT le mouvement (utile pour l'audit et le recalcul CMUP).</summary>
         public int QuantiteAvant { get; set; }

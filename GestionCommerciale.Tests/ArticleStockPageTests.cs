@@ -17,7 +17,7 @@ namespace GestionCommerciale.Tests;
 /// S4 étape 1 : reproduit le bug de signe des mouvements de stock saisis à la main
 /// dans la fiche article (Pages/Articles/Edit.cshtml.cs, handler AddStockMovement).
 /// Convention attendue (celle de IStockService et de MouvementStock.Quantite) :
-/// entrée = quantité POSITIVE, sortie = quantité NÉGATIVE, et le stock suit le même signe.
+/// quantité enregistrée TOUJOURS positive, le sens (entrée ou sortie) est porté par le type (S6 étape 2).
 /// Ces tests doivent ÉCHOUER tant que le bug n'est pas corrigé (étape 2).
 /// </summary>
 public class ArticleStockPageTests : IDisposable
@@ -151,7 +151,7 @@ public class ArticleStockPageTests : IDisposable
 
         var (stock, mouvements) = await LireAsync(id);
         Assert.Equal(6, stock);                          // bug actuel : 14
-        Assert.Equal(-4, Assert.Single(mouvements).Quantite); // bug actuel : +4
+        Assert.Equal(4, Assert.Single(mouvements).Quantite);  // positive : le sens est porté par le type
     }
 
     [Fact]
@@ -166,14 +166,14 @@ public class ArticleStockPageTests : IDisposable
         Assert.Empty(mouvements);
     }
 
-    // ---- Ajustement d'inventaire (S4 étape 2) : quantité SIGNÉE, motif obligatoire ----
+    // ---- Ajustement d'inventaire : deux types (positif, négatif), quantité positive, motif obligatoire ----
 
     [Fact]
     public async Task Un_ajustement_positif_augmente_le_stock()
     {
         var id = await CreerArticleAsync(stock: 10);
 
-        await CreerPage(id, TypeMouvementStock.AjustementInventaire, 4, "Retrouvé au comptage").OnPostAddStockMovementAsync();
+        await CreerPage(id, TypeMouvementStock.AjustementPositif, 4, "Retrouvé au comptage").OnPostAddStockMovementAsync();
 
         var (stock, mouvements) = await LireAsync(id);
         Assert.Equal(14, stock);
@@ -189,12 +189,12 @@ public class ArticleStockPageTests : IDisposable
     {
         var id = await CreerArticleAsync(stock: 10);
 
-        await CreerPage(id, TypeMouvementStock.AjustementInventaire, -3, "Casse").OnPostAddStockMovementAsync();
+        await CreerPage(id, TypeMouvementStock.AjustementNegatif, 3, "Casse").OnPostAddStockMovementAsync();
 
         var (stock, mouvements) = await LireAsync(id);
         Assert.Equal(7, stock);                       // bug actuel : 10 (quantité négative refusée)
         var mouvement = Assert.Single(mouvements);
-        Assert.Equal(-3, mouvement.Quantite);
+        Assert.Equal(3, mouvement.Quantite);   // positive : le sens est porté par le type
         Assert.Equal(10, mouvement.QuantiteAvant);
         Assert.Equal(7, mouvement.QuantiteApres);
     }
@@ -204,7 +204,7 @@ public class ArticleStockPageTests : IDisposable
     {
         var id = await CreerArticleAsync(stock: 10);
 
-        await CreerPage(id, TypeMouvementStock.AjustementInventaire, -10, "Inventaire à zéro").OnPostAddStockMovementAsync();
+        await CreerPage(id, TypeMouvementStock.AjustementNegatif, 10, "Inventaire à zéro").OnPostAddStockMovementAsync();
 
         var (stock, mouvements) = await LireAsync(id);
         Assert.Equal(0, stock);                       // bug actuel : 10
@@ -216,7 +216,7 @@ public class ArticleStockPageTests : IDisposable
     {
         var id = await CreerArticleAsync(stock: 10);
 
-        await CreerPage(id, TypeMouvementStock.AjustementInventaire, -11, "Erreur de saisie").OnPostAddStockMovementAsync();
+        await CreerPage(id, TypeMouvementStock.AjustementNegatif, 11, "Erreur de saisie").OnPostAddStockMovementAsync();
 
         var (stock, mouvements) = await LireAsync(id);
         Assert.Equal(10, stock);
@@ -231,7 +231,7 @@ public class ArticleStockPageTests : IDisposable
     {
         var id = await CreerArticleAsync(stock: 10);
 
-        await CreerPage(id, TypeMouvementStock.AjustementInventaire, 4, motif).OnPostAddStockMovementAsync();
+        await CreerPage(id, TypeMouvementStock.AjustementPositif, 4, motif).OnPostAddStockMovementAsync();
 
         var (stock, mouvements) = await LireAsync(id);
         Assert.Equal(10, stock);                      // bug actuel : 14 (motif ignoré)
@@ -243,7 +243,7 @@ public class ArticleStockPageTests : IDisposable
     {
         var id = await CreerArticleAsync(stock: 10);
 
-        await CreerPage(id, TypeMouvementStock.AjustementInventaire, 0, "Rien").OnPostAddStockMovementAsync();
+        await CreerPage(id, TypeMouvementStock.AjustementPositif, 0, "Rien").OnPostAddStockMovementAsync();
 
         var (stock, mouvements) = await LireAsync(id);
         Assert.Equal(10, stock);

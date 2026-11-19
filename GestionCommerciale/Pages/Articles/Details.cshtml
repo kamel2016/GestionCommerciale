@@ -334,7 +334,7 @@
                                 <tbody>
                                     @foreach (var movement in Model.Fiche.DerniersMouvements)
                                     {
-                                        <tr class="movement-@(movement.Quantite > 0 ? "in" : "out")">
+                                        <tr class="movement-@(movement.QuantiteSignee > 0 ? "in" : "out")">
                                             <td data-label="Date">
                                                 <span class="date-badge">@movement.Date.ToString("dd/MM/yyyy HH:mm")</span>
                                             </td>
@@ -342,8 +342,8 @@
                                                 <span class="type-badge @movement.Type.ToString().ToLower()">@DetailsModel.LibelleType(movement.Type)</span>
                                             </td>
                                             <td data-label="Quantité" class="text-right">
-                                                <span class="quantity @(movement.Quantite > 0 ? "text-success" : "text-danger")">
-                                                    @(movement.Quantite > 0 ? "+" : "")@movement.Quantite
+                                                <span class="quantity @(movement.QuantiteSignee > 0 ? "text-success" : "text-danger")">
+                                                    @(movement.QuantiteSignee > 0 ? "+" : "")@movement.QuantiteSignee
                                                 </span>
                                             </td>
                                             <td data-label="Référence">

@@ -44,7 +44,7 @@
             <tr>
                 <td>@m.Date.ToString("dd/MM/yyyy HH:mm")</td>
                 <td>@m.Type</td>
-                <td class="text-end">@m.Quantite</td>
+                <td class="text-end">@m.QuantiteSignee.ToString("+0;-0;0")</td>
                 <td class="text-end">@m.QuantiteApres</td>
                 <td>@m.Commentaire</td>
             </tr>

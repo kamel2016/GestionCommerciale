@@ -57,8 +57,8 @@ public class EditModel : PageModel
         public TypeMouvementStock Type { get; set; } = TypeMouvementStock.EntreeReception;
 
         /// <summary>
-        /// Positive pour une entrée, un retour client ou un retour fournisseur (le signe réel est calculé par StockService).
-        /// Pour un ajustement d'inventaire : signée (+ ajoute, - retire).
+        /// Toujours strictement positive : le sens (entrée ou sortie) est porté par le type, calculé par StockService.
+        /// Pour un ajustement d'inventaire : choisir AjustementPositif (ajoute) ou AjustementNegatif (retire).
         /// </summary>
         public int Quantite { get; set; }
 

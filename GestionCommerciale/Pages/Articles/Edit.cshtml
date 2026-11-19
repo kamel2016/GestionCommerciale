@@ -200,7 +200,7 @@
                                 <tr>
                                     <td data-label="Date">@m.Date.ToString("dd/MM/yyyy HH:mm")</td>
                                     <td data-label="Type">@m.Type</td>
-                                    <td data-label="Quantité">@m.Quantite.ToString("+0;-0")</td>
+                                    <td data-label="Quantité">@m.QuantiteSignee.ToString("+0;-0")</td>
                                     <td data-label="Stock après">@m.QuantiteApres</td>
                                     <td data-label="Commentaire">@m.Commentaire</td>
                                 </tr>
@@ -371,19 +371,20 @@
                     <select asp-for="NewStock.Type" class="form-control">
                         <option value="EntreeReception">Entrée réception</option>
                         <option value="RetourClient">Retour client</option>
-                        <option value="AjustementInventaire">Ajustement d'inventaire (+ ou -)</option>
+                        <option value="AjustementPositif">Ajustement d'inventaire : ajouter (+)</option>
+                        <option value="AjustementNegatif">Ajustement d'inventaire : retirer (-)</option>
                         <option value="RetourFournisseur">Retour fournisseur</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Quantité</label>
                     <input asp-for="NewStock.Quantite" type="number" step="1" class="form-control" required />
-                    <small class="form-text">Nombre positif. Pour un ajustement : positif pour ajouter, négatif pour retirer (ex. -3).</small>
+                    <small class="form-text">Nombre strictement positif : le type choisi indique s'il s'agit d'une entrée ou d'une sortie.</small>
                 </div>
                 <div class="form-group">
                     <label>Motif / commentaire</label>
                     <input asp-for="NewStock.Commentaire" class="form-control" maxlength="250" />
-                    <small class="form-text">Obligatoire pour un ajustement d'inventaire.</small>
+                    <small class="form-text">Obligatoire pour un ajustement d'inventaire (ajouter ou retirer).</small>
                 </div>
             </div>
             <div class="modal-footer">

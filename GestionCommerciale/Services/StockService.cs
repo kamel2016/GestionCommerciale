@@ -1,6 +1,10 @@
-﻿using GestionCommerciale.Data;
+﻿﻿using GestionCommerciale.Data;
 using GestionCommerciale.Models;
 
+/// <summary>
+/// Seul endroit qui crée un mouvement de stock et modifie <c>Article.Quantite</c> (via <see cref="AppliquerMouvement"/>).
+/// CONVENTION : la quantité d'un mouvement est TOUJOURS positive ; le sens vient du type (<see cref="TypeMouvementStockExtensions.Sens"/>).
+/// </summary>
 public class StockService : IStockService
 {
     private readonly ApplicationDbContext _context;
@@ -9,32 +13,16 @@ public class StockService : IStockService
 
     public async Task EnregistrerMouvementAsync(
         int articleId, TypeMouvementStock type, int quantite,
-        string? commentaire = null, string? reference = null)
+        string? commentaire = null, string? reference = null,
+        string? sourceType = null, int? sourceId = null)
     {
-        if (quantite <= 0)
-            throw new ArgumentException("La quantité doit être positive.", nameof(quantite));
-
         var article = await _context.Articles.FindAsync(articleId)
             ?? throw new InvalidOperationException($"Article {articleId} introuvable.");
 
-        int delta = type switch
-        {
-            TypeMouvementStock.EntreeReception => +quantite,
-            TypeMouvementStock.RetourClient => +quantite,
-            TypeMouvementStock.SortieLivraison => -quantite,
-            TypeMouvementStock.RetourFournisseur => -quantite,
-            TypeMouvementStock.AjustementInventaire => throw new NotSupportedException(
-                "Un ajustement est signé : utiliser EnregistrerMouvementManuelAsync."),
-            _ => throw new NotSupportedException($"Type {type} non géré.")
-        };
-
-        if (article.Quantite + delta < 0)
-            throw new InvalidOperationException($"Stock insuffisant pour « {article.Libelle} » (disponible : {article.Quantite}).");
-
-        AppliquerMouvement(article, type, delta, commentaire, reference);
+        AppliquerMouvement(article, type, quantite, commentaire, reference, sourceType, sourceId);
     }
 
-    /// <summary>Quantité maximale par mouvement manuel (valeur absolue, tous types).</summary>
+    /// <summary>Quantité maximale par mouvement manuel.</summary>
     public const int QuantiteMaximaleParMouvement = 9_999_999;
 
     /// <summary>Types qu'un utilisateur peut saisir à la main depuis la fiche article.</summary>
@@ -42,7 +30,8 @@ public class StockService : IStockService
     {
         TypeMouvementStock.EntreeReception,
         TypeMouvementStock.RetourClient,
-        TypeMouvementStock.AjustementInventaire,
+        TypeMouvementStock.AjustementPositif,
+        TypeMouvementStock.AjustementNegatif,
         TypeMouvementStock.RetourFournisseur
     };
 
@@ -51,66 +40,81 @@ public class StockService : IStockService
         CancellationToken cancellationToken = default)
     {
         if (!TypesManuelsAutorises.Contains(type))
-            return ResultatStock.Echec(type == TypeMouvementStock.SortieLivraison
-                ? "La sortie de livraison est réservée aux bons de livraison : elle ne peut pas être saisie ici."
-                : "Ce type de mouvement n'est pas autorisé depuis la fiche article.");
+        {
+            return ResultatStock.Echec(type switch
+            {
+                TypeMouvementStock.SortieLivraison => "La sortie de livraison est réservée aux bons de livraison : elle ne peut pas être saisie ici.",
+                TypeMouvementStock.EntreeAnnulationLivraison => "L'entrée d'annulation de livraison est réservée aux bons de livraison : elle ne peut pas être saisie ici.",
+                TypeMouvementStock.AjustementInventaire => "L'ancien ajustement signé n'est plus utilisable : choisissez un ajustement positif ou négatif.",
+                _ => "Ce type de mouvement n'est pas autorisé depuis la fiche article."
+            });
+        }
 
         motif = string.IsNullOrWhiteSpace(motif) ? null : motif.Trim();
         if (motif is { Length: > 250 })
             return ResultatStock.Echec("Le motif ne doit pas dépasser 250 caractères.");
 
-        // Borne haute (remplace l'ancien [Range(1, 9999999)] de la page), sur la valeur absolue : vaut aussi pour -N.
         if (Math.Abs((long)quantite) > QuantiteMaximaleParMouvement)
             return ResultatStock.Echec($"La quantité ne doit pas dépasser {QuantiteMaximaleParMouvement:N0} par mouvement.");
 
-        int delta;
-        if (type == TypeMouvementStock.AjustementInventaire)
-        {
-            if (quantite == 0)
-                return ResultatStock.Echec("La quantité d'un ajustement ne peut pas être nulle.");
-            if (motif is null)
-                return ResultatStock.Echec("Le motif est obligatoire pour un ajustement d'inventaire.");
-            delta = quantite; // signée : + ajoute, - retire
-        }
-        else
-        {
-            if (quantite <= 0)
-                return ResultatStock.Echec("La quantité doit être supérieure à zéro.");
-            delta = type == TypeMouvementStock.RetourFournisseur ? -quantite : +quantite;
-        }
+        if (quantite <= 0)
+            return ResultatStock.Echec("La quantité doit être supérieure à zéro.");
+
+        if (type is TypeMouvementStock.AjustementPositif or TypeMouvementStock.AjustementNegatif && motif is null)
+            return ResultatStock.Echec("Le motif est obligatoire pour un ajustement d'inventaire.");
 
         var article = await _context.Articles.FindAsync(new object?[] { articleId }, cancellationToken);
         if (article is null)
             return ResultatStock.ArticleIntrouvable();
 
-        long apres = (long)article.Quantite + delta;
+        long apres = (long)article.Quantite + type.Sens() * quantite;
         if (apres < 0)
             return ResultatStock.Echec($"Stock insuffisant : disponible {article.Quantite}, le mouvement demandé le rendrait négatif.");
         if (apres > int.MaxValue)
             return ResultatStock.Echec("Quantité trop grande.");
 
-        AppliquerMouvement(article, type, delta, motif, reference: null);
+        AppliquerMouvement(article, type, quantite, motif, reference: null, sourceType: null, sourceId: null);
         return ResultatStock.Ok();
     }
 
-    /// <summary>Modifie le stock de l'article et ajoute la ligne d'historique (sans SaveChanges).</summary>
-    private void AppliquerMouvement(Article article, TypeMouvementStock type, int delta, string? commentaire, string? reference)
+    /// <summary>
+    /// UNIQUE point de création d'un mouvement : refuse toute quantité inférieure ou égale à zéro et tout type sans sens,
+    /// refuse un stock négatif, applique le sens d'après le type, renseigne QuantiteAvant et QuantiteApres.
+    /// Ne sauvegarde pas : l'appelant sauvegarde dans SA transaction.
+    /// </summary>
+    private void AppliquerMouvement(Article article, TypeMouvementStock type, int quantite, string? commentaire,
+        string? reference, string? sourceType, int? sourceId)
     {
+        if (quantite <= 0)
+            throw new ArgumentException("La quantité doit être strictement positive (le sens est porté par le type).", nameof(quantite));
+
+        var sens = type.Sens();
+        if (sens == 0)
+            throw new NotSupportedException($"Le type de mouvement {type} ne peut pas être utilisé pour un nouveau mouvement.");
+
+        long apres = (long)article.Quantite + sens * quantite;
+        if (apres < 0)
+            throw new InvalidOperationException($"Stock insuffisant pour « {article.Libelle} » (disponible : {article.Quantite}).");
+        if (apres > int.MaxValue)
+            throw new InvalidOperationException("Quantité trop grande.");
+
         var avant = article.Quantite;
-        article.Quantite = avant + delta;
+        article.Quantite = (int)apres;
         article.DateModification = DateTime.Now;
 
         _context.MouvementsStock.Add(new MouvementStock
         {
             ArticleId = article.ID,
             Type = type,
-            Quantite = delta,                 // signée : + entrée, - sortie
+            Quantite = quantite,              // toujours positive
             QuantiteAvant = avant,
             QuantiteApres = article.Quantite,
             Commentaire = commentaire,
             Reference = reference,
+            SourceType = sourceType,
+            SourceId = sourceId,
             Date = DateTime.Now
+            // CoutUnitaire non renseigné : aucune source fiable (Article.CMUP n'est calculé nulle part).
         });
-        // Pas de SaveChanges ici : l'appelant sauvegarde dans SA transaction
     }
 }
