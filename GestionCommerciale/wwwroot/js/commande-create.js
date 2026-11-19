@@ -69,7 +69,7 @@
         if (qte < 1 || (opt && opt.value && qte > stock)) {
             qteInput.classList.add('is-invalid');
             if (opt && opt.value && qte > stock) {
-                qteInput.nextElementSibling.textContent = `Stock insuffisant (disponible : ${stock}).`;
+                qteInput.nextElementSibling.textContent = `Quantité supérieure au stock physique actuel (${stock}).`;
             }
             valid = false;
         } else {
@@ -84,7 +84,7 @@
         if (existing) {
             const nouvelleQte = existing.quantite + qte;
             if (nouvelleQte > existing.stock) {
-                alert(`Stock insuffisant pour « ${existing.nom} » (disponible : ${existing.stock}).`);
+                alert(`Quantité supérieure au stock physique actuel pour « ${existing.nom} » (${existing.stock}). Ce contrôle ne réserve pas le stock.`);
                 return;
             }
             existing.quantite = nouvelleQte;

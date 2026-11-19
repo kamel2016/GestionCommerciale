@@ -99,10 +99,12 @@ namespace GestionCommerciale.Pages.Commande_Client
                         return Page();
                     }
 
+                    // Vérification en LECTURE SEULE (règle A) : le stock physique actuel n'est ni réservé ni modifié par la commande.
                     if (article.Quantite < ligne.Quantite)
                     {
                         ModelState.AddModelError(string.Empty,
-                            $"Stock insuffisant pour « {article.Libelle} » (disponible : {article.Quantite}).");
+                            $"Quantité demandée supérieure au stock physique actuel pour « {article.Libelle} » (stock physique actuel : {article.Quantite}). " +
+                            "Cette vérification ne réserve pas le stock : la sortie n'a lieu qu'à la validation du bon de livraison.");
                         await LoadDataAsync();
                         CommandeClient.NumeroCommande = await GenererNumeroCommandeAsync();
                         return Page();
@@ -140,9 +142,7 @@ namespace GestionCommerciale.Pages.Commande_Client
                         Quantite = ligne.Quantite,
                         PrixUnitaire = prix
                     });
-
-                    // Décrémentation du stock
-                    article.Quantite -= ligne.Quantite;
+                    // Aucune écriture sur le stock : seul le bon de livraison validé fait sortir le stock (S7).
                 }
 
                 commande.MontantHT = Math.Round(totalHT, 2);

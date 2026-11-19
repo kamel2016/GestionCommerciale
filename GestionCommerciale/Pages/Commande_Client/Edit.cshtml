@@ -183,7 +183,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group mb-3">
-                            <label class="form-label">Stock disponible</label>
+                            <label class="form-label">Stock physique actuel</label>
                             <input type="text" id="stock-disponible" class="form-control" readonly>
                         </div>
                     </div>
@@ -262,7 +262,7 @@
                 if (!valid) return;
 
                 if (qte > stock) {
-                    alert(`Stock insuffisant (disponible : ${stock}).`);
+                    alert(`Quantité supérieure au stock physique actuel (${stock}). Ce contrôle ne réserve pas le stock.`);
                     return;
                 }
 

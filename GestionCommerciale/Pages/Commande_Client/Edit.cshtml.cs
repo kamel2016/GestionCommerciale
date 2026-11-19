@@ -160,22 +160,21 @@ namespace GestionCommerciale.Pages.Commande_Client
                     return Page();
                 }
 
-                // 1. Restituer le stock des anciennes lignes
+                // 1. La commande ne touche JAMAIS au stock (S7). Une commande déjà liée à un bon de livraison garde ses lignes :
+                //    le lien ligne de BL -> ligne de commande et QuantiteLivree en dépendent (les recréer les perdrait).
                 var anciennesLignes = commande.LignesCommande.ToList();
-                var anciennesArticleIds = anciennesLignes.Select(l => l.ArticleId).Distinct().ToList();
-                var articlesAnciens = await _context.Articles
-                    .Where(a => anciennesArticleIds.Contains(a.ID))
-                    .ToDictionaryAsync(a => a.ID);
-
-                foreach (var ancienne in anciennesLignes)
+                var lignesModifiees = !MemesLignes(anciennesLignes, lignes);
+                if (lignesModifiees && await _context.BonsLivraison.AnyAsync(b => b.CommandeClientId == commande.Id))
                 {
-                    if (articlesAnciens.TryGetValue(ancienne.ArticleId, out var art))
-                    {
-                        art.Quantite += ancienne.Quantite;
-                    }
+                    ModelState.AddModelError(string.Empty,
+                        "Cette commande est déjà liée à un bon de livraison : ses lignes ne peuvent plus être modifiées. " +
+                        "Vous pouvez modifier l'en-tête (dates, statut, commentaire).");
+                    LignesExistantes = lignes;
+                    await LoadDataAsync();
+                    return Page();
                 }
 
-                // 2. Charger les nouveaux articles et vérifier le stock
+                // 2. Charger les articles et, si les lignes changent, vérifier le stock physique actuel (lecture seule, sans réservation)
                 var nouvellesIds = lignes.Select(l => l.ArticleId).Distinct().ToList();
                 var articles = await _context.Articles
                     .Where(a => nouvellesIds.Contains(a.ID))
@@ -191,37 +190,43 @@ namespace GestionCommerciale.Pages.Commande_Client
                         return Page();
                     }
 
-                    if (article.Quantite < l.Quantite)
+                    if (lignesModifiees && article.Quantite < l.Quantite)
                     {
                         ModelState.AddModelError(string.Empty,
-                            $"Stock insuffisant pour « {article.Libelle} » (disponible : {article.Quantite}).");
+                            $"Quantité demandée supérieure au stock physique actuel pour « {article.Libelle} » (stock physique actuel : {article.Quantite}). " +
+                            "Cette vérification ne réserve pas le stock : la sortie n'a lieu qu'à la validation du bon de livraison.");
                         LignesExistantes = lignes;
                         await LoadDataAsync();
                         return Page();
                     }
                 }
 
-                // 3. Remplacer les lignes et recalculer les montants
-                _context.LignesCommandeClient.RemoveRange(anciennesLignes);
-
-                decimal totalHT = 0;
-                decimal totalTVA = 0;
-
-                foreach (var l in lignes)
+                // 3. Remplacer les lignes et recalculer les montants, seulement si les lignes ont changé (aucune écriture sur le stock)
+                if (lignesModifiees)
                 {
-                    var article = articles[l.ArticleId];
-                    var montantLigneHT = article.PrixAchatHT * l.Quantite;
-                    totalHT += montantLigneHT;
-                    totalTVA += montantLigneHT * (article.TauxTVA / 100m);
+                    _context.LignesCommandeClient.RemoveRange(anciennesLignes);
 
-                    commande.LignesCommande.Add(new LigneCommandeClient
+                    decimal totalHT = 0;
+                    decimal totalTVA = 0;
+
+                    foreach (var l in lignes)
                     {
-                        ArticleId = article.ID,
-                        Quantite = l.Quantite,
-                        PrixUnitaire = article.PrixVenteHT
-                    });
+                        var article = articles[l.ArticleId];
+                        var montantLigneHT = article.PrixAchatHT * l.Quantite;
+                        totalHT += montantLigneHT;
+                        totalTVA += montantLigneHT * (article.TauxTVA / 100m);
 
-                    article.Quantite -= l.Quantite;
+                        commande.LignesCommande.Add(new LigneCommandeClient
+                        {
+                            ArticleId = article.ID,
+                            Quantite = l.Quantite,
+                            PrixUnitaire = article.PrixVenteHT
+                        });
+                    }
+
+                    commande.MontantHT = Math.Round(totalHT, 2);
+                    commande.MontantTVA = Math.Round(totalTVA, 2);
+                    commande.MontantTTC = Math.Round(totalHT + totalTVA, 2);
                 }
 
                 // 4. Mettre à jour l'entête
@@ -230,9 +235,6 @@ namespace GestionCommerciale.Pages.Commande_Client
                 commande.DateLivraison = Input.DateLivraison;
                 commande.Statut = Input.Statut;
                 commande.Commentaire = Input.Commentaire ?? string.Empty;
-                commande.MontantHT = Math.Round(totalHT, 2);
-                commande.MontantTVA = Math.Round(totalTVA, 2);
-                commande.MontantTTC = Math.Round(totalHT + totalTVA, 2);
                 commande.DateModification = DateTime.Now;
 
                 await _context.SaveChangesAsync();
@@ -255,6 +257,14 @@ namespace GestionCommerciale.Pages.Commande_Client
                 await LoadDataAsync();
                 return Page();
             }
+        }
+
+        /// <summary>Vrai si les lignes saisies sont les mêmes que celles enregistrées (mêmes articles, mêmes quantités totales par article).</summary>
+        private static bool MemesLignes(IEnumerable<LigneCommandeClient> existantes, IEnumerable<LigneDto> saisies)
+        {
+            var a = existantes.GroupBy(l => l.ArticleId).ToDictionary(g => g.Key, g => g.Sum(l => l.Quantite));
+            var b = saisies.GroupBy(l => l.ArticleId).ToDictionary(g => g.Key, g => g.Sum(l => l.Quantite));
+            return a.Count == b.Count && a.All(kv => b.TryGetValue(kv.Key, out var q) && q == kv.Value);
         }
 
         private List<LigneDto> ParseLignes(string json)
