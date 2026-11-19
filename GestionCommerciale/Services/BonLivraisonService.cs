@@ -9,10 +9,15 @@ namespace GestionCommerciale.Services
     public class BonLivraisonService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IStockService _stock;
 
-        public BonLivraisonService(ApplicationDbContext context)
+        /// <summary>Valeur de MouvementStock.SourceType pour les mouvements créés par un bon de livraison.</summary>
+        public const string SourceBonLivraison = "BonLivraison";
+
+        public BonLivraisonService(ApplicationDbContext context, IStockService stock)
         {
             _context = context;
+            _stock = stock;
         }
 
         public async Task<(bool Succes, string? Erreur)> ValiderAsync(int bonLivraisonId)
@@ -48,21 +53,18 @@ namespace GestionCommerciale.Services
                         $"La quantité livrée de {ligne.Article.Libelle} dépasse le reliquat de la commande.");
             }
 
-            // 2. Sortie de stock + mouvements
+            // 2. Sortie de stock + mouvements (point d'entrée unique : StockService, quantité positive, type SortieLivraison)
             foreach (var ligne in bl.Lignes)
             {
-                var article = ligne.Article!;
-                article.Quantite -= ligne.Quantite;
-
-                _context.MouvementsStock.Add(new MouvementStock
+                try
                 {
-                    ArticleId = article.ID,
-                    Date = DateTime.Now,
-                    Type = TypeMouvementStock.SortieLivraison,
-                    Quantite = ligne.Quantite,
-                    QuantiteApres = article.Quantite,
-                    Commentaire = $"Bon de livraison {bl.Numero}"
-                });
+                    await _stock.EnregistrerMouvementAsync(ligne.ArticleId, TypeMouvementStock.SortieLivraison, ligne.Quantite,
+                        $"Bon de livraison {bl.Numero}", bl.Numero, SourceBonLivraison, bl.ID);
+                }
+                catch (InvalidOperationException ex)   // stock insuffisant (par exemple deux lignes du même article)
+                {
+                    return (false, ex.Message);
+                }
 
                 if (ligne.LigneCommandeClient != null)
                     ligne.LigneCommandeClient.QuantiteLivree += ligne.Quantite;
@@ -100,23 +102,24 @@ namespace GestionCommerciale.Services
             if (bl.Statut == StatutBonLivraison.Annule)
                 return (false, "Ce BL est déjà annulé.");
 
+            // Garde-fou indépendant du statut : une annulation est déjà enregistrée pour ce BL (jamais deux fois l'effet).
+            if (await _context.MouvementsStock.AnyAsync(m => m.Type == TypeMouvementStock.EntreeAnnulationLivraison
+                    && m.SourceType == SourceBonLivraison && m.SourceId == bl.ID))
+                return (false, "Ce BL est déjà annulé.");
+
+            // Règle réelle : le statut Facture du BL n'est jamais posé par FactureService (la facture ne fait que référencer
+            // Facture.BonLivraisonId), donc on refuse dès qu'une facture NON annulée est liée à ce BL.
+            if (await _context.Factures.AnyAsync(f => f.BonLivraisonId == bl.ID && f.Statut != StatutFacture.Annulee))
+                return (false, "Impossible d'annuler ce BL : il est lié à une facture non annulée. Annulez d'abord la facture.");
+
             // Si validé, on remet le stock
             if (bl.Statut == StatutBonLivraison.Valide)
             {
                 foreach (var ligne in bl.Lignes)
                 {
-                    var article = ligne.Article!;
-                    article.Quantite += ligne.Quantite;
-
-                    _context.MouvementsStock.Add(new MouvementStock
-                    {
-                        ArticleId = article.ID,
-                        Date = DateTime.Now,
-                        Type = TypeMouvementStock.EntreeReception,
-                        Quantite = ligne.Quantite,
-                        QuantiteApres = article.Quantite,
-                        Commentaire = $"Annulation BL {bl.Numero}"
-                    });
+                    // Mouvement inverse (jamais de suppression du mouvement d'origine), type dédié, quantité positive.
+                    await _stock.EnregistrerMouvementAsync(ligne.ArticleId, TypeMouvementStock.EntreeAnnulationLivraison, ligne.Quantite,
+                        $"Annulation BL {bl.Numero}", bl.Numero, SourceBonLivraison, bl.ID);
 
                     if (ligne.LigneCommandeClient != null)
                         ligne.LigneCommandeClient.QuantiteLivree -= ligne.Quantite;

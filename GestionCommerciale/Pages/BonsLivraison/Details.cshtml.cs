@@ -19,6 +19,9 @@ namespace GestionCommerciale.Pages.BonsLivraison
             _service = service;
         }
 
+        /// <summary>Affiché quand le stock d'un article a été modifié par une autre opération entre la lecture et l'enregistrement.</summary>
+        public const string MessageConflitStock = "Le stock d'un article a été modifié par une autre opération. Rien n'a été enregistré : vérifiez le bon de livraison puis recommencez.";
+
         public BonLivraison BonLivraison { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(int id)
@@ -31,17 +34,31 @@ namespace GestionCommerciale.Pages.BonsLivraison
 
         public async Task<IActionResult> OnPostValiderAsync(int id)
         {
-            var (succes, erreur) = await _service.ValiderAsync(id);
-            if (succes) TempData["SuccessMessage"] = "Bon de livraison validé, stock mis à jour.";
-            else TempData["ErrorMessage"] = erreur;
+            try
+            {
+                var (succes, erreur) = await _service.ValiderAsync(id);
+                if (succes) TempData["SuccessMessage"] = "Bon de livraison validé, stock mis à jour.";
+                else TempData["ErrorMessage"] = erreur;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                TempData["ErrorMessage"] = MessageConflitStock;
+            }
             return RedirectToPage(new { id });
         }
 
         public async Task<IActionResult> OnPostAnnulerAsync(int id)
         {
-            var (succes, erreur) = await _service.AnnulerAsync(id);
-            if (succes) TempData["SuccessMessage"] = "Bon de livraison annulé.";
-            else TempData["ErrorMessage"] = erreur;
+            try
+            {
+                var (succes, erreur) = await _service.AnnulerAsync(id);
+                if (succes) TempData["SuccessMessage"] = "Bon de livraison annulé.";
+                else TempData["ErrorMessage"] = erreur;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                TempData["ErrorMessage"] = MessageConflitStock;
+            }
             return RedirectToPage(new { id });
         }
 
