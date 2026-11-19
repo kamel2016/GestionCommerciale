@@ -48,8 +48,36 @@ namespace GestionCommerciale.Services.Interface
         public const string TarifsFournisseur = "tarif(s) fournisseur";
     }
 
+    /// <summary>Contenu de la fiche article (page Détails) : données réelles, lues en base.</summary>
+    public class FicheArticle
+    {
+        public Models.Article Article { get; init; } = null!;
+
+        /// <summary>Nom de la catégorie, ou null si l'article n'en a pas.</summary>
+        public string? CategorieNom => Article.Category?.Name;
+
+        /// <summary>Tarifs par fournisseur, triés par nom de fournisseur.</summary>
+        public IReadOnlyList<Models.ArticleFournisseur> Tarifs { get; init; } = Array.Empty<Models.ArticleFournisseur>();
+
+        /// <summary>Derniers mouvements de stock, du plus récent au plus ancien (limités à <see cref="ArticleService.NombreMouvementsAffiches"/>).</summary>
+        public IReadOnlyList<Models.MouvementStock> DerniersMouvements { get; init; } = Array.Empty<Models.MouvementStock>();
+
+        /// <summary>Nombre TOTAL de mouvements de stock de l'article (pas seulement ceux affichés).</summary>
+        public int NombreMouvements { get; init; }
+
+        /// <summary>Date du mouvement de stock le plus récent, ou null s'il n'y en a aucun.</summary>
+        public DateTime? DernierMouvement { get; init; }
+    }
+
     public interface IArticleService
     {
+        /// <summary>
+        /// Charge la fiche réelle d'un article : l'article et sa catégorie, ses tarifs par fournisseur et ses derniers mouvements
+        /// de stock. Null si l'article n'existe pas. Lecture seule. Pas de stock « réservé » ni « en commande » : ces notions ne sont
+        /// pas encore définies (décision métier en attente), elles ne sont donc pas calculées ici.
+        /// </summary>
+        Task<FicheArticle?> ObtenirFicheAsync(int id, CancellationToken cancellationToken = default);
+
         /// <summary>
         /// Supprime physiquement un article, seulement s'il n'est utilisé nulle part : aucun mouvement de stock,
         /// aucune ligne de BL, facture, bon de réception, commande (client ou fournisseur) ou devis, aucun tarif fournisseur.

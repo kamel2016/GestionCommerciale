@@ -64,6 +64,42 @@ namespace GestionCommerciale.Services
             return new UtilisationArticle { Elements = comptes.Where(c => c.Nombre > 0).ToList(), Stock = stock };
         }
 
+        // ------------------------------------------------------------------ fiche (S4 étape 6)
+
+        public const int NombreMouvementsAffiches = 20;
+
+        public async Task<FicheArticle?> ObtenirFicheAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var article = await _context.Articles.AsNoTracking()
+                .Include(a => a.Category)
+                .FirstOrDefaultAsync(a => a.ID == id, cancellationToken);
+            if (article == null)
+                return null;
+
+            var tarifs = await _context.ArticleFournisseurs.AsNoTracking()
+                .Include(af => af.Fournisseur)
+                .Where(af => af.ArticleId == id)
+                .OrderBy(af => af.Fournisseur.Nom)
+                .ToListAsync(cancellationToken);
+
+            var mouvements = _context.MouvementsStock.AsNoTracking().Where(m => m.ArticleId == id);
+            var derniers = await mouvements
+                .OrderByDescending(m => m.Date).ThenByDescending(m => m.ID)
+                .Take(NombreMouvementsAffiches)
+                .ToListAsync(cancellationToken);
+            var nombre = await mouvements.CountAsync(cancellationToken);
+            DateTime? dernier = derniers.Count > 0 ? derniers[0].Date : null;
+
+            return new FicheArticle
+            {
+                Article = article,
+                Tarifs = tarifs,
+                DerniersMouvements = derniers,
+                NombreMouvements = nombre,
+                DernierMouvement = dernier
+            };
+        }
+
         // ------------------------------------------------------------------ création et modification (S4 étape 3)
 
         public async Task<ResultatArticle> CreerAsync(Article article, CancellationToken cancellationToken = default)
