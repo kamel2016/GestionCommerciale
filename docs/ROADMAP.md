@@ -15,7 +15,6 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
 
 ### État global
 - Le build échoue (1 erreur) : `Pages/Clients/Create.cshtml:46`, `@using GestionCommerciale.Enums` manquant.
-- Il n'y a aucun projet de tests.
 - `Client.Code` (et son index unique) et `Client.ModeFacturation` ne figurent dans aucune migration ni dans le snapshot.
 - `InitialCreate` a été modifiée à la main. La migration `AjoutDevis` n'est pas commitée. 22 fichiers sont modifiés ou non suivis.
 - Aucune authentification, aucun rôle, aucun journal d'actions.
@@ -39,7 +38,7 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
 - **Erreurs** : pas de gestion globale, messages d'exception affichés tels quels, concurrence jamais gérée, presque aucun log.
 - **Performance** : listes sans pagination (BL, commandes fournisseur), `Include` inutiles, `AsNoTracking` rare.
 - **Sécurité** : aucune authentification ni rôle, paramètres fiscaux et PDF accessibles à tous, seed factice à chaque démarrage, Dockerfile inexploitable.
-- **Nettoyage** : doublons (`Supplier/`, `Categorie`/`Category`), ViewModels et scripts orphelins, code commenté, encodage mixte, symbole € au lieu de DT.
+- **Nettoyage** : doublons (`Supplier/`, `Categorie`/`Category`), ViewModels et scripts orphelins, code commenté, encodage mixte, symbole € au lieu de DT (fait dans les vues et scripts : commit `cfed4f0`).
 - **PDF** : en-tête en dur, paramètres société non lus, mentions légales incomplètes, PDF non figé.
 
 ### Tableau priorisé
@@ -49,7 +48,7 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
 | Build | Erreur de compilation | `Pages/Clients/Create.cshtml:46` | S |
 | Migrations | `Client.Code`, `ModeFacturation`, index unique absents ; `InitialCreate` modifiée | `Migrations/`, `Models/Client.cs` | M |
 | Clients | Edit, Delete, Details factices | `Pages/Clients/*` | M |
-| Stock et commandes | Double sortie de stock | `Commande_Client/Create:145`, `BonLivraisonService:55` | M |
+| Stock et commandes | Double sortie de stock (à traiter en S7 et S9) | `Commande_Client/Create:145`, `BonLivraisonService:55` | M |
 | Stock | Signe inversé des entrées | `Articles/Edit.cshtml.cs:223` | S |
 | Réception | Aucune validation de BR, pas d'entrée de stock, Details factice | `Pages/GoodsReceipt/*` | G |
 | Réception | Service de retenue non injectable | `GoodsReceipt/Create:21` | S |
@@ -74,7 +73,6 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
 | Stock | Convention de signe unique, `StockService` partout | `StockService`, BL, Articles | M |
 | Erreurs et logs | Gestion globale, concurrence, transactions | `Services/`, `Pages/` | M |
 | Validation | Règles tunisiennes, anti sur-binding, quantités | `Models/`, `Pages/` | M |
-| Tests | Aucun projet de tests | – | M |
 
 **Souhaitable**
 | Module | Problème | Fichier | Effort |
@@ -85,7 +83,7 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
 | Import Excel | Articles, clients, fournisseurs | – | G |
 | Reporting | Balance âgée, ventes, stock, TVA, retenues | – | G |
 | Performance | Pagination BL et commandes fournisseur, projections | Pages Index | S à M |
-| Nettoyage | Doublons, code mort, encodage, € vers DT | divers | M |
+| Nettoyage | Doublons, code mort, encodage (€ vers DT fait : `cfed4f0`) | divers | M |
 | Exploitation | Dockerfile, secrets, configuration par environnement | `Dockerfile` | M |
 
 ---
@@ -97,7 +95,7 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
 
 **Réalisé** (preuve entre parenthèses, vérifiée le 2026-11-17)
 - **Erreur de build corrigée** : `@using GestionCommerciale.Enums` est en ligne 3 de `Pages/Clients/Create.cshtml` (commit `5ed700a` « Build corrigé »).
-- **Projet de tests créé avec un premier test** : `GestionCommerciale.Tests` et `ClientCodeTests.cs` (commit `3819ba1`). La solution compte aujourd'hui 89 tests.
+- **Projet de tests créé avec un premier test** : `GestionCommerciale.Tests` et `ClientCodeTests.cs` (commit `3819ba1`). La solution compte au 2026-11-19 **375 tests réussis et 18 ignorés** (tests SQL Server, lancés seulement avec `GC_TESTS_SQLSERVER=1`), 0 échec (`dotnet test`) ; 89 au 2026-11-17.
 - **SQL fautif retiré de `InitialCreate`** (5 lignes, avec votre accord) : commit `639c304`, fichier `Migrations/20261010173403_InitialCreate.cs`.
 - **État de travail commité** : oui, mais en **un seul commit** (`5ed700a`, 22 fichiers, +3013 / −52).
 - **`dotnet build` et `dotnet test` passent** : 0 erreur de compilation, 89 tests réussis (exécutés le 2026-11-17).
@@ -129,7 +127,8 @@ Point encore ouvert : l'avis du comptable (FODEC, timbre fiscal, retenue à la s
   - `ParametresSociete` : `TauxFodec`, `TauxRetenueSource` ;
   - `BonReception` : `TauxRetenueSource` et `MontantRetenueSource`.
   Cette liste est à confirmer, propriété par propriété, avant d'écrire la migration. Les arrondis du code sont à 3 décimales alors que ces colonnes n'en gardent que 2.
-- **Double configuration de `TauxTVA` : déplacée vers S4** (décision du 2026-11-17), car elle concerne les Articles. Elle n'est pas faite ; voir S4.
+- **État réel au 2026-11-19 [vérifié par requête en lecture seule sur la base de dev]** : les 9 colonnes d'en-tête (`MontantHT`, `MontantTVA`, `MontantTTC` de `CommandesClient`, `CommandesFournisseur`, `BonsReception`) sont en `decimal(18,3)`. Elles n'ont pas été modifiées à la main : la base de dev a été recréée depuis la chaîne de migrations (décision du 2026-11-19, voir `docs/DECISION-PRECISIONS.md`, section 7, document non suivi), qui les définit déjà en `(18,3)` ; **aucune migration n'est donc à écrire pour ces 9 colonnes**. Les autres colonnes de la liste ci-dessus restent en `decimal(18,2)` [vérifié : par exemple `Factures.TotalHt`, `LignesFacture.PrixUnitaireHt`, `ParametresSociete.TauxFodec`, `BonsReception.MontantRetenueSource`] : la migration correspondante reste à écrire, après relecture comptable de la précision cible.
+- **Double configuration de `TauxTVA` : déplacée vers S4** (décision du 2026-11-17), car elle concerne les Articles. Faite en S4 (commit `01faca4`, aucune migration nécessaire).
 - **Test à la main : « créer un client et vérifier son code `CLI-00001` »** : non prouvé dans l'historique. La génération du code est couverte par le test `ClientServiceTests.Les_codes_sont_generes_dans_l_ordre` (sous SQLite). Le client existant de la base de dev porte `CLI-00001` parce que la migration l'a rempli. La création d'un nouveau client sur la base de dev est à confirmer par vous.
 
 - **Effort** : M.
@@ -163,7 +162,7 @@ La migration `AjoutCodeClientEtModeFacturation` (`639c304`, commitée avant S3) 
 2. **Plafond de crédit et délai de paiement non appliqués** : enregistrés, validés et affichés, mais aucune règle ne les applique aux commandes. Prévu en **S7**.
 3. **Encours et solde client** : absents, faute de règle de calcul validée.
 4. **Liste non migrée vers le service** : l'activation et la désactivation (`ToggleStatus`) écrivent toujours directement dans la base. `Index.cshtml.cs` est resté en Windows-1252 et son champ `_logger` n'est plus utilisé.
-5. **Symbole € dans les autres modules** (Articles, commandes, réceptions, fournisseurs) : à traiter dans leurs sessions.
+5. **Symbole € dans les autres modules** (Articles, commandes, réceptions, fournisseurs) : remplacé par DT dans les vues et scripts (commit `cfed4f0`, 2026-11-19). Reste `Pages/Fournisseurs/Details.cshtml:35` (« Adresse € », texte fautif sans rapport avec un montant), à traiter en S5.
 
 **Risques connus**
 - Tout est testé sous SQLite. Les détections propres à SQL Server n'ont jamais été exécutées : doublon de code (erreurs 2601 et 2627 sur `IX_Clients_Code`) et refus de suppression par clé étrangère (erreur 547).
@@ -177,7 +176,13 @@ La migration `AjoutCodeClientEtModeFacturation` (`639c304`, commitée avant S3) 
 
 ### S4 – Articles
 - **Objectif** : fiches article fiables et premier correctif de stock.
-- **À faire** : Details et Delete réels ; unicité de la référence et du code-barres ; filtres catégorie et rupture corrects ; corriger le signe inversé de `Articles/Edit.cshtml.cs:223` ; affichage en DT ; **supprimer la double configuration de `TauxTVA`** (déplacée depuis S2) : `Infrastructure/ArticleConfiguration.cs:23` donne `HasPrecision(18, 3)` et `Data/ApplicationDbContext.cs:105` donne `HasPrecision(5, 2)` ; la colonne `Articles.TauxTVA` est déjà en `decimal(5,2)` dans le snapshot (le DbContext l'emporte), donc il reste à retirer une des deux configurations (probablement celle de `ArticleConfiguration`) et à vérifier avec `dotnet ef migrations has-pending-model-changes` qu'aucune migration n'est nécessaire.
+- **Fait** (preuves vérifiées le 2026-11-19 par `git log`, `dotnet test` et `dotnet ef migrations`) : signe des mouvements de stock corrigé (`8f69627`) ; suppression sûre d'un article et page Delete réelle (`1250db4`) ; création et modification réelles, unicité de la référence et du code-barres contrôlée par l'application (`112bcc4`, `980c33a`) ; index unique filtré sur `CodeBarre` (`f179c7a`) ; fiche Détails réelle (`103e7dc`) et suppression de son code mort (`2436c13`) ; liste des articles : catégories réelles, filtres rupture, stock bas et stock élevé distincts, tri stable, nombre de fournisseurs réel (`d167ef4`) ; double configuration de `TauxTVA` supprimée, `decimal(5,2)` conservé, aucune migration (`01faca4` ; `dotnet ef migrations has-pending-model-changes` : aucun changement) ; symbole € remplacé par DT dans 13 vues et 3 scripts (`cfed4f0`).
+- **Reste à faire (S4)** :
+  1. **Test manuel dans un navigateur**, jamais fait : Articles (liste, filtres, pagination, Create, Edit, Détails) et Détails d'un bon de réception (le script `goods-receipt-details.js` relit les montants affichés avec le suffixe « DT » : vérifier que le total ne s'affiche pas « NaN »).
+  2. **Stock réservé, en commande et disponible** : affichés « N/A » sur la fiche article, décision métier en attente (définitions candidates : `docs/DECISION-PRECISIONS.md`, section 8, document non suivi).
+  3. **Erreurs de la fenêtre « Nouveau mouvement de stock »** : affichées en haut de la page Edit et non dans la fenêtre (voir « Limite connue » ci-dessous).
+  4. **`catch (DbUpdateConcurrencyException)` de `Articles/Edit.OnPostAddStockMovementAsync`** : aucun test (voir S6).
+  5. **Tests de suppression avec clés étrangères désactivées** : le repli sur la violation de clé étrangère de SQL Server n'est pas testé (voir « Limite de test (étape 5) »).
 - **Effort** : M.
 - **Test à la main** : ajouter une entrée de stock manuelle, la quantité augmente ; un retour fournisseur ou un ajustement négatif la diminue ; la fiche affiche le vrai historique.
 - **Limite connue (étape 2, mouvements manuels)** : les erreurs de saisie de la fenêtre « Nouveau mouvement de stock » (motif manquant, stock insuffisant, quantité nulle…) ne sont pas affichées dans la fenêtre elle-même : elles passent par le message d'erreur en haut de la page Edit, après rechargement. À améliorer plus tard (affichage dans la fenêtre).
@@ -185,22 +190,22 @@ La migration `AjoutCodeClientEtModeFacturation` (`639c304`, commitée avant S3) 
 - **Limite de test (étape 5)** : les tests de suppression tournent sur SQLite avec les clés étrangères désactivées (`Foreign Keys=False`) pour créer une ligne qui référence l'article sans fabriquer tout le document parent. Le contrôle applicatif est donc validé, mais le repli sur une violation de clé étrangère de SQL Server (ligne créée entre le contrôle et la suppression) n'est pas testé.
 - **Dette (étape 5)** : `ArticleService` réutilise `ClientService.EstViolationCleEtrangere` ; à déplacer dans un helper commun (par ex. `Helpers/`) lors d'une session qui touche aussi le module Clients.
 - **Création et modification réelles via `ArticleService` (étape 3)** : `CreerAsync` et `ModifierAsync` portent les règles N1 à N8 (nettoyage des textes, unicité de la référence et du code-barres insensible à la casse, TVA 0 à 100 avec 2 décimales, stocks, catégorie facultative mais existante, valeurs imposées à la création, courses doublon/catégorie sans exception). Les pages Create et Edit passent par le service ; Create reçoit les prix d'achat HT, de vente HT et TTC (décision D) ; le TTC est libre, jamais calculé ni vérifié (décision C, règle FODEC non validée).
-- **Limites de l'étape 3** : (1) tests sur SQLite ; la détection SQL Server d'un doublon simultané (erreurs 2601/2627 avec le nom d'index) et d'une clé étrangère (547) n'est pas exercée ; seules les requêtes d'unicité et de catégorie ont été vérifiées sur la base SQL Server de dev (refus uniquement, aucune écriture). (2) Rien n'a été vérifié dans un navigateur (affichage des erreurs par champ, champs de prix de Create). (3) Corrigé après l'étape 3 : le libellé « Catégorie » du formulaire de création n'a plus la classe `required` (commit `dd7dfe9`), et la fiche Edit affiche maintenant les erreurs du code-barres, de la marque, du modèle, de la couleur et de la taille (emplacements `asp-validation-for` rétablis) ; rendu toujours non vérifié dans un navigateur. (4) L'index unique filtré sur le code-barres reste à créer (étape 4) : sans lui, seul le contrôle applicatif protège le code-barres.
-- **BLOQUANT avant toute base neuve ou tout déploiement : la chaîne de migrations ne reconstruisait pas la base (constaté à l'étape 4)** : 2 migrations appliquées sur la base de dev (`20261109184448_AjoutParametres`, `20261111082521_AjoutDevis1`) n'avaient jamais été commitées et étaient absentes du dépôt (`Migrate()` sur base vide échouait à `AjoutParametres1`). Retrouvées dans la corbeille Windows et réintégrées sans modification (commit `3ddb9d5`) : `Migrate()` sur base vide réussit désormais avec les 19 migrations. **Écart restant** : 9 colonnes de montants (`BonsReception`, `CommandesClient`, `CommandesFournisseur` : `MontantHT`, `MontantTVA`, `MontantTTC`) sont en `decimal(18,3)` dans la chaîne mais en `decimal(18,2)` dans la base de dev (à traiter dans la migration des précisions decimal, S2 non faite). **La production n'a pas été examinée** : sa chaîne et son schéma sont inconnus et doivent être vérifiés avant toute application.
+- **Limites de l'étape 3** : (1) tests sur SQLite ; la détection SQL Server d'un doublon simultané (erreurs 2601/2627 avec le nom d'index) et d'une clé étrangère (547) n'est pas exercée ; seules les requêtes d'unicité et de catégorie ont été vérifiées sur la base SQL Server de dev (refus uniquement, aucune écriture). (2) Rien n'a été vérifié dans un navigateur (affichage des erreurs par champ, champs de prix de Create). (3) Corrigé après l'étape 3 : le libellé « Catégorie » du formulaire de création n'a plus la classe `required` (commit `dd7dfe9`), et la fiche Edit affiche maintenant les erreurs du code-barres, de la marque, du modèle, de la couleur et de la taille (emplacements `asp-validation-for` rétablis) ; rendu toujours non vérifié dans un navigateur. (4) [Levé] L'index unique filtré sur le code-barres a été créé (étape 4, `f179c7a`) et appliqué à la base de dev (voir « Migration `UniciteCodeBarre` » ci-dessous).
+- **BLOQUANT avant toute base neuve ou tout déploiement : la chaîne de migrations ne reconstruisait pas la base (constaté à l'étape 4)** : 2 migrations appliquées sur la base de dev (`20261109184448_AjoutParametres`, `20261111082521_AjoutDevis1`) n'avaient jamais été commitées et étaient absentes du dépôt (`Migrate()` sur base vide échouait à `AjoutParametres1`). Retrouvées dans la corbeille Windows et réintégrées sans modification (commit `3ddb9d5`) : `Migrate()` sur base vide réussit désormais avec les 19 migrations. **Écart levé le 2026-11-19 (base de dev)** : la base de dev a été recréée depuis la chaîne de migrations ; les 9 colonnes de montants (`BonsReception`, `CommandesClient`, `CommandesFournisseur` : `MontantHT`, `MontantTVA`, `MontantTTC`) y sont en `decimal(18,3)` [vérifié par requête, 9 sur 9], comme dans la chaîne et le snapshot (voir S2). **La production n'a pas été examinée** : sa chaîne et son schéma sont inconnus et doivent être vérifiés avant toute application.
 - **Prérequis écrits de l'étape 4 (index unique filtré sur `CodeBarre`)** : (1) rejouer sur CHAQUE base cible, avant l'application, les 4 requêtes de contrôle (doublons après nettoyage, chaînes vides ou blanches, espaces au début ou à la fin, tabulation / saut de ligne / retour chariot / espace insécable) ; (2) une sauvegarde de la base cible est un prérequis, vérifiée avant toute application ; (3) la production n'a pas été examinée ; (4) la migration ne s'applique sur aucune base sans accord explicite après affichage du script.
 - **RÈGLE : toute écriture de code-barres passe par `ArticleService`** (`CreerAsync` / `ModifierAsync`). L'index unique filtré (`WHERE [CodeBarre] IS NOT NULL`) accepte plusieurs NULL mais **refuse deux chaînes vides** (constaté sur SQL Server, test S6f) : seul le service convertit une valeur vide ou blanche en NULL et traduit un doublon en erreur sur le champ. Aucune écriture directe dans `Articles.CodeBarre` (SQL, autre service, script). **L'import Excel (S15) doit s'y conformer** (voir S15).
-- **Migration `UniciteCodeBarre` générée, NON appliquée (étape 4)** : `20261118231853_UniciteCodeBarre` remplace l'index non unique `IX_Articles_CodeBarre` par un index unique filtré (`WHERE [CodeBarre] IS NOT NULL`) ; elle ne touche à aucune précision decimal (vérifié : le script ne contient ni `decimal` ni `ALTER COLUMN`). `Down` rétablit l'index non unique. À appliquer seulement après : sauvegarde de la base cible, rejeu des 4 requêtes de contrôle sur cette base, accord explicite. Sur la base de dev, les 4 requêtes sont vides (6 articles, codes tous distincts) ; la production n'a pas été examinée. La détection d'un doublon de code-barres simultané (2601 sur `IX_Articles_CodeBarre`) est écrite et testée sur SQLite et sur SQL Server 13.0.4001 (base jetable).
+- **Migration `UniciteCodeBarre` générée (étape 4) et APPLIQUÉE à la base de dev** : `20261118231853_UniciteCodeBarre` remplace l'index non unique `IX_Articles_CodeBarre` par un index unique filtré (`WHERE [CodeBarre] IS NOT NULL`) ; elle ne touche à aucune précision decimal (vérifié : le script ne contient ni `decimal` ni `ALTER COLUMN`). `Down` rétablit l'index non unique. **État constaté le 2026-11-19 sur la base de dev (requêtes en lecture seule)** : `dbo.__EFMigrationsHistory` contient 20 lignes et la dernière est `20261118231853_UniciteCodeBarre` ; `IX_Articles_CodeBarre` a `is_unique = 1` et le filtre `([CodeBarre] IS NOT NULL)` ; `dotnet ef migrations list` n'affiche aucune migration en attente. Appliquée sur la base de dev recréée, après sauvegarde `COPY_ONLY` et rejeu des 4 requêtes de contrôle (vides) : voir `docs/DECISION-PRECISIONS.md`, section 7.2 (document non suivi). Sur toute autre base cible, les prérequis ci-dessus restent à rejouer (sauvegarde, 4 requêtes de contrôle, accord explicite) ; la production n'existe pas à ce jour. La détection d'un doublon de code-barres simultané (2601 sur `IX_Articles_CodeBarre`) est écrite et testée sur SQLite et sur SQL Server 13.0.4001 (base jetable).
 - **Tests sur un vrai SQL Server (étape 4)** : base jetable LocalDB créée par `Migrate()` et supprimée à la fin (garde-fous : LocalDB obligatoire, nom de base `GestionCommerciale_Test_*`), exécutés seulement avec `GC_TESTS_SQLSERVER=1` (sinon « ignorés »). Numéros réels relevés sur SQL Server 13.0.4001 : doublon de référence = **2601** (message contenant `IX_Articles_Reference`, aussi pour une casse différente) ; violation de clé primaire = **2627** (`PK_Articles`, non confondue avec un doublon de référence) ; clé étrangère = **547** (`FK_Articles_Categories_CategoryId`). Valable pour cette version seulement.
 
 ### S5 – Fournisseurs
 - **Objectif** : un seul module fournisseur.
-- **À faire** : supprimer `Pages/Supplier/` (décision 2, confirmation explicite au moment de la session) en reportant la requête allégée de son Index ; Details et Delete réels ; unicité du nom, de l'email et du matricule ; liste unique de gouvernorats ; script JS manquant ; pagination bornée.
+- **À faire** : supprimer `Pages/Supplier/` (décision 2, confirmation explicite au moment de la session) en reportant la requête allégée de son Index ; Details et Delete réels ; unicité du nom, de l'email et du matricule ; liste unique de gouvernorats ; script JS manquant ; pagination bornée. [vérifié : `Pages/Supplier/` existe encore à côté de `Pages/Fournisseurs/` ; le reste est déduit de l'audit du 2026-11-15, non revérifié dans le code]
 - **Effort** : M.
 - **Test à la main** : créer, modifier, supprimer un fournisseur ; refuser la suppression d'un fournisseur ayant des articles.
 
 ### S6 – Stock (historique des mouvements)
 - **Objectif** : une seule règle pour tous les mouvements.
-- **À faire** : fixer la convention (quantité signée) ; enregistrer `StockService` dans `Program.cs` et l'utiliser partout ; type de mouvement correct à l'annulation d'un BL ; protection de concurrence sur `Article.Quantite` ; page d'historique réelle par article.
+- **À faire** : fixer la convention (quantité signée) ; enregistrer `StockService` dans `Program.cs` et l'utiliser partout ; type de mouvement correct à l'annulation d'un BL ; protection de concurrence sur `Article.Quantite` ; page d'historique réelle par article. [vérifié : `StockService` enregistré dans `Program.cs:34` ; le reste est déduit de l'audit, non revérifié dans le code]
 - **Changement de contrat de `StockService` (fait en S4 étape 2, à connaître)** : `StockService` est maintenant enregistré dans `Program.cs`. `EnregistrerMouvementAsync` lève `NotSupportedException` pour `AjustementInventaire` (un ajustement est signé : utiliser `EnregistrerMouvementManuelAsync`, qui exige un motif et refuse un stock négatif) ; `RetourFournisseur` y est géré en sortie ; `QuantiteAvant` y est renseignée. Aucun code n'appelait cette méthode avant S4 (recherche sur `.cs` et `.cshtml`), donc rien n'était cassé. **`BonLivraisonService` ne l'utilise toujours pas** : il modifie `Article.Quantite` directement (`BonLivraisonService.cs:55` et `:109`), enregistre les sorties en quantité positive (`:62`), enregistre l'annulation d'un BL avec le type `EntreeReception` (`:115`) et ne renseigne pas `QuantiteAvant`. À reprendre ici en S6.
 - **Limite de test (S4 étape 2)** : le `catch (DbUpdateConcurrencyException)` de `Articles/Edit.OnPostAddStockMovementAsync` n'est couvert par aucun test (SQLite ne reproduit pas `rowversion`). À vérifier sur SQL Server lors de la protection de concurrence de `Article.Quantite`.
 - **Effort** : M.
@@ -208,44 +213,44 @@ La migration `AjoutCodeClientEtModeFacturation` (`639c304`, commitée avant S3) 
 
 ### S7 – Commandes client
 - **Objectif** : commandes justes, sans toucher au stock (décision 1).
-- **À faire** : supprimer la sortie de stock à la création et à l'édition ; copier `TauxTVA` dans la ligne à sa création et renseigner `MontantLigne` ; remise globale ; corriger l'Edit (`PrixVenteHT`, conservation de `QuantiteLivree`) ; transitions de statut contrôlées ; plafond de crédit et délai pour les clients en compte ; numérotation sûre ; vraie page Delete.
+- **À faire** : supprimer la sortie de stock à la création et à l'édition ; copier `TauxTVA` dans la ligne à sa création et renseigner `MontantLigne` ; remise globale ; corriger l'Edit (`PrixVenteHT`, conservation de `QuantiteLivree`) ; transitions de statut contrôlées ; plafond de crédit et délai pour les clients en compte ; numérotation sûre ; vraie page Delete. [vérifié : `Commande_Client/Create.cshtml.cs:145` décrémente encore `article.Quantite` ; le reste est déduit de l'audit, non revérifié dans le code]
 - **Effort** : M.
 - **Test à la main** : créer une commande, le stock ne bouge pas ; modifier une commande partiellement livrée sans perdre la livraison ; dépasser le plafond de crédit est signalé.
 
 ### S8 – Commandes fournisseur et bons de réception
 - **Objectif** : la marchandise reçue entre en stock.
-- **À faire** : TVA par ligne issue de l'article ; prix recalculés côté serveur ; reliquat par ligne ; validation et annulation du BR avec entrée de stock ; statut de la commande mis à jour ; Details réel ; corriger l'injection de `IRetenueSourceService` ; numérotation sûre.
+- **À faire** : TVA par ligne issue de l'article ; prix recalculés côté serveur ; reliquat par ligne ; validation et annulation du BR avec entrée de stock ; statut de la commande mis à jour ; Details réel ; corriger l'injection de `IRetenueSourceService` ; numérotation sûre. [vérifié : `GoodsReceipt/Create.cshtml.cs:21` injecte `RetenueSourceService` concret alors que seule l'interface est enregistrée (`Program.cs:28`), et `Pages/GoodsReceipt/` n'a aucune page de validation de BR ; le reste est déduit de l'audit, non revérifié dans le code]
 - **Effort** : G.
 - **Test à la main** : créer puis valider un BR, la quantité de l'article augmente ; recevoir plus que le reliquat est refusé.
 
 ### S9 – Bons de livraison
 - **Objectif** : BL complets et cohérents avec la commande.
-- **À faire** : statut de la commande après livraison (partielle ou totale) ; édition et suppression d'un brouillon ; prix et TVA figés sur la ligne du BL ; contrôle du client et de la commande au POST ; gestion d'erreurs et de concurrence sur Valider et Annuler.
+- **À faire** : statut de la commande après livraison (partielle ou totale) ; édition et suppression d'un brouillon ; prix et TVA figés sur la ligne du BL ; contrôle du client et de la commande au POST ; gestion d'erreurs et de concurrence sur Valider et Annuler. [vérifié : la mise à jour du statut de la commande est en commentaire, `BonLivraisonService.cs:76-78` ; le reste est déduit de l'audit, non revérifié dans le code]
 - **Effort** : M.
 - **Test à la main** : deux livraisons partielles d'une commande, puis annulation de l'une.
 
 ### S10 – Facturation (après avis du comptable)
 - **Objectif** : factures conformes.
 - **Prérequis** : réponses du comptable sur FODEC, timbre, retenue à la source, numérotation et exercice. Aucune règle fiscale supposée.
-- **À faire** : une seule numérotation (`NumerotationService`) ; un BL ne donne qu'une facture non annulée (index unique filtré) ; prix du BL repris ; échéance selon `Client.DelaiPaiement` ; facture directe pour le client passager ; facture mensuelle depuis les BL du client en compte ; modification du brouillon ; facture figée après validation ; FODEC et timbre selon les règles validées.
+- **À faire** : une seule numérotation (`NumerotationService`) ; un BL ne donne qu'une facture non annulée (index unique filtré) ; prix du BL repris ; échéance selon `Client.DelaiPaiement` ; facture directe pour le client passager ; facture mensuelle depuis les BL du client en compte ; modification du brouillon ; facture figée après validation ; FODEC et timbre selon les règles validées. [vérifié : `FactureService` utilise `ISequenceService` (`FactureService.cs:13`) ; le reste est déduit de l'audit, non revérifié dans le code]
 - **Effort** : G.
 - **Test à la main** : facturer un BL, tenter de le facturer à nouveau (refusé), générer la facture mensuelle d'un client.
 
 ### S11 – Règlements puis échéanciers
 - **Objectif** : encaissements justes.
-- **À faire** : supprimer la triple déduction de la retenue à la source ; refuser un règlement sur brouillon ou facture annulée ; transaction et concurrence ; remplacer la cascade Règlement vers Facture ; échéancier et suivi des retards.
+- **À faire** : supprimer la triple déduction de la retenue à la source ; refuser un règlement sur brouillon ou facture annulée ; transaction et concurrence ; remplacer la cascade Règlement vers Facture ; échéancier et suivi des retards. [déduit de l'audit du 2026-11-15, non revérifié dans le code]
 - **Effort** : G.
 - **Test à la main** : deux règlements partiels puis solde ; un règlement supérieur au reste est refusé.
 
 ### S12 – PDF et mentions légales
 - **Objectif** : facture imprimable et conforme.
-- **À faire** : lire les paramètres de la société (nom, matricule, adresse, logo) ; mentions légales validées par le comptable ; récapitulatif de TVA par taux ; FODEC ; montant en lettres ; « net à payer » correct ; archivage du PDF figé à la validation ; formats de nombres indépendants du serveur.
+- **À faire** : lire les paramètres de la société (nom, matricule, adresse, logo) ; mentions légales validées par le comptable ; récapitulatif de TVA par taux ; FODEC ; montant en lettres ; « net à payer » correct ; archivage du PDF figé à la validation ; formats de nombres indépendants du serveur. [déduit de l'audit du 2026-11-15, non revérifié dans le code]
 - **Effort** : M.
 - **Test à la main** : comparer un PDF avec un exemple validé par le comptable.
 
 ### S13 – Avoirs
 - **Objectif** : corriger une facture validée sans la modifier.
-- **À faire** : modèle, numérotation, lien avec la facture d'origine, retour de stock éventuel, impact sur le solde client, PDF.
+- **À faire** : modèle, numérotation, lien avec la facture d'origine, retour de stock éventuel, impact sur le solde client, PDF. [déduit de l'audit du 2026-11-15, non revérifié dans le code]
 - **Prérequis** : règles d'avoir validées par le comptable.
 - **Effort** : G.
 
