@@ -1,9 +1,8 @@
 ﻿using GestionCommerciale.Data;
-using GestionCommerciale.Infrastructure.Persistence;
-using GestionCommerciale.Models;
 using GestionCommerciale.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System;
 
@@ -15,17 +14,20 @@ public sealed class IndexModel(ApplicationDbContext db, IArticleService articleS
     private readonly IArticleService _articleService = articleService;
     private readonly ILogger<IndexModel> _logger = logger;
 
+    // Les noms de paramètres sont ceux envoyés par la vue (searchTerm, category, status, stockFilter, sortBy, pageSize, page).
     [BindProperty(SupportsGet = true)] public string? SearchTerm { get; set; }
-    [BindProperty(SupportsGet = true)] public string? SelectedCategory { get; set; }
-    [BindProperty(SupportsGet = true)] public string? SelectedStatus { get; set; }
-    [BindProperty(SupportsGet = true)] public string? SelectedStockFilter { get; set; }
+    /// <summary>Identifiant de la catégorie choisie (texte). Illisible ou vide : filtre ignoré.</summary>
+    [BindProperty(Name = "category", SupportsGet = true)] public string? SelectedCategory { get; set; }
+    [BindProperty(Name = "status", SupportsGet = true)] public string? SelectedStatus { get; set; }
+    /// <summary>« out » = rupture (stock nul), « low » = stock bas (au-dessus de 0 et au plus égal au minimum), « high » = au-dessus du minimum.</summary>
+    [BindProperty(Name = "stockFilter", SupportsGet = true)] public string? SelectedStockFilter { get; set; }
     [BindProperty(SupportsGet = true)] public string SortBy { get; set; } = "name";
     [BindProperty(SupportsGet = true)] public int Page { get; set; } = 1;
     [BindProperty(SupportsGet = true)] public int PageSize { get; set; } = 25;
 
     public List<ArticleListDto> Articles { get; private set; } = new();
-    // Conservé pour le contrat de la vue. Remplacer par une requête Categories lorsque l'entité est disponible.
-    public List<string> Categories { get; private set; } = new() { "Informatique", "Bureautique", "Fournitures", "Mobilier", "Outils", "Services" };
+    /// <summary>Catégories réelles (table Categories), triées par nom : valeur = identifiant, texte = nom.</summary>
+    public List<SelectListItem> Categories { get; private set; } = new();
     public int CurrentPage { get; private set; }
     public int TotalPages { get; private set; }
     public int TotalRecords { get; private set; }
@@ -34,29 +36,40 @@ public sealed class IndexModel(ApplicationDbContext db, IArticleService articleS
     {
         try
         {
+            Categories = await _db.Categories.AsNoTracking()
+                .OrderBy(c => c.Name)
+                .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
+                .ToListAsync(cancellationToken);
+
             var query = _db.Articles.AsNoTracking();
             if (!string.IsNullOrWhiteSpace(SearchTerm))
             {
-                var term = SearchTerm.Trim();
-                query = query.Where(a => a.Reference.Contains(term) || a.Libelle.Contains(term) ||
-                                         (a.CodeBarre != null && a.CodeBarre.Contains(term)));
+                // Insensible à la casse de façon explicite (SQL Server l'est par sa collation, SQLite non).
+                var term = SearchTerm.Trim().ToLower();
+                query = query.Where(a => a.Reference.ToLower().Contains(term) || a.Libelle.ToLower().Contains(term) ||
+                                         (a.CodeBarre != null && a.CodeBarre.ToLower().Contains(term)));
             }
+            if (int.TryParse(SelectedCategory, out var categoryId))
+                query = query.Where(a => a.CategoryId == categoryId);
             if (SelectedStatus is "active" or "inactive")
                 query = query.Where(a => a.EstActif == (SelectedStatus == "active"));
+
+            // Trois ensembles distincts, comme le statut affiché dans la colonne Stock.
             if (SelectedStockFilter is "out")
-                query = query.Where(a => a.Quantite <= a.StockMin);
+                query = query.Where(a => a.Quantite <= 0);
             else if (SelectedStockFilter is "low")
                 query = query.Where(a => a.Quantite > 0 && a.Quantite <= a.StockMin);
             else if (SelectedStockFilter is "high")
                 query = query.Where(a => a.Quantite > a.StockMin);
 
+            // Clé secondaire = Id : l'ordre est stable, donc deux pages successives ne se chevauchent pas.
             query = SortBy switch
             {
-                "name_desc" => query.OrderByDescending(a => a.Libelle),
-                "reference" => query.OrderBy(a => a.Reference),
-                "newest" => query.OrderByDescending(a => a.DateCreation),
-                "oldest" => query.OrderBy(a => a.DateCreation),
-                _ => query.OrderBy(a => a.Libelle)
+                "name_desc" => query.OrderByDescending(a => a.Libelle).ThenBy(a => a.ID),
+                "reference" => query.OrderBy(a => a.Reference).ThenBy(a => a.ID),
+                "newest" => query.OrderByDescending(a => a.DateCreation).ThenByDescending(a => a.ID),
+                "oldest" => query.OrderBy(a => a.DateCreation).ThenBy(a => a.ID),
+                _ => query.OrderBy(a => a.Libelle).ThenBy(a => a.ID)
             };
 
             PageSize = PageSize is 10 or 25 or 50 or 100 ? PageSize : 25;
@@ -64,22 +77,25 @@ public sealed class IndexModel(ApplicationDbContext db, IArticleService articleS
             TotalPages = Math.Max(1, (int)Math.Ceiling(TotalRecords / (double)PageSize));
             CurrentPage = Math.Clamp(Page, 1, TotalPages);
 
-            var rows = await query.Skip((CurrentPage - 1) * PageSize).Take(PageSize)
+            Articles = await query.Skip((CurrentPage - 1) * PageSize).Take(PageSize)
                 .Select(a => new ArticleListDto
                 {
                     Id = a.ID,
                     Reference = a.Reference,
                     Barcode = a.CodeBarre ?? string.Empty,
                     Name = a.Libelle,
+                    Category = a.Category != null ? a.Category.Name : null,
+                    Brand = a.Marque,
+                    Model = a.Modele,
                     CurrentStock = a.Quantite,
                     StockMinimum = a.StockMin,
                     Unit = a.Unite,
                     IsActive = a.EstActif,
                     CreatedAt = a.DateCreation,
-                    StockStatus = a.Quantite == 0 ? "out" : (a.Quantite <= a.StockMin ? "low" : "good"),
-                    SupplierCount = a.FournisseurId.HasValue ? 1 : 0
+                    StockStatus = a.Quantite <= 0 ? "out" : (a.Quantite <= a.StockMin ? "low" : "good"),
+                    // Nombre réel de tarifs fournisseur de l'article (et non le seul fournisseur principal).
+                    SupplierCount = _db.ArticleFournisseurs.Count(af => af.ArticleId == a.ID)
                 }).ToListAsync(cancellationToken);
-            Articles = rows;
             return Page();
         }
         catch (Exception ex)

@@ -82,7 +82,7 @@ public abstract class ArticleTestBase : IDisposable
 
     protected async Task<int> InsererCategorieAsync(string nom = "Catégorie 1")
     {
-        var categorie = new Category { Name = nom };
+        var categorie = new Category { Name = nom, Code = "C-" + Guid.NewGuid().ToString("N")[..8] };   // Code est unique
         Db.Categories.Add(categorie);
         await Db.SaveChangesAsync();
         Db.ChangeTracker.Clear();

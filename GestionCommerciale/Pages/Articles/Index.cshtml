@@ -151,13 +151,13 @@
                         <option value="">-- Toutes les catégories --</option>
                         @foreach (var category in Model.Categories)
                         {
-                            if (Model.SelectedCategory == category)
+                            if (Model.SelectedCategory == category.Value)
                             {
-                                <option value="@category" selected>@category</option>
+                                <option value="@category.Value" selected>@category.Text</option>
                             }
                             else
                             {
-                                <option value="@category">@category</option>
+                                <option value="@category.Value">@category.Text</option>
                             }
                         }
                     </select>
@@ -304,7 +304,7 @@
                     </select>
                 </div>
 
-                @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.SelectedCategory) || !string.IsNullOrEmpty(Model.SelectedStatus))
+                @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.SelectedCategory) || !string.IsNullOrEmpty(Model.SelectedStatus) || !string.IsNullOrEmpty(Model.SelectedStockFilter))
                 {
                     <div class="filter-group">
                         <label>&nbsp;</label>
@@ -448,6 +448,7 @@
                        asp-route-searchTerm="@Model.SearchTerm"
                        asp-route-category="@Model.SelectedCategory"
                        asp-route-status="@Model.SelectedStatus"
+                       asp-route-stockFilter="@Model.SelectedStockFilter"
                        asp-route-sortBy="@Model.SortBy"
                        asp-route-pageSize="@Model.PageSize"
                        class="page-link">
@@ -458,6 +459,7 @@
                        asp-route-searchTerm="@Model.SearchTerm"
                        asp-route-category="@Model.SelectedCategory"
                        asp-route-status="@Model.SelectedStatus"
+                       asp-route-stockFilter="@Model.SelectedStockFilter"
                        asp-route-sortBy="@Model.SortBy"
                        asp-route-pageSize="@Model.PageSize"
                        class="page-link">
@@ -478,6 +480,7 @@
                            asp-route-searchTerm="@Model.SearchTerm"
                            asp-route-category="@Model.SelectedCategory"
                            asp-route-status="@Model.SelectedStatus"
+                       asp-route-stockFilter="@Model.SelectedStockFilter"
                            asp-route-sortBy="@Model.SortBy"
                            asp-route-pageSize="@Model.PageSize"
                            class="page-link">@i</a>
@@ -491,6 +494,7 @@
                        asp-route-searchTerm="@Model.SearchTerm"
                        asp-route-category="@Model.SelectedCategory"
                        asp-route-status="@Model.SelectedStatus"
+                       asp-route-stockFilter="@Model.SelectedStockFilter"
                        asp-route-sortBy="@Model.SortBy"
                        asp-route-pageSize="@Model.PageSize"
                        class="page-link">
@@ -501,6 +505,7 @@
                        asp-route-searchTerm="@Model.SearchTerm"
                        asp-route-category="@Model.SelectedCategory"
                        asp-route-status="@Model.SelectedStatus"
+                       asp-route-stockFilter="@Model.SelectedStockFilter"
                        asp-route-sortBy="@Model.SortBy"
                        asp-route-pageSize="@Model.PageSize"
                        class="page-link">
