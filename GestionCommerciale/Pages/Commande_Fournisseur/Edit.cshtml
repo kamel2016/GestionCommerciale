@@ -87,10 +87,10 @@
                             <div class="col-md-6 offset-md-6">
                                 <div class="card">
                                     <div class="card-body">
-                                        <div class="d-flex justify-content-between mb-2"><strong>Montant HT :</strong><span id="montant-ht">0,00 €</span></div>
-                                        <div class="d-flex justify-content-between mb-2"><strong>TVA (20 %) :</strong><span id="montant-tva">0,00 €</span></div>
+                                        <div class="d-flex justify-content-between mb-2"><strong>Montant HT :</strong><span id="montant-ht">0,00 DT</span></div>
+                                        <div class="d-flex justify-content-between mb-2"><strong>TVA (20 %) :</strong><span id="montant-tva">0,00 DT</span></div>
                                         <hr>
-                                        <div class="d-flex justify-content-between"><strong>Montant TTC :</strong><span id="montant-ttc" class="fw-bold text-primary">0,00 €</span></div>
+                                        <div class="d-flex justify-content-between"><strong>Montant TTC :</strong><span id="montant-ttc" class="fw-bold text-primary">0,00 DT</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -153,7 +153,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Montant ligne HT</label>
-                            <input type="text" id="montant-ligne-preview" class="form-control" readonly value="0,00 €">
+                            <input type="text" id="montant-ligne-preview" class="form-control" readonly value="0,00 DT">
                         </div>
                     </div>
                 </form>
@@ -184,7 +184,7 @@
 
         function openArticleModal() {
             document.getElementById('article-form').reset();
-            document.getElementById('montant-ligne-preview').value = '0,00 €';
+            document.getElementById('montant-ligne-preview').value = '0,00 DT';
             new bootstrap.Modal(document.getElementById('articleModal')).show();
         }
 
@@ -200,7 +200,7 @@
         function updateMontantPreview() {
             const q = parseInt(document.getElementById('quantite').value) || 0;
             const p = parseFloat(document.getElementById('prix-unitaire').value) || 0;
-            document.getElementById('montant-ligne-preview').value = (q * p).toFixed(2) + ' €';
+            document.getElementById('montant-ligne-preview').value = (q * p).toFixed(2) + ' DT';
         }
 
         function addArticle() {
@@ -253,8 +253,8 @@
                     <tr>
                         <td>${a.nom}</td>
                         <td>${a.quantite}</td>
-                        <td>${a.prixUnitaire.toFixed(2)} €</td>
-                        <td>${a.montantLigne.toFixed(2)} €</td>
+                        <td>${a.prixUnitaire.toFixed(2)} DT</td>
+                        <td>${a.montantLigne.toFixed(2)} DT</td>
                         <td class="text-center">
                             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeArticle(${i})">
                                 <i class="fas fa-trash"></i>
@@ -285,9 +285,9 @@
         function updateTotaux() {
             const ht = commandeArticles.reduce((s, a) => s + a.montantLigne, 0);
             const tva = ht * 0.20;
-            document.getElementById('montant-ht').textContent = ht.toFixed(2) + ' €';
-            document.getElementById('montant-tva').textContent = tva.toFixed(2) + ' €';
-            document.getElementById('montant-ttc').textContent = (ht + tva).toFixed(2) + ' €';
+            document.getElementById('montant-ht').textContent = ht.toFixed(2) + ' DT';
+            document.getElementById('montant-tva').textContent = tva.toFixed(2) + ' DT';
+            document.getElementById('montant-ttc').textContent = (ht + tva).toFixed(2) + ' DT';
         }
     </script>
     <partial name="_ValidationScriptsPartial" />

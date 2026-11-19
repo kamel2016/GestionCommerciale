@@ -210,15 +210,15 @@
                                             <strong>@supplier.Fournisseur.Nom</strong>
                                         </td>
                                         <td data-label="Prix Gros HT" class="text-right">
-                                            <strong>@supplier.PrixGrosHT.ToString("N2")</strong> €
+                                            <strong>@supplier.PrixGrosHT.ToString("N2")</strong> DT
                                         </td>
                                         <td data-label="Prix Détail HT" class="text-right">
-                                            @supplier.PrixDetailHT.ToString("N2") €
+                                            @supplier.PrixDetailHT.ToString("N2") DT
                                         </td>
                                         <td data-label="Prix Promo HT" class="text-right">
                                             @if (supplier.PrixPromoHT > 0)
                                             {
-                                                <span class="price-badge promo">@supplier.PrixPromoHT.Value.ToString("N2") €</span>
+                                                <span class="price-badge promo">@supplier.PrixPromoHT.Value.ToString("N2") DT</span>
                                             }
                                             else
                                             {

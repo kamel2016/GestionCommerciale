@@ -89,37 +89,37 @@
                 <div class="amount-box">
                     <div class="amount-label">TTC</div>
                     <div class="amount-value">@Model.GoodsReceipt.AmountIncludingTax.ToString("N2")</div>
-                    <div class="amount-currency">€</div>
+                    <div class="amount-currency">DT</div>
                 </div>
 
                 <div class="amount-box">
                     <div class="amount-label">À Recevoir</div>
                     <div class="amount-value">@Model.GoodsReceipt.AmountToReceive.ToString("N2")</div>
-                    <div class="amount-currency">€</div>
+                    <div class="amount-currency">DT</div>
                 </div>
 
                 <div class="amount-box">
                     <div class="amount-label">Réglé</div>
                     <div class="amount-value">@Model.GoodsReceipt.AmountPaid.ToString("N2")</div>
-                    <div class="amount-currency">€</div>
+                    <div class="amount-currency">DT</div>
                 </div>
 
                 <div class="amount-box">
                     <div class="amount-label">Régularisé</div>
                     <div class="amount-value">@Model.GoodsReceipt.AmountRegularized.ToString("N2")</div>
-                    <div class="amount-currency">€</div>
+                    <div class="amount-currency">DT</div>
                 </div>
 
                 <div class="amount-box">
                     <div class="amount-label">Reste</div>
                     <div class="amount-value">@Model.GoodsReceipt.AmountRemaining.ToString("N2")</div>
-                    <div class="amount-currency">€</div>
+                    <div class="amount-currency">DT</div>
                 </div>
 
                 <div class="amount-box">
                     <div class="amount-label">Imputé</div>
                     <div class="amount-value">@Model.GoodsReceipt.AmountCharged.ToString("N2")</div>
-                    <div class="amount-currency">€</div>
+                    <div class="amount-currency">DT</div>
                 </div>
             </div>
 
@@ -167,7 +167,7 @@
                                 <td>@line.Unit</td>
                                 <td class="text-center">@line.VatRate.ToString("N0")</td>
                                 <td class="text-center">@line.DiscountPercent.ToString("N0")</td>
-                                <td class="text-right">@line.LineAmountIncludingTax.ToString("N2") €</td>
+                                <td class="text-right">@line.LineAmountIncludingTax.ToString("N2") DT</td>
                             </tr>
                         }
                     </tbody>

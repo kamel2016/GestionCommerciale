@@ -213,7 +213,7 @@ function showStatistics() {
         const cells = line.querySelectorAll('td');
         if (cells.length > 0) {
             stats.totalQuantity += parseInt(cells[3].textContent);
-            const amount = parseFloat(cells[7].textContent.replace(' €', '').replace(',', '.'));
+            const amount = parseFloat(cells[7].textContent.replace(' DT', '').replace(',', '.'));
             stats.totalAmount += amount;
         }
     });

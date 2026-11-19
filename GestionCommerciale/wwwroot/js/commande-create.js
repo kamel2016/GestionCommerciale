@@ -1,7 +1,7 @@
 ﻿// wwwroot/js/commande-create.js
 
 (function () {
-    const fmt = (n) => n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+    const fmt = (n) => n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DT';
 
     let commandeArticles = []; // { articleId, nom, prix, tva, quantite, stock }
 

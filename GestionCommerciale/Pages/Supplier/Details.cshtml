@@ -618,7 +618,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label asp-for="Supplier.PlafondCredit">Plafond de Crédit (€)</label>
+                        <label asp-for="Supplier.PlafondCredit">Plafond de Crédit (DT)</label>
                         <input asp-for="Supplier.PlafondCredit" 
                                type="number" 
                                step="0.01" 
@@ -675,11 +675,11 @@
                 {
                     <div class="financial-summary">
                         <div class="financial-card @(Model.Supplier.PlafondCredit > 0 ? "positive" : "")">
-                            <h3>@((Model.Supplier.PlafondCredit ?? 0).ToString("N0")) €</h3>
+                            <h3>@((Model.Supplier.PlafondCredit ?? 0).ToString("N0")) DT</h3>
                             <p>Plafond de Crédit</p>
                         </div>
                         <div class="financial-card @(Model.Supplier.SoldeActuel >= 0 ? "positive" : "negative")">
-                            <h3>@((Model.Supplier.SoldeActuel ?? 0).ToString("N2")) €</h3>
+                            <h3>@((Model.Supplier.SoldeActuel ?? 0).ToString("N2")) DT</h3>
                             <p>Solde Actuel</p>
                         </div>
                         <div class="financial-card @(Model.Supplier.RemiseNegociee > 0 ? "positive" : "")">

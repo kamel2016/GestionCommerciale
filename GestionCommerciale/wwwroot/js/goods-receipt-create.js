@@ -311,9 +311,9 @@
             totalTVA += ht * l.tva / 100;
         });
 
-        totalHTEl.textContent = fmt.format(totalHTGlobal) + ' €';
-        totalTVAEl.textContent = fmt.format(totalTVA) + ' €';
-        totalTTCEl.textContent = fmt.format(totalHTGlobal + totalTVA) + ' €';
+        totalHTEl.textContent = fmt.format(totalHTGlobal) + ' DT';
+        totalTVAEl.textContent = fmt.format(totalTVA) + ' DT';
+        totalTTCEl.textContent = fmt.format(totalHTGlobal + totalTVA) + ' DT';
 
         hidden.value = JSON.stringify(serialiserLignes());
     }
