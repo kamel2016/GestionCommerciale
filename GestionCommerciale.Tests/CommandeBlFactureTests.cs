@@ -172,5 +172,65 @@ public class CommandeBlFactureTests : ArticleTestBase
         Assert.Equal(0.011m, facture.TotalTva);                             // AwayFromZero comme la commande (avant S10 : ToEven, 0,010)
         Assert.Equal(0.161m + 1.000m, facture.TotalTtc);                    // 1,161
     }
-}
 
+    // ------------------------------------------------------------------ S10 étape 4 : parcours complet automatisé
+
+    private sealed class SequenceFixe : GestionCommerciale.Services.Interface.ISequenceService
+    {
+        public Task<string> ProchainNumeroAsync(string type, int exercice) => Task.FromResult($"{type}-{exercice}-00001");
+    }
+
+    [Fact]
+    public async Task S10_parcours_complet_commande_bl_valide_facture_validee_donne_les_memes_totaux_et_ne_bouge_plus()
+    {
+        await ParametresNeutresAsync();                                   // FODEC 0 %, timbre 1,000
+        var client = await CreerClientAsync();
+        var a = await CreerArticleAsync("0.335", 20m);
+        var b = await CreerArticleAsync("10.500", 19m);
+
+        // 1. commande par la page : HT 22,005 ; TVA 4,191 ; TTC 26,196 (calculés à la main, voir CalculTotauxTests)
+        var commandeId = await CommandeParLaPageAsync(client, (a, 3), (b, 2));
+        var commande = await Db.CommandesClient.AsNoTracking().Include(c => c.LignesCommande).SingleAsync(c => c.Id == commandeId);
+        Assert.Equal((22.005m, 4.191m, 26.196m), (commande.MontantHT, commande.MontantTVA, commande.MontantTTC));
+
+        // 2. BL : lignes dérivées côté serveur de la commande (prix ignoré), puis validation (sort le stock)
+        var service = new BonLivraisonService(Db, new StockService(Db));
+        var (lignes, erreur) = await service.ConstruireLignesAsync(commandeId, commande.LignesCommande.OrderBy(l => l.Id).Select(l => ((int?)l.Id, l.Quantite)));
+        Assert.Null(erreur);
+        var bl = new BonLivraison { Numero = "BL-PARCOURS-S10", ClientId = client, CommandeClientId = commandeId, Lignes = lignes! };
+        Db.BonsLivraison.Add(bl);
+        await Db.SaveChangesAsync();
+        Db.ChangeTracker.Clear();
+        var (valide, erreurBl) = await service.ValiderAsync(bl.ID);
+        Assert.True(valide, erreurBl);
+        Assert.Equal(22.005m, (await Db.BonsLivraison.AsNoTracking().Include(x => x.Lignes).SingleAsync(x => x.ID == bl.ID)).TotalHT);
+
+        // 3. les articles changent après coup ; facture créée puis validée
+        await ModifierPrixArticleAsync(a, prix: 9.999m, tva: 7m);
+        var factureService = new FactureService(Db, new SequenceFixe());
+        var brouillon = await factureService.CreerDepuisBonLivraisonAsync(bl.ID);
+        Db.ChangeTracker.Clear();
+        var (okFacture, erreurFacture) = await factureService.ValiderAsync(brouillon.Id);
+        Assert.True(okFacture, erreurFacture);
+
+        // 4. mêmes totaux de bout en bout (la facture ajoute le seul timbre de 1,000) ; l'annulation du BL est refusée (facturé)
+        Db.ChangeTracker.Clear();
+        var facture = await Db.Factures.AsNoTracking().SingleAsync(f => f.Id == brouillon.Id);
+        Assert.Equal(StatutFacture.Validee, facture.Statut);
+        Assert.Equal((22.005m, 4.191m, 1.000m, 27.196m), (facture.TotalHt, facture.TotalTva, facture.TimbreFiscal, facture.TotalTtc));
+        Assert.Equal((commande.MontantHT, commande.MontantTVA, commande.MontantTTC + 1.000m), (facture.TotalHt, facture.TotalTva, facture.TotalTtc));
+        var (annule, erreurAnnulation) = await service.AnnulerAsync(bl.ID);
+        Assert.False(annule);
+        Assert.Contains("facture", erreurAnnulation, StringComparison.OrdinalIgnoreCase);
+
+        // 5. une facture validée ne se recalcule plus, même si les paramètres société changent ; aucun avoir n'existe encore (S13)
+        var p = await Db.ParametresSociete.SingleAsync();
+        p.TimbreFiscal = 9.000m; p.TauxFodec = 5m;
+        await Db.SaveChangesAsync();
+        var validee = await Db.Factures.Include(f => f.Lignes).SingleAsync(f => f.Id == brouillon.Id);
+        factureService.Recalculer(validee, p);
+        await Db.SaveChangesAsync();
+        Db.ChangeTracker.Clear();
+        Assert.Equal(27.196m, (await Db.Factures.AsNoTracking().SingleAsync(f => f.Id == brouillon.Id)).TotalTtc);
+    }
+}
