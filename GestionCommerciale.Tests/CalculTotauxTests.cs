@@ -247,4 +247,134 @@ public class CalculTotauxTests
         Assert.Equal(0m, commande.MontantTTC);
         Assert.Equal(0m, commande.MontantHTBrut);
     }
+
+    // ================================================================== S10 : extension FODEC (articles marqués) et base de TVA pilotée par paramètre
+
+    private static (decimal, decimal, bool) F(string ht, decimal taux, bool fodec) => (decimal.Parse(ht, System.Globalization.CultureInfo.InvariantCulture), taux, fodec);
+
+    [Fact]
+    public void Fodec_sur_une_ligne_marquee_base_de_tva_SANS_fodec()
+    {
+        // 100,000 à 19 %, marquée FODEC, taux FODEC 1 % : FODEC 1,000 ; TVA = 100,000 x 19 % = 19,000 ; TTC = 100 + 1 + 19 = 120,000
+        var t = CalculTotaux.CalculerTotaux(new[] { F("100.000", 19m, true) }, 0m, tauxFodec: 1m, baseTvaInclutFodec: false);
+
+        Assert.Equal(1.000m, t.MontantFodec);
+        Assert.Equal(19.000m, t.TotalTVA);
+        Assert.Equal(100.000m, t.TotalHTNet);
+        Assert.Equal(120.000m, t.TotalTTC);
+    }
+
+    [Fact]
+    public void Fodec_sur_une_ligne_marquee_base_de_tva_AVEC_fodec()
+    {
+        // même ligne : TVA = (100,000 + 1,000) x 19 % = 19,190 ; TTC = 100 + 1 + 19,190 = 120,190
+        var t = CalculTotaux.CalculerTotaux(new[] { F("100.000", 19m, true) }, 0m, tauxFodec: 1m, baseTvaInclutFodec: true);
+
+        Assert.Equal(1.000m, t.MontantFodec);
+        Assert.Equal(19.190m, t.TotalTVA);
+        Assert.Equal(120.190m, t.TotalTTC);
+    }
+
+    [Fact]
+    public void Le_timbre_s_ajoute_apres_la_tva_et_le_fodec()
+        => Assert.Equal(121.000m, CalculTotaux.CalculerTotaux(new[] { F("100.000", 19m, true) }, 0m, 1m, false, timbre: 1.000m).TotalTTC);
+
+    [Fact]
+    public void Seules_les_lignes_marquees_portent_le_fodec_plusieurs_taux()
+    {
+        // (100,000 ; 19 % ; FODEC), (50,000 ; 19 %), (20,000 ; 7 % ; FODEC) ; FODEC 1 %
+        // FODEC par taux : 19 % -> 1,000 ; 7 % -> 0,200 ; total 1,200 ; HT net 170,000
+        // base de TVA hors FODEC : 19 % : 150 x 19 % = 28,500 ; 7 % : 20 x 7 % = 1,400 ; TVA 29,900 ; TTC = 170 + 1,2 + 29,9 = 201,100
+        var lignes = new[] { F("100.000", 19m, true), F("50.000", 19m, false), F("20.000", 7m, true) };
+        var sans = CalculTotaux.CalculerTotaux(lignes, 0m, 1m, false);
+
+        Assert.Equal(1.200m, sans.MontantFodec);
+        Assert.Equal(29.900m, sans.TotalTVA);
+        Assert.Equal(170.000m, sans.TotalHTNet);
+        Assert.Equal(201.100m, sans.TotalTTC);
+
+        // base de TVA incluant le FODEC : 19 % : (150 + 1,000) x 19 % = 28,690 ; 7 % : (20 + 0,200) x 7 % = 1,414 ; TVA 30,104 ; TTC = 170 + 1,2 + 30,104 = 201,304
+        var avec = CalculTotaux.CalculerTotaux(lignes, 0m, 1m, true);
+        Assert.Equal(1.200m, avec.MontantFodec);
+        Assert.Equal(30.104m, avec.TotalTVA);
+        Assert.Equal(201.304m, avec.TotalTTC);
+    }
+
+    [Fact]
+    public void La_remise_globale_est_appliquee_avant_le_fodec_sur_le_ht_net()
+    {
+        // (60,000 ; 19 % ; FODEC) et (40,000 ; 19 %), remise 10 % : remise 10,000 ; groupes triés (non marqué, puis marqué)
+        // non marqué : 10 x 40/100 = 4,000 -> net 36,000 ; marqué (dernier) : 10 - 4 = 6,000 -> net 54,000
+        // FODEC 1 % de 54,000 = 0,540 ; TVA hors FODEC = 90,000 x 19 % = 17,100 ; TTC = 90 + 0,54 + 17,1 = 107,640
+        var lignes = new[] { F("60.000", 19m, true), F("40.000", 19m, false) };
+        var sans = CalculTotaux.CalculerTotaux(lignes, 10m, 1m, false);
+
+        Assert.Equal(10.000m, sans.MontantRemiseGlobale);
+        Assert.Equal(90.000m, sans.TotalHTNet);
+        Assert.Equal(0.540m, sans.MontantFodec);
+        Assert.Equal(17.100m, sans.TotalTVA);
+        Assert.Equal(107.640m, sans.TotalTTC);
+
+        // avec FODEC dans la base de TVA : (90,000 + 0,540) x 19 % = 17,2026 -> 17,203 ; TTC = 90 + 0,54 + 17,203 = 107,743
+        var avec = CalculTotaux.CalculerTotaux(lignes, 10m, 1m, true);
+        Assert.Equal(17.203m, avec.TotalTVA);
+        Assert.Equal(107.743m, avec.TotalTTC);
+    }
+
+    [Fact]
+    public void Le_fodec_au_demi_millime_est_arrondi_au_dessus_ToEven_donnerait_0()
+    {
+        // 0,050 à 0 %, FODEC 1 % : 0,0005 -> 0,001 ; TTC 0,051
+        var t = CalculTotaux.CalculerTotaux(new[] { F("0.050", 0m, true) }, 0m, 1m, false);
+
+        Assert.Equal(0.001m, t.MontantFodec);
+        Assert.Equal(0.051m, t.TotalTTC);
+    }
+
+    [Fact]
+    public void Un_taux_fodec_nul_ou_aucune_ligne_marquee_donne_un_fodec_nul()
+    {
+        Assert.Equal(0m, CalculTotaux.CalculerTotaux(new[] { F("100.000", 19m, true) }, 0m, 0m, false).MontantFodec);
+        Assert.Equal(0m, CalculTotaux.CalculerTotaux(new[] { F("100.000", 19m, false) }, 0m, 1m, false).MontantFodec);
+    }
+
+    [Fact]
+    public void Les_resultats_de_commande_sont_identiques_avant_et_apres_l_extension()
+    {
+        // L'ancienne signature (2 valeurs par ligne) et la nouvelle (ligne non marquée, FODEC nul) donnent les MÊMES totaux,
+        // sur tous les cas chiffrés à la main de cette classe (taux unique, plusieurs taux, remises, demi-millimes, vide, grandes valeurs).
+        var jeux = new (string Nom, (decimal, decimal)[] Lignes, decimal Remise, decimal Timbre)[]
+        {
+            ("vide", Array.Empty<(decimal, decimal)>(), 0m, 0m),
+            ("vide + timbre", Array.Empty<(decimal, decimal)>(), 0m, 1.000m),
+            ("un taux", new[] { L("100.000", 19m) }, 0m, 0m),
+            ("3 x 0,335 a 20 %", new[] { L("1.005", 20m) }, 0m, 0m),
+            ("plusieurs taux", new[] { L("10.000", 7m), L("20.000", 19m), L("5.000", 19m), L("1.000", 0m) }, 0m, 0m),
+            ("tva demi-millime", new[] { L("0.150", 7m) }, 0m, 0m),
+            ("tva 0,0005", new[] { L("0.050", 1m) }, 0m, 0m),
+            ("meme taux additionne", new[] { L("0.400", 7m), L("0.350", 7m) }, 0m, 0m),
+            ("remise exacte", new[] { L("10.000", 19m) }, 10m, 0m),
+            ("remise demi-millime", new[] { L("1.005", 20m) }, 10m, 0m),
+            ("remise avec reste", new[] { L("1.000", 7m), L("1.000", 13m), L("1.000", 19m) }, 3.333m, 0m),
+            ("remise 100 %", new[] { L("10.000", 19m) }, 100m, 0m),
+            ("grande valeur", new[] { L("999999000.000", 19m) }, 0m, 0m),
+            ("remise + timbre", new[] { L("22.005", 19m), L("1.005", 20m) }, 10m, 1.000m),
+        };
+
+        foreach (var (nom, lignes, remise, timbre) in jeux)
+        {
+            var ancien = CalculTotaux.CalculerTotaux(lignes, remise, timbre);
+            var nouveau = CalculTotaux.CalculerTotaux(lignes.Select(l => (l.Item1, l.Item2, false)), remise, 0m, false, timbre);
+
+            Assert.True(ancien.TotalHTBrut == nouveau.TotalHTBrut, nom + " : brut");
+            Assert.True(ancien.MontantRemiseGlobale == nouveau.MontantRemiseGlobale, nom + " : remise");
+            Assert.True(ancien.TotalHTNet == nouveau.TotalHTNet, nom + " : HT net");
+            Assert.True(ancien.TotalTVA == nouveau.TotalTVA, nom + " : TVA");
+            Assert.True(ancien.TotalTTC == nouveau.TotalTTC, nom + " : TTC");
+            Assert.True(ancien.Timbre == nouveau.Timbre, nom + " : timbre");
+            Assert.Equal(0m, ancien.MontantFodec);
+            Assert.Equal(0m, nouveau.MontantFodec);
+            Assert.Equal(ancien.DetailTVA, nouveau.DetailTVA);
+        }
+    }
 }
