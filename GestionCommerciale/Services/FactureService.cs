@@ -24,7 +24,7 @@ namespace GestionCommerciale.Services
         {
             var bl = await _db.BonsLivraison
                 .Include(b => b.Client)
-                .Include(b => b.CommandeClient)
+                .Include(b => b.CommandeClient).ThenInclude(c => c!.Client)
                 .Include(b => b.Lignes).ThenInclude(l => l.Article)
                 .Include(b => b.Lignes).ThenInclude(l => l.LigneCommandeClient)
                 .FirstOrDefaultAsync(b => b.ID == blId)
@@ -38,6 +38,17 @@ namespace GestionCommerciale.Services
                 throw new InvalidOperationException("Le bon de livraison ne contient aucune ligne.");
             if (bl.Lignes.Any(l => l.LigneCommandeClient == null))
                 throw new InvalidOperationException("Le bon de livraison contient une ligne non liée à une ligne de commande : facturation impossible.");
+
+            // Le client du BL doit être celui de sa commande : sinon la facture, la retenue à la source et les règlements iraient au mauvais client.
+            if (bl.CommandeClient == null || bl.Lignes.Any(l => l.LigneCommandeClient!.CommandeClientId != bl.CommandeClient.Id))
+                throw new InvalidOperationException(
+                    $"Facturation refusée : le bon de livraison {bl.Numero} n'est pas rattaché à la commande de ses lignes. " +
+                    "Recréez-le depuis la commande, puis refacturez.");
+            if (bl.ClientId == null || bl.ClientId != bl.CommandeClient.ClientId)
+                throw new InvalidOperationException(
+                    $"Facturation refusée : le bon de livraison {bl.Numero} est rattaché au client « {bl.Client?.Nom ?? "(aucun)"} » " +
+                    $"alors que sa commande {bl.CommandeClient.NumeroCommande} appartient au client « {bl.CommandeClient.Client?.Nom} » (client attendu). " +
+                    "Annulez ce bon de livraison puis recréez-en un depuis la commande avant de facturer.");
 
             var existante = await _db.Factures
                 .Where(f => f.BonLivraisonId == bl.ID && f.Statut != StatutFacture.Annulee)

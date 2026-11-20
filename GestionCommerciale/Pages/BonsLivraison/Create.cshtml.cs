@@ -1,10 +1,7 @@
 // Pages/BonsLivraison/Create.cshtml.cs
 using GestionCommerciale.Data;
-using GestionCommerciale.Enums;
-using GestionCommerciale.Models;
 using GestionCommerciale.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,14 +20,15 @@ namespace GestionCommerciale.Pages.BonsLivraison
             _bonLivraisonService = bonLivraisonService;
         }
 
-        [BindProperty] public int? ClientId { get; set; }
+        // Le client n'est PLUS un champ du formulaire : il est lu côté serveur dans la commande (S10b). Aucune valeur postée n'est liée.
         [BindProperty] public int? CommandeClientId { get; set; }
         [BindProperty] public DateTime Date { get; set; } = DateTime.Today;
         [BindProperty] public string? Commentaire { get; set; }
         [BindProperty] public List<LigneInput> Lignes { get; set; } = new();
 
-        public SelectList Clients { get; set; } = default!;
+        /// <summary>Numéro de la commande et nom de son client : affichage seulement.</summary>
         public string? NumeroCommande { get; set; }
+        public string? NomClient { get; set; }
 
         public class LigneInput
         {
@@ -40,49 +38,54 @@ namespace GestionCommerciale.Pages.BonsLivraison
             public int QuantiteRestante { get; set; }
             public int Stock { get; set; }
             public int Quantite { get; set; }
-            public decimal PrixUnitaire { get; set; }
+            public decimal PrixUnitaire { get; set; }   // affichage seulement : jamais relu au POST
         }
 
         public async Task<IActionResult> OnGetAsync(int? commandeId)
         {
-            await ChargerClientsAsync();
-
             if (!commandeId.HasValue)
             {
                 TempData["ErrorMessage"] = "Choisissez d'abord une commande client à livrer.";
                 return RedirectToPage("/Commande_Client/Index");
             }
-         
-            if (commandeId.HasValue)
+
+            var commande = await _context.CommandesClient
+                .Include(c => c.Client)
+                .Include(c => c.LignesCommande).ThenInclude(l => l.Article)
+                .FirstOrDefaultAsync(c => c.Id == commandeId.Value);
+
+            if (commande == null) return NotFound();
+
+            if (!BonLivraisonService.StatutsCommandeAutorisantUnBl.Contains(commande.Statut))
             {
-                var commande = await _context.CommandesClient
-                    .Include(c => c.LignesCommande).ThenInclude(l => l.Article)
-                    .FirstOrDefaultAsync(c => c.Id == commandeId.Value);
+                TempData["ErrorMessage"] = $"La commande {commande.NumeroCommande} est au statut « {BonLivraisonService.LibelleStatutCommande(commande.Statut)} » : " +
+                                           "un bon de livraison n'est possible que pour une commande Confirmée, En préparation ou Expédiée.";
+                return RedirectToPage("/Commande_Client/Index");
+            }
 
-                if (commande == null) return NotFound();
+            CommandeClientId = commande.Id;
+            NumeroCommande = commande.NumeroCommande;
+            NomClient = commande.Client?.NomComplet;
 
-                CommandeClientId = commande.Id;
-                ClientId = commande.ClientId;
-                NumeroCommande = commande.NumeroCommande;
-
-                Lignes = commande.LignesCommande
-                    .Where(l => l.QuantiteRestante > 0)
-                    .Select(l => new LigneInput
-                    {
-                        ArticleId = l.ArticleId,
-                        LigneCommandeClientId = l.Id,
-                        Designation = l.Article!.Libelle,
-                        QuantiteRestante = l.QuantiteRestante,
-                        Stock = l.Article.Quantite,
-                        Quantite = Math.Min(l.QuantiteRestante, l.Article.Quantite),
-                        PrixUnitaire = l.PrixUnitaire
-                    }).ToList();
-
-                if (!Lignes.Any())
+            // Reste à livrer = quantité commandée moins le cumul des lignes de BL non annulés (même règle que le contrôle du serveur)
+            var restes = await _bonLivraisonService.ResteParLigneAsync(commande.Id);
+            Lignes = commande.LignesCommande
+                .Where(l => restes.GetValueOrDefault(l.Id) > 0)
+                .Select(l => new LigneInput
                 {
-                    TempData["ErrorMessage"] = "Cette commande est déjà entièrement livrée.";
-                    return RedirectToPage("/Commande_Client/Index");
-                }
+                    ArticleId = l.ArticleId,
+                    LigneCommandeClientId = l.Id,
+                    Designation = l.Article!.Libelle,
+                    QuantiteRestante = restes[l.Id],
+                    Stock = l.Article.Quantite,
+                    Quantite = Math.Min(restes[l.Id], l.Article.Quantite),
+                    PrixUnitaire = l.PrixUnitaire
+                }).ToList();
+
+            if (!Lignes.Any())
+            {
+                TempData["ErrorMessage"] = "Cette commande est déjà entièrement couverte par des bons de livraison.";
+                return RedirectToPage("/Commande_Client/Index");
             }
 
             return Page();
@@ -96,57 +99,39 @@ namespace GestionCommerciale.Pages.BonsLivraison
             if (!Lignes.Any())
                 ModelState.AddModelError(string.Empty, "Saisissez au moins une quantité à livrer.");
 
-            if (ClientId == 0)
-                ModelState.AddModelError(nameof(ClientId), "Le client est obligatoire.");
-
             if (!ModelState.IsValid)
             {
-                await ChargerClientsAsync();
+                await ChargerEnTeteAsync();
                 return Page();
             }
 
-            // Prix et article de chaque ligne dérivés côté serveur de la ligne de commande liée : toute valeur postée est ignorée,
-            // et chaque ligne doit être liée à une ligne de la commande (S10).
-            var (lignesBl, erreurLignes) = await _bonLivraisonService.ConstruireLignesAsync(
-                CommandeClientId, Lignes.Select(l => (l.LigneCommandeClientId, l.Quantite)));
-            if (erreurLignes != null)
+            // Tout est contrôlé et construit côté serveur, dans une transaction, après verrou de la commande : client de la commande,
+            // statut autorisé, prix et article de la ligne de commande liée, une ligne de commande une seule fois, reste à livrer.
+            // Le numéro n'est demandé qu'après tous les contrôles.
+            var (bl, erreur) = await _bonLivraisonService.CreerBrouillonAsync(
+                CommandeClientId, Date, Commentaire,
+                Lignes.Select(l => (l.LigneCommandeClientId, l.Quantite)),
+                () => _numerotation.ProchainNumeroAsync("BL", DateTime.Now));
+
+            if (bl == null)
             {
-                ModelState.AddModelError(string.Empty, erreurLignes);
-                await ChargerClientsAsync();
+                ModelState.AddModelError(string.Empty, erreur ?? "Création impossible.");
+                await ChargerEnTeteAsync();
                 return Page();
             }
-
-            var bl = new BonLivraison
-            {
-                Numero = await _numerotation.ProchainNumeroAsync("BL", DateTime.Now),
-                Date = Date,
-                ClientId = ClientId,
-                CommandeClientId = CommandeClientId,
-                Commentaire = Commentaire,
-                Statut = StatutBonLivraison.Brouillon,
-                Lignes = lignesBl!
-            };
-
-            _context.BonsLivraison.Add(bl);
-            await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = $"Bon de livraison {bl.Numero} créé en brouillon.";
             return RedirectToPage("Details", new { id = bl.ID });
         }
 
-        //private async Task ChargerClientsAsync()
-        //{
-        //    Clients = new SelectList(await _context.Clients.OrderBy(c => c.Nom).ToListAsync(), "ID", "Nom");
-        //}
-
-        private async Task ChargerClientsAsync()
+        private async Task ChargerEnTeteAsync()
         {
-            var clients = await _context.Clients
-                .Where(c => c.EstActif)
-                .OrderBy(c => c.Nom)
-                .ToListAsync();
-
-            Clients = new SelectList(clients, nameof(Client.Id), nameof(Client.NomComplet));
+            if (CommandeClientId == null) return;
+            var commande = await _context.CommandesClient.AsNoTracking()
+                .Include(c => c.Client)
+                .FirstOrDefaultAsync(c => c.Id == CommandeClientId.Value);
+            NumeroCommande = commande?.NumeroCommande;
+            NomClient = commande?.Client?.NomComplet;
         }
     }
 }

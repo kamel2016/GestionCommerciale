@@ -17,18 +17,8 @@
 
     <div class="row mb-3">
         <div class="col-md-4">
-            <label class="form-label">Client</label>
-            @if (Model.CommandeClientId.HasValue)
-            {
-                <input type="hidden" asp-for="ClientId" />
-                <select class="form-select" asp-items="Model.Clients" disabled></select>
-            }
-                else
-                {
-                    <select asp-for="ClientId" asp-items="Model.Clients" class="form-select">
-                        <option value="">-- Choisir --</option>
-                    </select>
-                }
+            <label class="form-label">Client (celui de la commande)</label>
+            <input type="text" class="form-control" value="@Model.NomClient" readonly />
         </div>
         <div class="col-md-3">
             <label class="form-label">Date</label>
