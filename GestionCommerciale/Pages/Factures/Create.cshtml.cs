@@ -62,7 +62,7 @@ namespace GestionCommerciale.Pages.Factures
 
             var bls = await _db.BonsLivraison
                 .Include(b => b.Client)
-                .Where(b => !dejaFactures.Contains(b.ID))
+                .Where(b => b.Statut == Enums.StatutBonLivraison.Valide && !dejaFactures.Contains(b.ID))
                 .OrderByDescending(b => b.ID)
                 .AsNoTracking()
                 .ToListAsync();

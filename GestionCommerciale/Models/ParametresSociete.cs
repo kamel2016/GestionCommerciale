@@ -48,6 +48,13 @@ namespace GestionCommerciale.Models
         [Display(Name = "Appliquer Fodec par défaut")]
         public bool FodecDefaut { get; set; } = false;
 
+        /// <summary>
+        /// Vrai : la TVA est calculée aussi sur le FODEC. Faux (défaut, comportement antérieur) : la TVA ne porte que sur le HT net.
+        /// Règle fiscale à valider avec le comptable : ne rien supposer.
+        /// </summary>
+        [Display(Name = "La base de TVA inclut le FODEC")]
+        public bool BaseTvaInclutFodec { get; set; } = false;
+
         [Display(Name = "Taux Fodec (%)")]
         public decimal TauxFodec { get; set; } = 1m;
 

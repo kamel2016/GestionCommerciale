@@ -12,6 +12,9 @@
         public decimal PrixUnitaireHt { get; set; }
         public decimal RemisePourcent { get; set; }
         public decimal TauxTva { get; set; }        // 7, 13, 19
+
+        /// <summary>Ligne soumise au FODEC : copiée de Article.Fodec à la création de la facture, puis figée.</summary>
+        public bool SoumiseFodec { get; set; }
         public decimal TotalHt { get; set; }
     }
 }

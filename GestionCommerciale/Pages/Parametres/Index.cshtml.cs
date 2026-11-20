@@ -58,6 +58,7 @@ namespace GestionCommerciale.Pages.Parametres
             existant.Email = Parametres.Email;
             existant.TauxTVADefaut = Parametres.TauxTVADefaut;
             existant.FodecDefaut = Parametres.FodecDefaut;
+            existant.BaseTvaInclutFodec = Parametres.BaseTvaInclutFodec;
             existant.TauxFodec = Parametres.TauxFodec;
             existant.TauxRetenueSource = Parametres.TauxRetenueSource;
             existant.TimbreFiscal = Parametres.TimbreFiscal;

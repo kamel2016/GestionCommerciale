@@ -117,7 +117,15 @@
                     <div class="form-check">
                         <input asp-for="Parametres.FodecDefaut" class="form-check-input" />
                         <label asp-for="Parametres.FodecDefaut" class="form-check-label">
-                            Appliquer le FODEC par défaut sur les nouvelles factures
+                            Appliquer le FODEC par défaut sur les nouvelles factures (sans effet depuis S10 : le FODEC ne s'applique qu'aux articles marqués « Fodec »)
+                        </label>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="Parametres.BaseTvaInclutFodec" class="form-check-input" />
+                        <label asp-for="Parametres.BaseTvaInclutFodec" class="form-check-label">
+                            La base de TVA inclut le FODEC (laisser décoché tant que le comptable n'a pas validé la règle)
                         </label>
                     </div>
                 </div>

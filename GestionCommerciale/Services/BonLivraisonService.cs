@@ -20,6 +20,44 @@ namespace GestionCommerciale.Services
             _stock = stock;
         }
 
+        /// <summary>
+        /// Construit les lignes d'un BL à partir des SEULES données de la commande : article et prix viennent de la ligne de commande
+        /// liée (jamais d'une valeur postée par le navigateur). Chaque ligne doit être liée à une ligne de la commande du BL.
+        /// Les lignes de quantité nulle sont ignorées. Retourne soit les lignes, soit un message d'erreur clair.
+        /// </summary>
+        public async Task<(List<LigneBonLivraison>? Lignes, string? Erreur)> ConstruireLignesAsync(
+            int? commandeClientId, IEnumerable<(int? LigneCommandeClientId, int Quantite)> saisies)
+        {
+            if (commandeClientId == null)
+                return (null, "Un bon de livraison doit être créé à partir d'une commande client.");
+
+            var retenues = saisies.Where(s => s.Quantite > 0).ToList();
+            if (!retenues.Any())
+                return (null, "Saisissez au moins une quantité à livrer.");
+            if (retenues.Any(s => s.LigneCommandeClientId == null))
+                return (null, "Chaque ligne du bon de livraison doit être liée à une ligne de la commande.");
+
+            var lignesCommande = await _context.LignesCommandeClient.AsNoTracking()
+                .Where(l => l.CommandeClientId == commandeClientId)
+                .ToDictionaryAsync(l => l.Id);
+
+            var lignes = new List<LigneBonLivraison>();
+            foreach (var s in retenues)
+            {
+                if (!lignesCommande.TryGetValue(s.LigneCommandeClientId!.Value, out var ligneCommande))
+                    return (null, "Chaque ligne du bon de livraison doit être liée à une ligne de la commande.");
+
+                lignes.Add(new LigneBonLivraison
+                {
+                    ArticleId = ligneCommande.ArticleId,
+                    LigneCommandeClientId = ligneCommande.Id,
+                    Quantite = s.Quantite,
+                    PrixUnitaire = ligneCommande.PrixUnitaire
+                });
+            }
+            return (lignes, null);
+        }
+
         public async Task<(bool Succes, string? Erreur)> ValiderAsync(int bonLivraisonId)
         {
             await using var tx = await _context.Database.BeginTransactionAsync();

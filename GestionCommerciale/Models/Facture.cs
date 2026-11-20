@@ -16,6 +16,13 @@ namespace GestionCommerciale.Models
         public int? BonLivraisonId { get; set; }
         public StatutFacture Statut { get; set; }
 
+        /// <summary>
+        /// Règle de calcul des montants. 1 = factures créées avant S10 (prix de l'article du jour, arrondi ToEven, colonnes à 2 décimales) :
+        /// leurs montants ne sont JAMAIS recalculés. 2 = règle actuelle (lignes copiées du BL et de la commande liée, CalculTotaux).
+        /// Une facture neuve est toujours de règle 2 ; les lignes existantes en base reçoivent 1 par la migration.
+        /// </summary>
+        public int RegleCalcul { get; set; } = 2;
+
         public decimal RemiseGlobalePourcent { get; set; }
         public decimal TotalHt { get; set; }
         public decimal MontantFodec { get; set; }

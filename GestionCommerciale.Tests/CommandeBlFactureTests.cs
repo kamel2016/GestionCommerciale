@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using CreerCommande = GestionCommerciale.Pages.Commande_Client.CreateModel;
-using Xunit.Abstractions;
 
 namespace GestionCommerciale.Tests;
 
@@ -90,7 +89,7 @@ public class CommandeBlFactureTests : ArticleTestBase
     private async Task<int> BlDepuisLaCommandeAsync(int commandeId)
     {
         var commande = await Db.CommandesClient.AsNoTracking().Include(c => c.LignesCommande).SingleAsync(c => c.Id == commandeId);
-        var bl = new BonLivraison { Numero = "BL-PF-" + Guid.NewGuid().ToString("N")[..5], ClientId = commande.ClientId, CommandeClientId = commande.Id };
+        var bl = new BonLivraison { Numero = "BL-PF-" + Guid.NewGuid().ToString("N")[..5], ClientId = commande.ClientId, CommandeClientId = commande.Id, Statut = StatutBonLivraison.Valide };
         foreach (var l in commande.LignesCommande)
             bl.Lignes.Add(new LigneBonLivraison { ArticleId = l.ArticleId, LigneCommandeClientId = l.Id, Quantite = l.Quantite, PrixUnitaire = l.PrixUnitaire });
         Db.BonsLivraison.Add(bl);
@@ -132,10 +131,10 @@ public class CommandeBlFactureTests : ArticleTestBase
         Assert.Equal(26.196m + 1.000m, facture.TotalTtc);                   // commande + timbre fiscal 1,000 (FODEC 0)
     }
 
-    // ------------------------------------------------------------------ DIVERGENCES CONNUES (comportement actuel, bloquant avant pilote)
+    // ------------------------------------------------------------------ S7bis : divergences prouvées, CORRIGÉES en S10
 
     [Fact]
-    public async Task DIVERGENCE_CONNUE_la_facture_reprend_le_prix_et_la_tva_ACTUELS_de_l_article_pas_ceux_de_la_commande_ni_du_bl()
+    public async Task S10_corrige_la_facture_garde_le_prix_et_la_tva_figes_de_la_commande_meme_si_l_article_change()
     {
         await ParametresNeutresAsync();
         var client = await CreerClientAsync();
@@ -150,15 +149,15 @@ public class CommandeBlFactureTests : ArticleTestBase
 
         var bl = await Db.BonsLivraison.AsNoTracking().Include(x => x.Lignes).SingleAsync(x => x.ID == blId);
         Assert.Equal(22.005m, bl.TotalHT);                                  // commande et BL : prix figés
-        // facture, à la main : 3 x 0,500 = 1,500 (7 %) ; 2 x 12,000 = 24,000 (19 %) ; HT 25,500 ; TVA 0,105 + 4,560 = 4,665 ; TTC 25,500 + 4,665 + timbre 1,000 = 31,165
-        Assert.Equal(25.500m, facture.TotalHt);                             // ≠ 22,005 : divergence
-        Assert.Equal(4.665m, facture.TotalTva);
-        Assert.Equal(31.165m, facture.TotalTtc);
-        Assert.NotEqual(bl.TotalHT, facture.TotalHt);
+        // facture : prix et TVA figés de la commande (avant S10, prix de l'article du jour : HT 25,500 ; TVA 4,665 ; TTC 31,165)
+        Assert.Equal(22.005m, facture.TotalHt);
+        Assert.Equal(4.191m, facture.TotalTva);
+        Assert.Equal(27.196m, facture.TotalTtc);                            // commande 26,196 + timbre 1,000
+        Assert.Equal(bl.TotalHT, facture.TotalHt);
     }
 
     [Fact]
-    public async Task DIVERGENCE_CONNUE_la_facture_arrondit_la_tva_en_ToEven_la_commande_en_AwayFromZero()
+    public async Task S10_corrige_la_tva_est_arrondie_de_la_meme_facon_en_commande_et_en_facture()
     {
         await ParametresNeutresAsync();
         var client = await CreerClientAsync();
@@ -170,56 +169,8 @@ public class CommandeBlFactureTests : ArticleTestBase
 
         var facture = await FactureDepuisLeBlAsync(await BlDepuisLaCommandeAsync(commandeId));
 
-        Assert.Equal(0.010m, facture.TotalTva);                             // ToEven (Math.Round par défaut) : 1 millime d'écart
-        Assert.Equal(0.150m + 0.010m + 1.000m, facture.TotalTtc);           // 1,160 au lieu de 0,161 + 1,000 = 1,161
+        Assert.Equal(0.011m, facture.TotalTva);                             // AwayFromZero comme la commande (avant S10 : ToEven, 0,010)
+        Assert.Equal(0.161m + 1.000m, facture.TotalTtc);                    // 1,161
     }
 }
 
-/// <summary>
-/// S7bis étape 3 : les colonnes de montants de Facture sont en decimal(18,2) alors que le code calcule et que le reste du modèle
-/// stocke au millime (decimal(18,3)). Preuve sur un vrai SQL Server (base LocalDB jetable), seulement avec GC_TESTS_SQLSERVER=1.
-/// </summary>
-[Trait("Category", "SqlServer")]
-public class SqlServerFactureDecimalTests : IClassFixture<BaseJetableFixture>
-{
-    private readonly BaseJetableFixture _base;
-    private readonly ITestOutputHelper _sortie;
-
-    public SqlServerFactureDecimalTests(BaseJetableFixture baseJetable, ITestOutputHelper sortie) { _base = baseJetable; _sortie = sortie; }
-
-    [SqlServerFact]
-    public async Task DIVERGENCE_CONNUE_la_facture_perd_le_millime_a_l_enregistrement_colonnes_decimal_18_2()
-    {
-        _base.AssurerBase();
-        int blId;
-        using (var db = _base.NouveauContexte())
-        {
-            var p = await db.ParametresSociete.FirstOrDefaultAsync();
-            if (p == null) { p = new ParametresSociete { RaisonSociale = "Société test" }; db.ParametresSociete.Add(p); }
-            p.TauxFodec = 0m; p.TimbreFiscal = 1.000m; p.RetenueActive = false;
-            var article = new Article { Reference = "S7B-" + Guid.NewGuid().ToString("N")[..8], Libelle = "Decimal", Quantite = 10, PrixVenteHT = 0.335m, TauxTVA = 20m };
-            db.Articles.Add(article);
-            await db.SaveChangesAsync();
-            var bl = new BonLivraison { Numero = "BL-S7B-" + Guid.NewGuid().ToString("N")[..5] };
-            bl.Lignes.Add(new LigneBonLivraison { ArticleId = article.ID, Quantite = 3, PrixUnitaire = 0.335m });
-            db.BonsLivraison.Add(bl);
-            await db.SaveChangesAsync();
-            blId = bl.ID;
-        }
-
-        int factureId;
-        using (var db = _base.NouveauContexte())
-        {
-            var facture = await new FactureService(db, null!).CreerDepuisBonLivraisonAsync(blId);
-            Assert.Equal(1.005m, facture.TotalHt);                           // calculé en mémoire au millime (3 x 0,335)
-            factureId = facture.Id;
-        }
-
-        using (var db = _base.NouveauContexte())
-        {
-            var relue = await db.Factures.AsNoTracking().SingleAsync(f => f.Id == factureId);
-            _sortie.WriteLine($"[S7bis] TotalHt calculé 1,005 -> relu sur SQL Server : {relue.TotalHt} ; TotalTva calculé 0,201 -> relu : {relue.TotalTva}");
-            Assert.NotEqual(1.005m, relue.TotalHt);                          // le millime est perdu : la colonne n'a que 2 décimales
-        }
-    }
-}

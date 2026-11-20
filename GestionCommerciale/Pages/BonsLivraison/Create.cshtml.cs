@@ -14,11 +14,13 @@ namespace GestionCommerciale.Pages.BonsLivraison
     {
         private readonly ApplicationDbContext _context;
         private readonly NumerotationService _numerotation;
+        private readonly BonLivraisonService _bonLivraisonService;
 
-        public CreateModel(ApplicationDbContext context, NumerotationService numerotation)
+        public CreateModel(ApplicationDbContext context, NumerotationService numerotation, BonLivraisonService bonLivraisonService)
         {
             _context = context;
             _numerotation = numerotation;
+            _bonLivraisonService = bonLivraisonService;
         }
 
         [BindProperty] public int? ClientId { get; set; }
@@ -103,6 +105,17 @@ namespace GestionCommerciale.Pages.BonsLivraison
                 return Page();
             }
 
+            // Prix et article de chaque ligne dérivés côté serveur de la ligne de commande liée : toute valeur postée est ignorée,
+            // et chaque ligne doit être liée à une ligne de la commande (S10).
+            var (lignesBl, erreurLignes) = await _bonLivraisonService.ConstruireLignesAsync(
+                CommandeClientId, Lignes.Select(l => (l.LigneCommandeClientId, l.Quantite)));
+            if (erreurLignes != null)
+            {
+                ModelState.AddModelError(string.Empty, erreurLignes);
+                await ChargerClientsAsync();
+                return Page();
+            }
+
             var bl = new BonLivraison
             {
                 Numero = await _numerotation.ProchainNumeroAsync("BL", DateTime.Now),
@@ -111,13 +124,7 @@ namespace GestionCommerciale.Pages.BonsLivraison
                 CommandeClientId = CommandeClientId,
                 Commentaire = Commentaire,
                 Statut = StatutBonLivraison.Brouillon,
-                Lignes = Lignes.Select(l => new LigneBonLivraison
-                {
-                    ArticleId = l.ArticleId,
-                    LigneCommandeClientId = l.LigneCommandeClientId,
-                    Quantite = l.Quantite,
-                    PrixUnitaire = l.PrixUnitaire
-                }).ToList()
+                Lignes = lignesBl!
             };
 
             _context.BonsLivraison.Add(bl);

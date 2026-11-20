@@ -783,19 +783,25 @@ namespace GestionCommerciale.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("MontantFodec")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.Property<decimal>("MontantRegle")
                         .HasColumnType("decimal(18,3)");
 
                     b.Property<decimal>("MontantRetenueSource")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.Property<decimal>("NetAPayer")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.Property<string>("Numero")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("RegleCalcul")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("RemiseGlobalePourcent")
                         .HasColumnType("decimal(18,2)");
@@ -818,18 +824,26 @@ namespace GestionCommerciale.Migrations
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<decimal>("TimbreFiscal")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.Property<decimal>("TotalHt")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.Property<decimal>("TotalTtc")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.Property<decimal>("TotalTva")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BonLivraisonId")
+                        .IsUnique()
+                        .HasFilter("[BonLivraisonId] IS NOT NULL AND [Statut] <> 2");
 
                     b.HasIndex("ClientId");
 
@@ -1136,7 +1150,8 @@ namespace GestionCommerciale.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("PrixUnitaireHt")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.Property<decimal>("Quantite")
                         .HasColumnType("decimal(18,2)");
@@ -1144,11 +1159,15 @@ namespace GestionCommerciale.Migrations
                     b.Property<decimal>("RemisePourcent")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<bool>("SoumiseFodec")
+                        .HasColumnType("bit");
+
                     b.Property<decimal>("TauxTva")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("TotalHt")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
 
                     b.HasKey("Id");
 
@@ -1227,6 +1246,9 @@ namespace GestionCommerciale.Migrations
                     b.Property<string>("Adresse")
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
+
+                    b.Property<bool>("BaseTvaInclutFodec")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Email")
                         .HasMaxLength(100)

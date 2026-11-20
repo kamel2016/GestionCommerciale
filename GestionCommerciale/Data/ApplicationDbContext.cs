@@ -130,6 +130,25 @@ namespace GestionCommerciale.Data
 
             modelBuilder.Entity<Facture>().HasIndex(f => f.Numero).IsUnique();
 
+            // S10 : montants de facture au millime (decimal(18,3), comme tout le reste du modèle) ; un BL = une seule facture NON annulée
+            // (index unique filtré ; 2 = StatutFacture.Annulee).
+            modelBuilder.Entity<Facture>(entity =>
+            {
+                entity.Property(f => f.TotalHt).HasPrecision(18, 3);
+                entity.Property(f => f.TotalTva).HasPrecision(18, 3);
+                entity.Property(f => f.TotalTtc).HasPrecision(18, 3);
+                entity.Property(f => f.TimbreFiscal).HasPrecision(18, 3);
+                entity.Property(f => f.MontantFodec).HasPrecision(18, 3);
+                entity.Property(f => f.NetAPayer).HasPrecision(18, 3);
+                entity.Property(f => f.MontantRetenueSource).HasPrecision(18, 3);
+                entity.HasIndex(f => f.BonLivraisonId).IsUnique().HasFilter("[BonLivraisonId] IS NOT NULL AND [Statut] <> 2");
+            });
+            modelBuilder.Entity<LigneFacture>(entity =>
+            {
+                entity.Property(l => l.PrixUnitaireHt).HasPrecision(18, 3);
+                entity.Property(l => l.TotalHt).HasPrecision(18, 3);
+            });
+
             modelBuilder.Entity<SequenceDocument>().HasIndex(s => new { s.TypeDocument, s.Exercice }).IsUnique();
 
             modelBuilder.Entity<TauxTva>().HasData(
