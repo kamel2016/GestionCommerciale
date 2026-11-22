@@ -7,6 +7,8 @@
     var bl = Model.BonLivraison;
 }
 
+<partial name="_MessagesBonLivraison" />
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Bon de livraison @bl.Numero</h2>
     <span class="badge fs-6 @(bl.Statut == StatutBonLivraison.Valide ? "bg-success" :

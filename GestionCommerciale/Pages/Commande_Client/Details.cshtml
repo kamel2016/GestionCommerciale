@@ -134,8 +134,7 @@
                             Retour à la liste
                         </a>
                         <div>
-                            @if (Model.CommandeClient.Statut == StatutCommande.Confirmee
-                            && Model.CommandeClient.LignesCommande.Any(l => l.QuantiteRestante > 0))
+                            @if (Model.PeutCreerBonLivraison)
                             {
                                 <a asp-page="/BonsLivraison/Create"
                                    asp-route-commandeId="@Model.CommandeClient.Id"

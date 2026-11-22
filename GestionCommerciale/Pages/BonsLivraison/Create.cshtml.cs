@@ -30,6 +30,9 @@ namespace GestionCommerciale.Pages.BonsLivraison
         public string? NumeroCommande { get; set; }
         public string? NomClient { get; set; }
 
+        /// <summary>Commandes proposées quand aucune commande n'est choisie (page de sélection).</summary>
+        public List<BonLivraisonService.CommandeEligible> CommandesEligibles { get; set; } = new();
+
         public class LigneInput
         {
             public int ArticleId { get; set; }
@@ -45,8 +48,9 @@ namespace GestionCommerciale.Pages.BonsLivraison
         {
             if (!commandeId.HasValue)
             {
-                TempData["ErrorMessage"] = "Choisissez d'abord une commande client à livrer.";
-                return RedirectToPage("/Commande_Client/Index");
+                // Page de sélection : les commandes éligibles (même règle que le serveur), au lieu d'une redirection silencieuse.
+                CommandesEligibles = await _bonLivraisonService.CommandesEligiblesAsync();
+                return Page();
             }
 
             var commande = await _context.CommandesClient
@@ -58,8 +62,9 @@ namespace GestionCommerciale.Pages.BonsLivraison
 
             if (!BonLivraisonService.StatutsCommandeAutorisantUnBl.Contains(commande.Statut))
             {
-                TempData["ErrorMessage"] = $"La commande {commande.NumeroCommande} est au statut « {BonLivraisonService.LibelleStatutCommande(commande.Statut)} » : " +
-                                           "un bon de livraison n'est possible que pour une commande Confirmée, En préparation ou Expédiée.";
+                // Clé « Error » : c'est celle que la liste des commandes (Commande_Client/Index) affiche.
+                TempData["Error"] = $"La commande {commande.NumeroCommande} est au statut « {BonLivraisonService.LibelleStatutCommande(commande.Statut)} » : " +
+                                    "un bon de livraison n'est possible que pour une commande Confirmée, En préparation ou Expédiée.";
                 return RedirectToPage("/Commande_Client/Index");
             }
 
@@ -84,7 +89,7 @@ namespace GestionCommerciale.Pages.BonsLivraison
 
             if (!Lignes.Any())
             {
-                TempData["ErrorMessage"] = "Cette commande est déjà entièrement couverte par des bons de livraison.";
+                TempData["Error"] = "Cette commande est déjà entièrement couverte par des bons de livraison.";
                 return RedirectToPage("/Commande_Client/Index");
             }
 

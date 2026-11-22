@@ -11,6 +11,51 @@
     <p class="text-muted">Depuis la commande <strong>@Model.NumeroCommande</strong></p>
 }
 
+@if (!Model.CommandeClientId.HasValue)
+{
+    <p class="text-muted">Choisissez la commande à livrer. Seules les commandes Confirmées, En préparation ou Expédiées qui ont encore du reste à livrer sont proposées.</p>
+    @if (!Model.CommandesEligibles.Any())
+    {
+        <div class="alert alert-info">
+            Aucune commande éligible (statut Confirmée, En préparation ou Expédiée, avec du reste à livrer).
+        </div>
+    }
+    else
+    {
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>N° commande</th>
+                    <th>Date</th>
+                    <th>Client</th>
+                    <th>Statut</th>
+                    <th class="text-end">Lignes à livrer</th>
+                    <th class="text-end">Reste total</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.CommandesEligibles)
+                {
+                    <tr>
+                        <td>@c.NumeroCommande</td>
+                        <td>@c.DateCommande.ToString("dd/MM/yyyy")</td>
+                        <td>@c.NomClient</td>
+                        <td>@GestionCommerciale.Services.BonLivraisonService.LibelleStatutCommande(c.Statut)</td>
+                        <td class="text-end">@c.NombreLignesAvecReste</td>
+                        <td class="text-end">@c.ResteTotal</td>
+                        <td class="text-end">
+                            <a asp-page="Create" asp-route-commandeId="@c.Id" class="btn btn-sm btn-success">Créer un BL</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    <a asp-page="Index" class="btn btn-secondary">Retour à la liste des BL</a>
+}
+else
+{
 <form method="post">
     <div asp-validation-summary="All" class="text-danger"></div>
     <input type="hidden" asp-for="CommandeClientId" />
@@ -73,3 +118,4 @@
     <button type="submit" class="btn btn-primary">Enregistrer en brouillon</button>
     <a asp-page="Index" class="btn btn-secondary">Annuler</a>
 </form>
+}

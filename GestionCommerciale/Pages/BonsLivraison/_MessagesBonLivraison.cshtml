@@ -1,0 +1,14 @@
+﻿@* Bandeaux de messages des pages BL : succès en vert, erreur en rouge. Clés propres au module BL (SuccessMessage, ErrorMessage) ;
+   une redirection vers un AUTRE module utilise la clé de ce module. *@
+@{
+    var succes = TempData["SuccessMessage"] as string;
+    var erreur = TempData["ErrorMessage"] as string;
+}
+@if (!string.IsNullOrEmpty(succes))
+{
+    <div class="alert alert-success" role="alert">@succes</div>
+}
+@if (!string.IsNullOrEmpty(erreur))
+{
+    <div class="alert alert-danger" role="alert">@erreur</div>
+}
