@@ -59,6 +59,9 @@ namespace GestionCommerciale.Services
             return (lignes, null);
         }
 
+        /// <summary>Nombre maximal de numéros demandés au générateur pour obtenir un numéro de BL libre.</summary>
+        public const int MaxEssaisNumero = 50;
+
         /// <summary>Statuts de commande pour lesquels un bon de livraison peut être créé (décision du 2026-11-21).</summary>
         public static readonly StatutCommande[] StatutsCommandeAutorisantUnBl =
             { StatutCommande.Confirmee, StatutCommande.EnPreparation, StatutCommande.Expediee };
@@ -117,6 +120,52 @@ namespace GestionCommerciale.Services
             return lignes.ToDictionary(l => l.Id, l => Math.Max(0, l.Quantite - pris.GetValueOrDefault(l.Id)));
         }
 
+        /// <summary>Commande proposée à la création d'un BL : statut autorisé et reste à livrer > 0 (cumul des BL non annulés).</summary>
+        public sealed record CommandeEligible(int Id, string NumeroCommande, DateTime DateCommande, string? NomClient,
+            StatutCommande Statut, int NombreLignesAvecReste, int ResteTotal);
+
+        /// <summary>
+        /// Commandes pour lesquelles un BL peut être créé : statut Confirmée, En préparation ou Expédiée, et au moins une ligne avec du reste
+        /// à livrer. Le reste vient UNIQUEMENT du cumul des lignes de BL non annulés (brouillons inclus), jamais de QuantiteLivree : c'est la
+        /// règle appliquée par la création et la validation. Plus récentes d'abord. Lecture seule, sans verrou (affichage).
+        /// </summary>
+        public async Task<List<CommandeEligible>> CommandesEligiblesAsync()
+        {
+            var commandes = await _context.CommandesClient.AsNoTracking()
+                .Include(c => c.Client)
+                .Include(c => c.LignesCommande)
+                .Where(c => StatutsCommandeAutorisantUnBl.Contains(c.Statut))
+                .OrderByDescending(c => c.DateCommande).ThenByDescending(c => c.Id)
+                .ToListAsync();
+
+            var pris = await _context.LignesBonLivraison.AsNoTracking()
+                .Where(l => l.LigneCommandeClientId != null
+                            && l.BonLivraison!.Statut != StatutBonLivraison.Annule
+                            && StatutsCommandeAutorisantUnBl.Contains(l.LigneCommandeClient!.CommandeClient.Statut))
+                .GroupBy(l => l.LigneCommandeClientId!.Value)
+                .Select(g => new { Id = g.Key, Quantite = g.Sum(x => x.Quantite) })
+                .ToDictionaryAsync(x => x.Id, x => x.Quantite);
+
+            var resultat = new List<CommandeEligible>();
+            foreach (var c in commandes)
+            {
+                var restes = c.LignesCommande.Select(l => Math.Max(0, l.Quantite - pris.GetValueOrDefault(l.Id))).ToList();
+                var avecReste = restes.Count(r => r > 0);
+                if (avecReste == 0) continue;
+                resultat.Add(new CommandeEligible(c.Id, c.NumeroCommande, c.DateCommande, c.Client?.NomComplet, c.Statut, avecReste, restes.Sum()));
+            }
+            return resultat;
+        }
+
+        /// <summary>Vrai si un BL peut être créé pour cette commande : MÊME règle que <see cref="CommandesEligiblesAsync"/> (statut autorisé et reste par cumul).</summary>
+        public async Task<bool> PeutCreerBonAsync(int commandeClientId)
+        {
+            var statut = await _context.CommandesClient.AsNoTracking()
+                .Where(c => c.Id == commandeClientId).Select(c => (StatutCommande?)c.Statut).FirstOrDefaultAsync();
+            if (statut == null || !StatutsCommandeAutorisantUnBl.Contains(statut.Value)) return false;
+            return (await ResteParLigneAsync(commandeClientId)).Values.Any(r => r > 0);
+        }
+
         /// <summary>
         /// Crée un BL BROUILLON depuis une commande, dans une transaction, après verrou de la commande : le client est TOUJOURS celui de la
         /// commande (un client posté différent est refusé, sinon ignoré) ; statut de commande autorisé ; chaque ligne liée à une ligne de la
@@ -167,9 +216,21 @@ namespace GestionCommerciale.Services
                     return (null, MessageReste(ligneCommande.Article.Libelle, l.Quantite, ligneCommande.Quantite, pris));
             }
 
+            // Numéro : on SAUTE les numéros déjà pris (compteur en retard sur des BL existants, par exemple un BL numéroté avant la création de
+            // la table de séquences). Chaque numéro demandé fait avancer le compteur DANS la transaction : il est validé avec le BL et annulé
+            // si la création échoue (aucun numéro perdu, aucun BL à moitié créé).
+            var numero = await genererNumero();
+            for (var essai = 1; await _context.BonsLivraison.AnyAsync(b => b.Numero == numero); essai++)
+            {
+                if (essai >= MaxEssaisNumero)
+                    return (null, $"Impossible d'obtenir un numéro de bon de livraison libre après {MaxEssaisNumero} essais (dernier numéro essayé : {numero}). " +
+                                  "Le compteur de numérotation est très en retard sur les bons de livraison existants : contactez l'administrateur.");
+                numero = await genererNumero();
+            }
+
             var bl = new BonLivraison
             {
-                Numero = await genererNumero(),
+                Numero = numero,
                 Date = date,
                 ClientId = commande.ClientId,
                 CommandeClientId = commande.Id,
@@ -178,9 +239,27 @@ namespace GestionCommerciale.Services
                 Lignes = lignes
             };
             _context.BonsLivraison.Add(bl);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (EstViolationNumeroBonLivraison(ex))
+            {
+                // Course : un autre BL a pris ce numéro entre le contrôle et l'enregistrement (index unique IX_BonsLivraison_Numero).
+                _context.ChangeTracker.Clear();
+                return (null, $"Le numéro de bon de livraison {numero} est déjà utilisé : une autre création vient d'avoir lieu. " +
+                              "Aucun bon de livraison n'a été créé : réessayez.");
+            }
             if (tx != null) await tx.CommitAsync();
             return (bl, null);
+        }
+
+        /// <summary>Vrai si l'exception vient de l'index unique IX_BonsLivraison_Numero (SQL Server 2601 ou 2627 avec le nom d'index, ou SQLite).</summary>
+        private static bool EstViolationNumeroBonLivraison(DbUpdateException ex)
+        {
+            if (ex.InnerException is Microsoft.Data.SqlClient.SqlException sql)
+                return (sql.Number == 2601 || sql.Number == 2627) && sql.Message.Contains("IX_BonsLivraison_Numero");
+            return (ex.InnerException?.Message ?? ex.Message).Contains("UNIQUE constraint failed: BonsLivraison.Numero");
         }
 
         public async Task<(bool Succes, string? Erreur)> ValiderAsync(int bonLivraisonId)
